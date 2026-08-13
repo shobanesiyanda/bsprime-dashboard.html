@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json, os, subprocess
 from pathlib import Path
 import pandas as pd
@@ -14,8 +15,6 @@ ns={'__name__':'trailaris_acquisition_definitions'}
 exec(compile(prefix,'trailaris/acquire_market_data_immutable.py','exec'),ns)
 DUKA,CRYPTO,SYNTH=ns['DUKA'],ns['CRYPTO'],ns['SYNTH']; OUT=ns['OUT']
 
-# Current dukascopy-node can emit extensionless filenames. Force an output
-# directory and accept the largest non-cache file rather than only *.csv.
 def duka_fixed(asset,inst):
     work=OUT/('_fixed_'+asset); work.mkdir(exist_ok=True)
     cmd=['npx','--yes','dukascopy-node','-i',inst,'-from',ns['START'],'-to',ns['END'],'-t','m5','-f','csv','-dir',str(work.resolve())]
@@ -33,6 +32,15 @@ def duka_fixed(asset,inst):
         except Exception as e: errors.append(f'{p.name}:{e}')
     raise RuntimeError('materialized files unreadable; '+' | '.join(errors[:4]))
 
+def acquire_one(asset,src):
+    try:
+        if asset in DUKA: n=duka_fixed(asset,src)
+        elif asset in CRYPTO: n=ns['binance'](asset,src)
+        else: n=ns['deriv'](asset,src)
+        print('OK',asset,n,flush=True); return [asset,'OK',n,'']
+    except Exception as exc:
+        print('FAILED',asset,exc,flush=True); return [asset,'FAILED',0,str(exc)[:1400]]
+
 items=list(DUKA.items())+list(CRYPTO.items())+list(SYNTH.items())
 shards=6
 run_number=int(os.environ.get('GITHUB_RUN_NUMBER','0'))
@@ -40,15 +48,11 @@ shard=run_number % shards
 selected=[(a,s) for i,(a,s) in enumerate(items) if i % shards == shard]
 print('TRAILARIS_SHARD',shard,'OF',shards,'ASSETS',[a for a,_ in selected],flush=True)
 rows=[]
-for asset,src in selected:
-    try:
-        if asset in DUKA: n=duka_fixed(asset,src)
-        elif asset in CRYPTO: n=ns['binance'](asset,src)
-        else: n=ns['deriv'](asset,src)
-        rows.append([asset,'OK',n,'']); print('OK',asset,n,flush=True)
-    except Exception as exc:
-        rows.append([asset,'FAILED',0,str(exc)[:1400]]); print('FAILED',asset,exc,flush=True)
+with ThreadPoolExecutor(max_workers=len(selected)) as pool:
+    fut=[pool.submit(acquire_one,a,s) for a,s in selected]
+    for f in as_completed(fut): rows.append(f.result())
+order=[a for a,_ in selected]; rows.sort(key=lambda x:order.index(x[0]))
 cov=pd.DataFrame(rows,columns=['asset','state','rows','error'])
 cov.to_csv('trailaris/coverage.csv',index=False)
-Path('trailaris/coverage.json').write_text(json.dumps({'required':34,'shard':shard,'shards':shards,'selected':[a for a,_ in selected],'ok':int((cov.state=='OK').sum()),'failed':cov.loc[cov.state!='OK','asset'].tolist()},indent=2))
+Path('trailaris/coverage.json').write_text(json.dumps({'required':34,'shard':shard,'shards':shards,'selected':order,'ok':int((cov.state=='OK').sum()),'failed':cov.loc[cov.state!='OK','asset'].tolist()},indent=2))
 print(cov.to_string(index=False))
