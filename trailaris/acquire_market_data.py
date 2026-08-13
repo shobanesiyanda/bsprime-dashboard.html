@@ -1,50 +1,34 @@
 #!/usr/bin/env python3
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import json, os, subprocess
 from pathlib import Path
+import json, subprocess
 import pandas as pd
 
-subprocess.run(['git','fetch','--quiet','--depth=30','origin','trailaris-data-runtime-20260813'],check=False)
-text=subprocess.check_output(['git','show','bccbe92864d8f1ac8eaf7f19151c4faa7b47272f:trailaris/acquire_market_data.py'],text=True)
-text=text.replace("'-t','m1'","'-t','m5'")
-text=text.replace("{symbol}-1m-","{symbol}-5m-")
-text=text.replace("/{symbol}/1m/{stem}","/{symbol}/5m/{stem}")
-text=text.replace("'granularity':60","'granularity':300")
-prefix=text.split('\nrows=[]\n',1)[0]
-ns={'__name__':'trailaris_acquisition_definitions'}
-exec(compile(prefix,'trailaris/acquire_market_data_immutable.py','exec'),ns)
-DUKA,CRYPTO,SYNTH=ns['DUKA'],ns['CRYPTO'],ns['SYNTH']; OUT=ns['OUT']
-
-def duka_fixed(asset,inst):
-    work=OUT/('_fixed_'+asset); work.mkdir(exist_ok=True)
-    cmd=['npx','--yes','dukascopy-node','-i',inst,'-from',ns['START'],'-to',ns['END'],'-t','m5','-f','csv','-dir',str(work.resolve())]
-    cp=subprocess.run(cmd,capture_output=True,text=True,timeout=900)
-    if cp.returncode: raise RuntimeError((cp.stderr+' '+cp.stdout)[-1800:])
-    files=[p for p in work.rglob('*') if p.is_file() and p.stat().st_size>100 and p.suffix.lower() not in ('.bi5','.json')]
-    if not files: raise RuntimeError('no materialized CSV-like output; '+cp.stdout[-1200:])
-    errors=[]
-    for p in sorted(files,key=lambda q:q.stat().st_size,reverse=True):
+out=Path('trailaris/raw'); out.mkdir(parents=True,exist_ok=True)
+work=out/'_natgas'; work.mkdir(exist_ok=True)
+cmd=['npx','--yes','dukascopy-node','-i','gascmdusd','-from','2026-05-04','-to','2026-08-13','-t','m5','-f','csv','-dir',str(work.resolve())]
+cp=subprocess.run(cmd,capture_output=True,text=True,timeout=900)
+rows=[]
+if cp.returncode==0:
+    for p in sorted([q for q in work.rglob('*') if q.is_file() and q.stat().st_size>100],key=lambda q:q.stat().st_size,reverse=True):
         try:
-            raw=pd.read_csv(p)
-            raw.columns=[str(c).strip().lower() for c in raw.columns]
-            if 'volume' not in raw.columns: raw['volume']=0.0
-            d=ns['normalize'](raw)
-            if len(d)>10:
-                d.to_csv(OUT/(asset+'.csv.gz'),index=False,compression='gzip')
-                return len(d)
-        except Exception as e: errors.append(f'{p.name}:{e}')
-    raise RuntimeError('materialized files unreadable; '+' | '.join(errors[:4]))
-
-def acquire_one(asset,src):
-    try:
-        n=duka_fixed(asset,src)
-        print('OK',asset,n,flush=True); return [asset,'OK',n,'']
-    except Exception as exc:
-        print('FAILED',asset,exc,flush=True); return [asset,'FAILED',0,str(exc)[:1400]]
-
-selected=[('NATGAS',DUKA['NATGAS'])]
-rows=[acquire_one(a,s) for a,s in selected]
-cov=pd.DataFrame(rows,columns=['asset','state','rows','error'])
-cov.to_csv('trailaris/coverage.csv',index=False)
-Path('trailaris/coverage.json').write_text(json.dumps({'required':34,'selected':['NATGAS'],'ok':int((cov.state=='OK').sum()),'failed':cov.loc[cov.state!='OK','asset'].tolist()},indent=2))
-print(cov.to_string(index=False))
+            x=pd.read_csv(p); x.columns=[str(c).strip().lower() for c in x.columns]
+            tc=next((c for c in ('timestamp','time','datetime','date') if c in x.columns),None)
+            if tc is None: continue
+            ts=x[tc]
+            if pd.api.types.is_numeric_dtype(ts):
+                z=float(pd.to_numeric(ts,errors='coerce').dropna().iloc[0]); unit='us' if z>1e14 else ('ms' if z>1e11 else 's')
+                x['timestamp']=pd.to_datetime(ts,unit=unit,utc=True)
+            else: x['timestamp']=pd.to_datetime(ts,utc=True,errors='coerce')
+            for c in ('open','high','low','close'): x[c]=pd.to_numeric(x[c],errors='coerce')
+            if 'volume' not in x.columns: x['volume']=0.0
+            x['volume']=pd.to_numeric(x['volume'],errors='coerce').fillna(0)
+            x=x[['timestamp','open','high','low','close','volume']].dropna(subset=['timestamp','open','high','low','close']).sort_values('timestamp').drop_duplicates('timestamp')
+            if len(x)>100:
+                x.to_csv(out/'NATGAS.csv.gz',index=False,compression='gzip'); rows=[['NATGAS','OK',len(x),'']]; break
+        except Exception:
+            pass
+if not rows: rows=[['NATGAS','FAILED',0,(cp.stderr+' '+cp.stdout)[-1200:]]]
+c=pd.DataFrame(rows,columns=['asset','state','rows','error']); c.to_csv('trailaris/coverage.csv',index=False)
+Path('trailaris/coverage.json').write_text(json.dumps({'required':34,'selected':['NATGAS'],'ok':int((c.state=='OK').sum()),'failed':c.loc[c.state!='OK','asset'].tolist()},indent=2))
+print(c.to_string(index=False))
+if c.state.iloc[0]!='OK': raise SystemExit(2)
