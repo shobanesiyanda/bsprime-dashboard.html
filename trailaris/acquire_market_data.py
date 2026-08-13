@@ -37,25 +37,14 @@ def duka_fixed(asset,inst):
 
 def acquire_one(asset,src):
     try:
-        if asset in DUKA: n=duka_fixed(asset,src)
-        elif asset in CRYPTO: n=ns['binance'](asset,src)
-        else: n=ns['deriv'](asset,src)
+        n=duka_fixed(asset,src)
         print('OK',asset,n,flush=True); return [asset,'OK',n,'']
     except Exception as exc:
         print('FAILED',asset,exc,flush=True); return [asset,'FAILED',0,str(exc)[:1400]]
 
-items=list(DUKA.items())+list(CRYPTO.items())+list(SYNTH.items())
-shards=6
-run_number=int(os.environ.get('GITHUB_RUN_NUMBER','0'))
-shard=run_number % shards
-selected=[(a,s) for i,(a,s) in enumerate(items) if i % shards == shard]
-print('TRAILARIS_SHARD',shard,'OF',shards,'ASSETS',[a for a,_ in selected],flush=True)
-rows=[]
-with ThreadPoolExecutor(max_workers=len(selected)) as pool:
-    fut=[pool.submit(acquire_one,a,s) for a,s in selected]
-    for f in as_completed(fut): rows.append(f.result())
-order=[a for a,_ in selected]; rows.sort(key=lambda x:order.index(x[0]))
+selected=[('NATGAS',DUKA['NATGAS'])]
+rows=[acquire_one(a,s) for a,s in selected]
 cov=pd.DataFrame(rows,columns=['asset','state','rows','error'])
 cov.to_csv('trailaris/coverage.csv',index=False)
-Path('trailaris/coverage.json').write_text(json.dumps({'required':34,'shard':shard,'shards':shards,'selected':order,'ok':int((cov.state=='OK').sum()),'failed':cov.loc[cov.state!='OK','asset'].tolist()},indent=2))
+Path('trailaris/coverage.json').write_text(json.dumps({'required':34,'selected':['NATGAS'],'ok':int((cov.state=='OK').sum()),'failed':cov.loc[cov.state!='OK','asset'].tolist()},indent=2))
 print(cov.to_string(index=False))
