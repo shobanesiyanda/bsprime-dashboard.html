@@ -25,7 +25,10 @@ def duka_fixed(asset,inst):
     errors=[]
     for p in sorted(files,key=lambda q:q.stat().st_size,reverse=True):
         try:
-            d=ns['normalize'](pd.read_csv(p))
+            raw=pd.read_csv(p)
+            raw.columns=[str(c).strip().lower() for c in raw.columns]
+            if 'volume' not in raw.columns: raw['volume']=0.0
+            d=ns['normalize'](raw)
             if len(d)>10:
                 d.to_csv(OUT/(asset+'.csv.gz'),index=False,compression='gzip')
                 return len(d)
