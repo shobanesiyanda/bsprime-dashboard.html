@@ -1,0 +1,53 @@
+{
+  "V75": {
+    "asset": "V75",
+    "symbol": "R_75",
+    "pages": 23,
+    "unique_rows": 105118,
+    "first_epoch": 1755269910,
+    "last_epoch": 1786805700,
+    "floor_reason": "NO_BACKWARD_PROGRESS",
+    "usable": true
+  },
+  "V50": {
+    "asset": "V50",
+    "symbol": "R_50",
+    "pages": 23,
+    "unique_rows": 105118,
+    "first_epoch": 1755269909,
+    "last_epoch": 1786805700,
+    "floor_reason": "NO_BACKWARD_PROGRESS",
+    "usable": true
+  },
+  "V100": {
+    "asset": "V100",
+    "symbol": "R_100",
+    "pages": 23,
+    "unique_rows": 105118,
+    "first_epoch": 1755269910,
+    "last_epoch": 1786805700,
+    "floor_reason": "NO_BACKWARD_PROGRESS",
+    "usable": true
+  },
+  "V25": {
+    "asset": "V25",
+    "symbol": "R_25",
+    "pages": 23,
+    "unique_rows": 105118,
+    "first_epoch": 1755269909,
+    "last_epoch": 1786805700,
+    "floor_reason": "NO_BACKWARD_PROGRESS",
+    "usable": true
+  },
+  "V10": {
+    "asset": "V10",
+    "symbol": "R_10",
+    "pages": 23,
+    "unique_rows": 105118,
+    "first_epoch": 1755269909,
+    "last_epoch": 1786805700,
+    "floor_reason": "NO_BACKWARD_PROGRESS",
+    "usable": true
+  },
+  "pass": true
+}
