@@ -1,0 +1,376 @@
+{
+  "routes_required": 34,
+  "routes_materialized": 34,
+  "missing": [],
+  "rows": {
+    "EURUSD": 72982,
+    "GBPUSD": 73522,
+    "USDJPY": 74124,
+    "AUDUSD": 72977,
+    "USDCAD": 74107,
+    "USDCHF": 73813,
+    "NZDUSD": 74051,
+    "EURJPY": 72635,
+    "GBPJPY": 71976,
+    "EURGBP": 71023,
+    "AUDJPY": 73231,
+    "CADJPY": 72880,
+    "GBPCHF": 71958,
+    "XAUUSD": 69763,
+    "XAGUSD": 69872,
+    "BTCUSD": 104544,
+    "ETHUSD": 104544,
+    "SOLUSD": 104544,
+    "BNBUSD": 104544,
+    "XRPUSD": 104544,
+    "US100": 67586,
+    "US500": 66996,
+    "US30": 61296,
+    "GER40": 65653,
+    "UK100": 58788,
+    "JP225": 67709,
+    "WTI": 70136,
+    "BRENT": 64102,
+    "NATGAS": 68908,
+    "V75": 104361,
+    "V50": 104361,
+    "V100": 104361,
+    "V25": 104361,
+    "V10": 104361
+  },
+  "first": {
+    "EURUSD": 1755216000000,
+    "GBPUSD": 1755216000000,
+    "USDJPY": 1755216000000,
+    "AUDUSD": 1755216000000,
+    "USDCAD": 1755216000000,
+    "USDCHF": 1755216000000,
+    "NZDUSD": 1755216000000,
+    "EURJPY": 1755216000000,
+    "GBPJPY": 1755216000000,
+    "EURGBP": 1755216000000,
+    "AUDJPY": 1755216000000,
+    "CADJPY": 1755216000000,
+    "GBPCHF": 1755216000000,
+    "XAUUSD": 1755216000000,
+    "XAGUSD": 1755216000000,
+    "BTCUSD": 1755216000000,
+    "ETHUSD": 1755216000000,
+    "SOLUSD": 1755216000000,
+    "BNBUSD": 1755216000000,
+    "XRPUSD": 1755216000000,
+    "US100": 1755216000000,
+    "US500": 1755216000000,
+    "US30": 1755216000000,
+    "GER40": 1755468300000,
+    "UK100": 1755216000000,
+    "JP225": 1755216000000,
+    "WTI": 1755216000000,
+    "BRENT": 1755216000000,
+    "NATGAS": 1755216000000,
+    "V75": 1755270109000,
+    "V50": 1755270109000,
+    "V100": 1755270106000,
+    "V25": 1755270106000,
+    "V10": 1755270108000
+  },
+  "last": {
+    "EURUSD": 1786578900000,
+    "GBPUSD": 1786578900000,
+    "USDJPY": 1786578900000,
+    "AUDUSD": 1786578900000,
+    "USDCAD": 1786578900000,
+    "USDCHF": 1786578900000,
+    "NZDUSD": 1786578900000,
+    "EURJPY": 1786578900000,
+    "GBPJPY": 1786578900000,
+    "EURGBP": 1786578900000,
+    "AUDJPY": 1786578900000,
+    "CADJPY": 1786578900000,
+    "GBPCHF": 1786578900000,
+    "XAUUSD": 1786578900000,
+    "XAGUSD": 1786578900000,
+    "BTCUSD": 1786578900000,
+    "ETHUSD": 1786578900000,
+    "SOLUSD": 1786578900000,
+    "BNBUSD": 1786578900000,
+    "XRPUSD": 1786578900000,
+    "US100": 1786578900000,
+    "US500": 1786578900000,
+    "US30": 1786578900000,
+    "GER40": 1786578900000,
+    "UK100": 1786578900000,
+    "JP225": 1786578900000,
+    "WTI": 1786578900000,
+    "BRENT": 1786568100000,
+    "NATGAS": 1786578900000,
+    "V75": 1786578900000,
+    "V50": 1786578900000,
+    "V100": 1786578900000,
+    "V25": 1786578900000,
+    "V10": 1786578900000
+  },
+  "common_start_ms": 1755468300000,
+  "common_end_ms": 1786568100000,
+  "sources": {
+    "AUDUSD": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 72977,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "USDJPY": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 74124,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "EURJPY": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 72635,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "EURUSD": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 72982,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "USDCAD": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 74107,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "USDCHF": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 73813,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "GBPUSD": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 73522,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "NZDUSD": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 74051,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "V100": {
+      "source": "DERIV_OFFICIAL",
+      "rows": 104361,
+      "first": 1755270106000,
+      "last": 1786578900000,
+      "pages": 23,
+      "floor": "PROVIDER_HISTORY_FLOOR",
+      "status": "OK"
+    },
+    "V25": {
+      "source": "DERIV_OFFICIAL",
+      "rows": 104361,
+      "first": 1755270106000,
+      "last": 1786578900000,
+      "pages": 23,
+      "floor": "PROVIDER_HISTORY_FLOOR",
+      "status": "OK"
+    },
+    "V10": {
+      "source": "DERIV_OFFICIAL",
+      "rows": 104361,
+      "first": 1755270108000,
+      "last": 1786578900000,
+      "pages": 23,
+      "floor": "PROVIDER_HISTORY_FLOOR",
+      "status": "OK"
+    },
+    "V50": {
+      "source": "DERIV_OFFICIAL",
+      "rows": 104361,
+      "first": 1755270109000,
+      "last": 1786578900000,
+      "pages": 23,
+      "floor": "PROVIDER_HISTORY_FLOOR",
+      "status": "OK"
+    },
+    "V75": {
+      "source": "DERIV_OFFICIAL",
+      "rows": 104361,
+      "first": 1755270109000,
+      "last": 1786578900000,
+      "pages": 23,
+      "floor": "PROVIDER_HISTORY_FLOOR",
+      "status": "OK"
+    },
+    "XAUUSD": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 69763,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "XAGUSD": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 69872,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "US100": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 67586,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "GBPJPY": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 71976,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "CADJPY": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 72880,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "AUDJPY": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 73231,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "GBPCHF": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 71958,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "EURGBP": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 71023,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "US500": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 66996,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "GER40": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 65653,
+      "first": 1755468300000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "US30": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 61296,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "WTI": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 70136,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "BRENT": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 64102,
+      "first": 1755216000000,
+      "last": 1786568100000,
+      "status": "OK"
+    },
+    "NATGAS": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 68908,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "UK100": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 58788,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "JP225": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 67709,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "BTCUSD": {
+      "source": "BINANCE_OFFICIAL_SPOT",
+      "rows": 104544,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK",
+      "error_count": 0,
+      "errors": []
+    },
+    "ETHUSD": {
+      "source": "BINANCE_OFFICIAL_SPOT",
+      "rows": 104544,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK",
+      "error_count": 0,
+      "errors": []
+    },
+    "SOLUSD": {
+      "source": "BINANCE_OFFICIAL_SPOT",
+      "rows": 104544,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK",
+      "error_count": 0,
+      "errors": []
+    },
+    "BNBUSD": {
+      "source": "BINANCE_OFFICIAL_SPOT",
+      "rows": 104544,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK",
+      "error_count": 0,
+      "errors": []
+    },
+    "XRPUSD": {
+      "source": "BINANCE_OFFICIAL_SPOT",
+      "rows": 104544,
+      "first": 1755216000000,
+      "last": 1786578900000,
+      "status": "OK",
+      "error_count": 0,
+      "errors": []
+    }
+  },
+  "gate_pass": true
+}
