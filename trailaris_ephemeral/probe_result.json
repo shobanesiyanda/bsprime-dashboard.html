@@ -1,0 +1,19 @@
+{
+  "dns_data.binance.vision": "3.167.183.47",
+  "dns_datafeed.dukascopy.com": "16.62.187.25",
+  "dns_ws.binaryws.com": "172.66.138.236",
+  "binance_http_status": 200,
+  "binance_checksum": "425f6e1a0de85dc99d8a7f17924bcb210c8f92100fb71e5993e1d197577b7053  BTCUSDT-5m-2026-07.zip",
+  "dukascopy_rows": 288,
+  "dukascopy_sample": {
+    "timestamp": 1785715200000,
+    "open": 1.15437,
+    "high": 1.15438,
+    "low": 1.15348,
+    "close": 1.15383,
+    "volume": 820.9
+  },
+  "deriv_points": 10,
+  "deriv_error": null,
+  "probe_pass": true
+}
