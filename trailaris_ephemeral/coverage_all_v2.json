@@ -1,0 +1,370 @@
+{
+  "routes_required": 34,
+  "routes_materialized": 29,
+  "missing": [
+    "V75",
+    "V50",
+    "V100",
+    "V25",
+    "V10"
+  ],
+  "rows": {
+    "EURUSD": 343570,
+    "GBPUSD": 342269,
+    "USDJPY": 344697,
+    "AUDUSD": 341409,
+    "USDCAD": 344798,
+    "USDCHF": 344272,
+    "NZDUSD": 344625,
+    "EURJPY": 343389,
+    "GBPJPY": 319755,
+    "EURGBP": 334597,
+    "AUDJPY": 343852,
+    "CADJPY": 341102,
+    "GBPCHF": 336131,
+    "XAUUSD": 321361,
+    "XAGUSD": 326609,
+    "BTCUSD": 485264,
+    "ETHUSD": 485264,
+    "SOLUSD": 485264,
+    "BNBUSD": 485264,
+    "XRPUSD": 485264,
+    "US100": 310679,
+    "US500": 315401,
+    "US30": 272661,
+    "GER40": 303312,
+    "UK100": 310415,
+    "JP225": 314124,
+    "WTI": 326710,
+    "BRENT": 298146,
+    "NATGAS": 306275,
+    "V75": 0,
+    "V50": 0,
+    "V100": 0,
+    "V25": 0,
+    "V10": 0
+  },
+  "first": {
+    "EURUSD": 1641160800000,
+    "GBPUSD": 1641160800000,
+    "USDJPY": 1641160800000,
+    "AUDUSD": 1641161400000,
+    "USDCAD": 1641161100000,
+    "USDCHF": 1641161400000,
+    "NZDUSD": 1641162600000,
+    "EURJPY": 1641161400000,
+    "GBPJPY": 1641168000000,
+    "EURGBP": 1641161400000,
+    "AUDJPY": 1641161400000,
+    "CADJPY": 1641161400000,
+    "GBPCHF": 1641162900000,
+    "XAUUSD": 1641164400000,
+    "XAGUSD": 1641164400000,
+    "BTCUSD": 1640995200000,
+    "ETHUSD": 1640995200000,
+    "SOLUSD": 1640995200000,
+    "BNBUSD": 1640995200000,
+    "XRPUSD": 1640995200000,
+    "US100": 1641164400000,
+    "US500": 1641164400000,
+    "US30": 1641164400000,
+    "GER40": 1641164400000,
+    "UK100": 1641164400000,
+    "JP225": 1641164400000,
+    "WTI": 1641164400000,
+    "BRENT": 1641171600000,
+    "NATGAS": 1641164400000
+  },
+  "last": {
+    "EURUSD": 1786578900000,
+    "GBPUSD": 1786578900000,
+    "USDJPY": 1786578900000,
+    "AUDUSD": 1786578900000,
+    "USDCAD": 1786578900000,
+    "USDCHF": 1786578900000,
+    "NZDUSD": 1786578900000,
+    "EURJPY": 1786578900000,
+    "GBPJPY": 1786578900000,
+    "EURGBP": 1786578900000,
+    "AUDJPY": 1786578900000,
+    "CADJPY": 1786578900000,
+    "GBPCHF": 1786578900000,
+    "XAUUSD": 1786578900000,
+    "XAGUSD": 1786578900000,
+    "BTCUSD": 1786578900000,
+    "ETHUSD": 1786578900000,
+    "SOLUSD": 1786578900000,
+    "BNBUSD": 1786578900000,
+    "XRPUSD": 1786578900000,
+    "US100": 1786578900000,
+    "US500": 1786578900000,
+    "US30": 1786578900000,
+    "GER40": 1786578900000,
+    "UK100": 1786578900000,
+    "JP225": 1786578900000,
+    "WTI": 1786578900000,
+    "BRENT": 1786568100000,
+    "NATGAS": 1786578900000
+  },
+  "sources": {
+    "V50": {
+      "source": "DERIV_OFFICIAL",
+      "rows": 0,
+      "status": "FAIL",
+      "error": "Error: pagination stalled",
+      "pages": 23,
+      "errors": []
+    },
+    "V75": {
+      "source": "DERIV_OFFICIAL",
+      "rows": 0,
+      "status": "FAIL",
+      "error": "Error: pagination stalled",
+      "pages": 23,
+      "errors": []
+    },
+    "V25": {
+      "source": "DERIV_OFFICIAL",
+      "rows": 0,
+      "status": "FAIL",
+      "error": "Error: pagination stalled",
+      "pages": 23,
+      "errors": []
+    },
+    "V10": {
+      "source": "DERIV_OFFICIAL",
+      "rows": 0,
+      "status": "FAIL",
+      "error": "Error: pagination stalled",
+      "pages": 23,
+      "errors": []
+    },
+    "V100": {
+      "source": "DERIV_OFFICIAL",
+      "rows": 0,
+      "status": "FAIL",
+      "error": "Error: pagination stalled",
+      "pages": 23,
+      "errors": []
+    },
+    "EURUSD": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 343570,
+      "first": 1641160800000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "USDJPY": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 344697,
+      "first": 1641160800000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "AUDUSD": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 341409,
+      "first": 1641161400000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "USDCHF": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 344272,
+      "first": 1641161400000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "USDCAD": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 344798,
+      "first": 1641161100000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "GBPUSD": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 342269,
+      "first": 1641160800000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "NZDUSD": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 344625,
+      "first": 1641162600000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "AUDJPY": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 343852,
+      "first": 1641161400000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "EURJPY": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 343389,
+      "first": 1641161400000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "CADJPY": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 341102,
+      "first": 1641161400000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "EURGBP": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 334597,
+      "first": 1641161400000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "GBPJPY": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 319755,
+      "first": 1641168000000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "GBPCHF": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 336131,
+      "first": 1641162900000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "XAUUSD": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 321361,
+      "first": 1641164400000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "XAGUSD": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 326609,
+      "first": 1641164400000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "US100": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 310679,
+      "first": 1641164400000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "US500": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 315401,
+      "first": 1641164400000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "US30": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 272661,
+      "first": 1641164400000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "UK100": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 310415,
+      "first": 1641164400000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "WTI": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 326710,
+      "first": 1641164400000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "GER40": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 303312,
+      "first": 1641164400000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "JP225": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 314124,
+      "first": 1641164400000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "BRENT": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 298146,
+      "first": 1641171600000,
+      "last": 1786568100000,
+      "status": "OK"
+    },
+    "NATGAS": {
+      "source": "DUKASCOPY_RESEARCH_PROXY",
+      "rows": 306275,
+      "first": 1641164400000,
+      "last": 1786578900000,
+      "status": "OK"
+    },
+    "BTCUSD": {
+      "source": "BINANCE_OFFICIAL_SPOT",
+      "symbol": "BTCUSDT",
+      "rows": 485264,
+      "first": 1640995200000,
+      "last": 1786578900000,
+      "status": "OK",
+      "errors": [],
+      "error_count": 0
+    },
+    "ETHUSD": {
+      "source": "BINANCE_OFFICIAL_SPOT",
+      "symbol": "ETHUSDT",
+      "rows": 485264,
+      "first": 1640995200000,
+      "last": 1786578900000,
+      "status": "OK",
+      "errors": [],
+      "error_count": 0
+    },
+    "SOLUSD": {
+      "source": "BINANCE_OFFICIAL_SPOT",
+      "symbol": "SOLUSDT",
+      "rows": 485264,
+      "first": 1640995200000,
+      "last": 1786578900000,
+      "status": "OK",
+      "errors": [],
+      "error_count": 0
+    },
+    "BNBUSD": {
+      "source": "BINANCE_OFFICIAL_SPOT",
+      "symbol": "BNBUSDT",
+      "rows": 485264,
+      "first": 1640995200000,
+      "last": 1786578900000,
+      "status": "OK",
+      "errors": [],
+      "error_count": 0
+    },
+    "XRPUSD": {
+      "source": "BINANCE_OFFICIAL_SPOT",
+      "symbol": "XRPUSDT",
+      "rows": 485264,
+      "first": 1640995200000,
+      "last": 1786578900000,
+      "status": "OK",
+      "errors": [],
+      "error_count": 0
+    }
+  },
+  "gate_pass": false
+}
