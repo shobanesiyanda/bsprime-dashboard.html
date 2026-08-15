@@ -1,0 +1,43 @@
+name: Trailaris Synthetic Maximum-History Floor
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_ephemeral_synthetic_floor.yml']
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-ephemeral-research-20260815
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install --no-save --silent ws
+      - name: Find maximum accessible history floor
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'), WebSocket=require('ws');
+          const symbols={V75:'R_75',V50:'R_50',V100:'R_100',V25:'R_25',V10:'R_10'};
+          async function one(asset,symbol){
+            const ws=new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id=1089');let id=1,pending=new Map();
+            await new Promise((res,rej)=>{let t=setTimeout(()=>rej(new Error('open timeout')),15000);ws.once('open',()=>{clearTimeout(t);res()});ws.once('error',rej)});
+            ws.on('message',m=>{let x;try{x=JSON.parse(m.toString())}catch{return};let p=pending.get(x.req_id);if(p){pending.delete(x.req_id);x.error?p.reject(new Error(x.error.message)):p.resolve(x)}});
+            const req=o=>new Promise((res,rej)=>{let rid=id++;pending.set(rid,{resolve:res,reject:rej});ws.send(JSON.stringify({...o,req_id:rid}));setTimeout(()=>{if(pending.has(rid)){pending.delete(rid);rej(new Error('timeout'))}},20000)});
+            let end='latest',seen=new Set(),pages=0,lastEarliest=null,floorReason='';
+            try{while(pages<80){const x=await req({ticks_history:symbol,end,style:'candles',granularity:300,count:5000,adjust_start_time:1});const cs=x.candles||[];if(!cs.length){floorReason='EMPTY';break}const eps=cs.map(c=>+c.epoch).filter(Number.isFinite);const earliest=Math.min(...eps);for(const e of eps)seen.add(e);pages++;if(lastEarliest!==null&&earliest>=lastEarliest){floorReason='NO_BACKWARD_PROGRESS';break}lastEarliest=earliest;end=earliest-1;}
+            }catch(e){floorReason='ERROR:'+String(e)}finally{try{ws.close()}catch{}}
+            const arr=[...seen].sort((a,b)=>a-b);return {asset,symbol,pages,unique_rows:arr.length,first_epoch:arr[0]||null,last_epoch:arr.at(-1)||null,floor_reason:floorReason,usable:arr.length>10000};
+          }
+          (async()=>{let entries=Object.entries(symbols);let vals=await Promise.all(entries.map(([a,s])=>one(a,s)));let out=Object.fromEntries(vals.map(v=>[v.asset,v]));out.pass=vals.every(v=>v.usable);fs.writeFileSync('trailaris_ephemeral/synthetic_floor.json',JSON.stringify(out,null,2));console.log(JSON.stringify(out,null,2));})();
+          NODE
+      - name: Commit result
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add trailaris_ephemeral/synthetic_floor.json
+          git commit -m 'test: Deriv maximum-history floor [skip ci]' || true
+          git push origin HEAD:trailaris-ephemeral-research-20260815
