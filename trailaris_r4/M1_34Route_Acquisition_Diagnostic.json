@@ -1,0 +1,32 @@
+{
+  "routes_required": 34,
+  "routes_materialized": 10,
+  "missing_or_failed": [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "AUDUSD",
+    "USDCAD",
+    "USDCHF",
+    "NZDUSD",
+    "EURJPY",
+    "GBPJPY",
+    "EURGBP",
+    "AUDJPY",
+    "CADJPY",
+    "GBPCHF",
+    "XAUUSD",
+    "XAGUSD",
+    "US100",
+    "US500",
+    "US30",
+    "GER40",
+    "UK100",
+    "JP225",
+    "WTI",
+    "BRENT",
+    "NATGAS"
+  ],
+  "node_exit": "2",
+  "binance_exit": "0"
+}

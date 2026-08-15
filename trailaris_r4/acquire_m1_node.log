@@ -1,0 +1,191 @@
+{
+  "EURUSD": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "GBPUSD": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "USDJPY": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "AUDUSD": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "USDCAD": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "USDCHF": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "NZDUSD": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "EURJPY": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "GBPJPY": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "EURGBP": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "AUDJPY": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "CADJPY": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "XAUUSD": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "GBPCHF": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "XAGUSD": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "US100": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "US500": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "GER40": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "US30": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "UK100": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "WTI": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "BRENT": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "NATGAS": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "JP225": {
+    "source": "DUKASCOPY_BIDASK_M1_RESEARCH_PROXY",
+    "rows": 0,
+    "status": "FAIL",
+    "error": "Error: Request failed with status 429"
+  },
+  "V10": {
+    "source": "DERIV_OFFICIAL_M1_CANDLES",
+    "rows": 145439,
+    "first": "2026-05-04T00:00:00.000Z",
+    "last": "2026-08-12T23:59:00.000Z",
+    "pages": 30,
+    "floor": "REQUESTED_START_REACHED",
+    "status": "OK"
+  },
+  "V100": {
+    "source": "DERIV_OFFICIAL_M1_CANDLES",
+    "rows": 145439,
+    "first": "2026-05-04T00:00:00.000Z",
+    "last": "2026-08-12T23:59:00.000Z",
+    "pages": 30,
+    "floor": "REQUESTED_START_REACHED",
+    "status": "OK"
+  },
+  "V50": {
+    "source": "DERIV_OFFICIAL_M1_CANDLES",
+    "rows": 145439,
+    "first": "2026-05-04T00:00:00.000Z",
+    "last": "2026-08-12T23:59:00.000Z",
+    "pages": 30,
+    "floor": "REQUESTED_START_REACHED",
+    "status": "OK"
+  },
+  "V25": {
+    "source": "DERIV_OFFICIAL_M1_CANDLES",
+    "rows": 145439,
+    "first": "2026-05-04T00:00:00.000Z",
+    "last": "2026-08-12T23:59:00.000Z",
+    "pages": 30,
+    "floor": "REQUESTED_START_REACHED",
+    "status": "OK"
+  },
+  "V75": {
+    "source": "DERIV_OFFICIAL_M1_CANDLES",
+    "rows": 145439,
+    "first": "2026-05-04T00:00:00.000Z",
+    "last": "2026-08-12T23:59:00.000Z",
+    "pages": 30,
+    "floor": "REQUESTED_START_REACHED",
+    "status": "OK"
+  }
+}

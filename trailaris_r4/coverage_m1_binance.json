@@ -1,0 +1,42 @@
+{
+  "BTCUSD": {
+    "source": "BINANCE_OFFICIAL_SPOT_M1",
+    "rows": 145440,
+    "first": 1777852800000,
+    "last": 1786579140000,
+    "status": "OK",
+    "errors": []
+  },
+  "ETHUSD": {
+    "source": "BINANCE_OFFICIAL_SPOT_M1",
+    "rows": 145440,
+    "first": 1777852800000,
+    "last": 1786579140000,
+    "status": "OK",
+    "errors": []
+  },
+  "SOLUSD": {
+    "source": "BINANCE_OFFICIAL_SPOT_M1",
+    "rows": 145440,
+    "first": 1777852800000,
+    "last": 1786579140000,
+    "status": "OK",
+    "errors": []
+  },
+  "BNBUSD": {
+    "source": "BINANCE_OFFICIAL_SPOT_M1",
+    "rows": 145440,
+    "first": 1777852800000,
+    "last": 1786579140000,
+    "status": "OK",
+    "errors": []
+  },
+  "XRPUSD": {
+    "source": "BINANCE_OFFICIAL_SPOT_M1",
+    "rows": 145440,
+    "first": 1777852800000,
+    "last": 1786579140000,
+    "status": "OK",
+    "errors": []
+  }
+}
