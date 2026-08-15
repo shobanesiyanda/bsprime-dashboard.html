@@ -31,8 +31,8 @@ jobs:
           npm install --no-save --silent dukascopy-node@1.50.0 ws
       - name: Decode exact R4 engine
         run: |
-          cat trailaris_r4/r4_runner.part* | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
-          cat trailaris_r4/r4_adapter.part* | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
           python -m py_compile trailaris_r4/trailaris_r4_full_universe_loop.py trailaris_r4/trailaris_r4_asset_adapter.py
       - name: Materialize 34-route true-M1 market histories
         if: steps.cache.outputs.cache-hit != 'true'
