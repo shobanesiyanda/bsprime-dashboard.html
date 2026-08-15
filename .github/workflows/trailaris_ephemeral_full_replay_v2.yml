@@ -1,0 +1,92 @@
+name: Trailaris Ephemeral 34-Route Replay V2
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_ephemeral_full_replay_v2.yml']
+permissions:
+  contents: write
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-ephemeral-research-20260815
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Restore historical-data cache
+        id: rawcache
+        uses: actions/cache@v4
+        with:
+          path: trailaris_ephemeral/raw
+          key: trailaris-m5-34-20220101-20260812-v2
+      - name: Install research dependencies
+        run: |
+          python -m pip install --quiet pandas numpy
+          npm install --no-save --silent dukascopy-node ws
+      - name: Materialize 34 histories
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p trailaris_ephemeral/raw trailaris_ephemeral/results
+          node trailaris_ephemeral/acquire_full_v2.js > trailaris_ephemeral/acquire_node_v2.log 2>&1 & P1=$!
+          python trailaris_ephemeral/acquire_binance.py > trailaris_ephemeral/acquire_binance_v2.log 2>&1 & P2=$!
+          wait $P1
+          wait $P2
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import pandas as pd
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          a=json.load(open('trailaris_ephemeral/coverage_partial.json'));b=json.load(open('trailaris_ephemeral/coverage_binance.json'));a.update(b)
+          rows={}; first={}; last={}; missing=[]
+          for r in routes:
+              p=Path('trailaris_ephemeral/raw')/(r+'.csv')
+              if not p.exists(): rows[r]=0;missing.append(r);continue
+              d=pd.read_csv(p,usecols=['timestamp'])
+              rows[r]=len(d)
+              if len(d): first[r]=int(d.timestamp.iloc[0]);last[r]=int(d.timestamp.iloc[-1])
+              if len(d)<100:missing.append(r)
+          out={'routes_required':34,'routes_materialized':34-len(missing),'missing':missing,'rows':rows,'first':first,'last':last,'sources':a,'gate_pass':not missing}
+          Path('trailaris_ephemeral/coverage_all_v2.json').write_text(json.dumps(out,indent=2,default=str));print(json.dumps({'routes_materialized':out['routes_materialized'],'missing':missing,'min_rows':min(rows.values()),'max_rows':max(rows.values())},indent=2))
+          if missing: raise SystemExit('34/34 DATA GATE FAIL: '+','.join(missing))
+          PY
+      - name: Save 34-route data cache immediately
+        if: success() && steps.rawcache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: trailaris_ephemeral/raw
+          key: trailaris-m5-34-20220101-20260812-v2
+      - name: Run frozen holdout replay with shared-equity compounding
+        run: |
+          rm -rf trailaris_ephemeral/results && mkdir -p trailaris_ephemeral/results
+          python trailaris_ephemeral/replay_full.py | tee trailaris_ephemeral/replay_v2.log
+      - name: Audit result completeness
+        run: |
+          python - <<'PY'
+          import json,pandas as pd
+          from pathlib import Path
+          s=json.load(open('trailaris_ephemeral/results/summary.json'))
+          r=pd.read_csv('trailaris_ephemeral/results/route_results.csv')
+          w=pd.read_csv('trailaris_ephemeral/results/weekly_results.csv')
+          m=pd.read_csv('trailaris_ephemeral/results/monthly_results.csv')
+          assert len(r)==34, len(r)
+          assert s['scope_gate_open']=='34/34 PASS' and s['scope_gate_close']=='34/34 PASS'
+          assert len(w)>10 and len(m)>2
+          Path('trailaris_ephemeral/results/acceptance_audit.json').write_text(json.dumps({'routes':len(r),'weekly_rows':len(w),'monthly_rows':len(m),'scope_open':s['scope_gate_open'],'scope_close':s['scope_gate_close'],'pass':True},indent=2))
+          print(json.dumps(s['canonical_100_stress'],indent=2))
+          PY
+      - name: Commit compact auditable results
+        if: always()
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_ephemeral/coverage_all_v2.json 2>/dev/null || true
+          git add -f trailaris_ephemeral/results/summary.json trailaris_ephemeral/results/acceptance_audit.json trailaris_ephemeral/results/route_results.csv trailaris_ephemeral/results/portfolio_scenarios.csv trailaris_ephemeral/results/weekly_results.csv trailaris_ephemeral/results/monthly_results.csv trailaris_ephemeral/results/data_coverage.csv 2>/dev/null || true
+          git commit -m 'test: 34-route compounded holdout replay v2 results [skip ci]' || true
+          git push origin HEAD:trailaris-ephemeral-research-20260815
