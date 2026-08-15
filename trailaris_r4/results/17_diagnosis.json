@@ -1,0 +1,41 @@
+{
+  "validation_baseline": {
+    "state": "REPAIR_REQUIRED",
+    "mean_week_pct": -5.200324627744349,
+    "median_week_pct": -5.215656367198957,
+    "weeks": 4,
+    "weeks_ge5": 0,
+    "weeks_ge10": 0,
+    "max_weekly_dd_pct": -7.216851742037111,
+    "issues": [
+      "MEAN_WEEK_BELOW_5",
+      "INSUFFICIENT_5PCT_WEEK_DENSITY",
+      "DRAWDOWN_ABOVE_5",
+      "UNIVERSE_WIDE_LOW_CAPTURE"
+    ]
+  },
+  "validation_repaired": {
+    "state": "REPAIR_REQUIRED",
+    "mean_week_pct": 11.522696400109577,
+    "median_week_pct": 13.751113539626314,
+    "weeks": 4,
+    "weeks_ge5": 3,
+    "weeks_ge10": 3,
+    "max_weekly_dd_pct": -0.9924363844336481,
+    "issues": [
+      "UNIVERSE_WIDE_LOW_CAPTURE"
+    ]
+  },
+  "untouched_test": {
+    "state": "REPAIR_REQUIRED",
+    "mean_week_pct": 7.248081978095705,
+    "median_week_pct": 5.211190162615697,
+    "weeks": 4,
+    "weeks_ge5": 2,
+    "weeks_ge10": 1,
+    "max_weekly_dd_pct": -2.9211489914109934,
+    "issues": [
+      "UNIVERSE_WIDE_LOW_CAPTURE"
+    ]
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "mode": "RESEARCH-PROXY",
+  "routes_required": 34,
+  "routes_pass": 34,
+  "starting_equity": 100.0,
+  "strategy_families_defined": 15,
+  "evidence_class": "HISTORICAL_MARKET_PROXY_NOT_BROKER_CERTIFIED",
+  "state": "FULL_34_ASSET_OPPORTUNITY_LOOP_EXECUTED",
+  "candidate_campaigns": 304328,
+  "assets_with_candidates": 34,
+  "strategy_families_triggered_total": 11,
+  "strategy_cells_total": 510,
+  "strategy_cells_triggered": 345,
+  "strategy_cells_data_gated": 97,
+  "opening_candidates": 14877,
+  "closing_candidates": 3587,
+  "median_candidates_per_asset_day": 108.0,
+  "max_candidates_per_asset_day": 171,
+  "multi_candidate_asset_day_pct": 99.67180833606827,
+  "max_selected_open_risk_pct": 0.9994323304159346,
+  "dynamic_capital_recycles": 2,
+  "train_end": "2026-07-03 14:30:00+00:00",
+  "validation_end": "2026-07-23 19:10:00+00:00",
+  "validation_baseline": {
+    "state": "REPAIR_REQUIRED",
+    "mean_week_pct": -5.200324627744349,
+    "median_week_pct": -5.215656367198957,
+    "weeks": 4,
+    "weeks_ge5": 0,
+    "weeks_ge10": 0,
+    "max_weekly_dd_pct": -7.216851742037111,
+    "issues": [
+      "MEAN_WEEK_BELOW_5",
+      "INSUFFICIENT_5PCT_WEEK_DENSITY",
+      "DRAWDOWN_ABOVE_5",
+      "UNIVERSE_WIDE_LOW_CAPTURE"
+    ]
+  },
+  "validation_repaired": {
+    "state": "REPAIR_REQUIRED",
+    "mean_week_pct": 11.522696400109577,
+    "median_week_pct": 13.751113539626314,
+    "weeks": 4,
+    "weeks_ge5": 3,
+    "weeks_ge10": 3,
+    "max_weekly_dd_pct": -0.9924363844336481,
+    "issues": [
+      "UNIVERSE_WIDE_LOW_CAPTURE"
+    ]
+  },
+  "untouched_test": {
+    "state": "REPAIR_REQUIRED",
+    "mean_week_pct": 7.248081978095705,
+    "median_week_pct": 5.211190162615697,
+    "weeks": 4,
+    "weeks_ge5": 2,
+    "weeks_ge10": 1,
+    "max_weekly_dd_pct": -2.9211489914109934,
+    "issues": [
+      "UNIVERSE_WIDE_LOW_CAPTURE"
+    ]
+  },
+  "ending_equity": 132.1279772032862
+}

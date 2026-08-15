@@ -1,0 +1,11 @@
+{
+  "routes_validated": 34,
+  "weekly_rows": 4,
+  "capture_assets": 34,
+  "candidate_campaigns": 304328,
+  "strategy_cells_triggered": 345,
+  "max_selected_open_risk_pct": 0.9994323304159346,
+  "evidence_class": "HISTORICAL_MARKET_PROXY_NOT_BROKER_CERTIFIED",
+  "state": "FULL_34_ASSET_OPPORTUNITY_LOOP_EXECUTED",
+  "pass": true
+}
