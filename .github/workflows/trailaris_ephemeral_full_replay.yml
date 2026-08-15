@@ -1,0 +1,79 @@
+name: Trailaris Ephemeral 34-Route Historical Replay
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_ephemeral_full_replay.yml']
+permissions:
+  contents: write
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-ephemeral-research-20260815
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install research dependencies
+        run: |
+          python -m pip install --quiet pandas numpy
+          npm install --no-save --silent dukascopy-node ws
+      - name: Materialize all 34 histories
+        id: acquire
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf trailaris_ephemeral/raw trailaris_ephemeral/results
+          mkdir -p trailaris_ephemeral/raw trailaris_ephemeral/results
+          node trailaris_ephemeral/acquire_full.js > trailaris_ephemeral/acquire_node.log 2>&1 & P1=$!
+          python trailaris_ephemeral/acquire_binance.py > trailaris_ephemeral/acquire_binance.log 2>&1 & P2=$!
+          wait $P1
+          wait $P2
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          a=json.load(open('trailaris_ephemeral/coverage_partial.json'));b=json.load(open('trailaris_ephemeral/coverage_binance.json'));a.update(b)
+          files={r:(Path('trailaris_ephemeral/raw')/(r+'.csv')).exists() for r in routes}
+          rows={r:(sum(1 for _ in open(Path('trailaris_ephemeral/raw')/(r+'.csv')))-1 if files[r] else 0) for r in routes}
+          missing=[r for r in routes if not files[r] or rows[r]<100]
+          out={'routes_required':34,'routes_materialized':34-len(missing),'missing':missing,'rows':rows,'sources':a,'gate_pass':not missing}
+          Path('trailaris_ephemeral/coverage_all.json').write_text(json.dumps(out,indent=2,default=str));print(json.dumps(out,indent=2,default=str))
+          if missing: raise SystemExit('34/34 DATA GATE FAIL: '+','.join(missing))
+          PY
+      - name: Run frozen-factory 34-route holdout replay with compounding
+        if: success()
+        run: |
+          python trailaris_ephemeral/replay_full.py | tee trailaris_ephemeral/replay.log
+      - name: Write run status
+        if: always()
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path('trailaris_ephemeral/run_status.json')
+          summary=Path('trailaris_ephemeral/results/summary.json')
+          cov=Path('trailaris_ephemeral/coverage_all.json')
+          d={'coverage_exists':cov.exists(),'summary_exists':summary.exists(),'workflow':'Trailaris Ephemeral 34-Route Historical Replay'}
+          if cov.exists():d['coverage']=json.load(open(cov))
+          if summary.exists():d['summary']=json.load(open(summary))
+          p.write_text(json.dumps(d,indent=2,default=str))
+          PY
+      - name: Commit compact auditable results
+        if: always()
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_ephemeral/run_status.json trailaris_ephemeral/coverage_all.json 2>/dev/null || true
+          if [ -d trailaris_ephemeral/results ]; then
+            git add -f trailaris_ephemeral/results/summary.json trailaris_ephemeral/results/route_results.csv trailaris_ephemeral/results/portfolio_scenarios.csv trailaris_ephemeral/results/weekly_results.csv trailaris_ephemeral/results/monthly_results.csv trailaris_ephemeral/results/data_coverage.csv 2>/dev/null || true
+          fi
+          git commit -m 'test: Trailaris 34-route compounded historical replay results [skip ci]' || true
+          git push origin HEAD:trailaris-ephemeral-research-20260815
