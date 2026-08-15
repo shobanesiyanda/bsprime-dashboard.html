@@ -1,0 +1,138 @@
+{
+  "V75": {
+    "asset": "V75",
+    "symbol": "R_75",
+    "pages": [
+      {
+        "page": 0,
+        "count": 5000,
+        "first": 1785304800,
+        "last": 1786804500,
+        "msg_type": "candles"
+      },
+      {
+        "page": 1,
+        "count": 5000,
+        "first": 1783804800,
+        "last": 1785304500,
+        "msg_type": "candles"
+      },
+      {
+        "page": 2,
+        "count": 5000,
+        "first": 1782304800,
+        "last": 1783804500,
+        "msg_type": "candles"
+      }
+    ]
+  },
+  "V50": {
+    "asset": "V50",
+    "symbol": "R_50",
+    "pages": [
+      {
+        "page": 0,
+        "count": 5000,
+        "first": 1785304800,
+        "last": 1786804500,
+        "msg_type": "candles"
+      },
+      {
+        "page": 1,
+        "count": 5000,
+        "first": 1783804800,
+        "last": 1785304500,
+        "msg_type": "candles"
+      },
+      {
+        "page": 2,
+        "count": 5000,
+        "first": 1782304800,
+        "last": 1783804500,
+        "msg_type": "candles"
+      }
+    ]
+  },
+  "V100": {
+    "asset": "V100",
+    "symbol": "R_100",
+    "pages": [
+      {
+        "page": 0,
+        "count": 5000,
+        "first": 1785304800,
+        "last": 1786804500,
+        "msg_type": "candles"
+      },
+      {
+        "page": 1,
+        "count": 5000,
+        "first": 1783804800,
+        "last": 1785304500,
+        "msg_type": "candles"
+      },
+      {
+        "page": 2,
+        "count": 5000,
+        "first": 1782304800,
+        "last": 1783804500,
+        "msg_type": "candles"
+      }
+    ]
+  },
+  "V25": {
+    "asset": "V25",
+    "symbol": "R_25",
+    "pages": [
+      {
+        "page": 0,
+        "count": 5000,
+        "first": 1785304800,
+        "last": 1786804500,
+        "msg_type": "candles"
+      },
+      {
+        "page": 1,
+        "count": 5000,
+        "first": 1783804800,
+        "last": 1785304500,
+        "msg_type": "candles"
+      },
+      {
+        "page": 2,
+        "count": 5000,
+        "first": 1782304800,
+        "last": 1783804500,
+        "msg_type": "candles"
+      }
+    ]
+  },
+  "V10": {
+    "asset": "V10",
+    "symbol": "R_10",
+    "pages": [
+      {
+        "page": 0,
+        "count": 5000,
+        "first": 1785305100,
+        "last": 1786804800,
+        "msg_type": "candles"
+      },
+      {
+        "page": 1,
+        "count": 5000,
+        "first": 1783805100,
+        "last": 1785304800,
+        "msg_type": "candles"
+      },
+      {
+        "page": 2,
+        "count": 5000,
+        "first": 1782305100,
+        "last": 1783804800,
+        "msg_type": "candles"
+      }
+    ]
+  },
+  "pass": true
+}
