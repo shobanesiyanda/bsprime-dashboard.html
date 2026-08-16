@@ -72,7 +72,11 @@ def test2(early,valid,label,utility,one):
 def extension_label(z,fcache):
     delta=[]
     for _,r in z.iterrows():
-        if bool(r.get('is_addon',False)) or str(r.get('exit_reason',''))!='TARGET':delta.append(0.);continue
+        # Payoff-extension training must mirror the runtime mechanism: only an unmodified
+        # base trade that genuinely reached the original 3R TARGET is eligible. B3-managed
+        # exits may retain the historical exit_reason label, but they are not 3R runner seeds.
+        managed=pd.notna(r.get('management_rule',np.nan))
+        if bool(r.get('is_addon',False)) or managed or str(r.get('exit_reason',''))!='TARGET':delta.append(0.);continue
         h=extend_one(r,fcache.get(str(r.asset)) if fcache else None,.25,4.0,.8,36);delta.append(float(h['delta_r']) if h else 0.)
     return pd.Series(delta,index=z.index,dtype=float)
 
@@ -100,6 +104,6 @@ def main():
             R['score']=8*R.valid_target_lift+4*R.disc_target_lift+3*np.log1p(R.valid_n)+np.log1p(R.disc_n)+4*np.maximum(R.valid_mean_utility,0)+2*np.maximum(R.disc_mean_utility,0);R=R.sort_values(['clean_pass','score','valid_target_lift','valid_mean_utility'],ascending=[False,False,False,False]).reset_index(drop=True);R.to_csv(out/f'R5_5_LANE6_{path}_RULES.csv',index=False)
         best=R[R.clean_pass].iloc[0].to_dict() if len(R) and R.clean_pass.any() else (R.iloc[0].to_dict() if len(R) else {})
         status['paths'][path]={'discovery_target_rate':float(early[lab].mean()),'validation_target_rate':float(valid[lab].mean()),'fresh_target_rate_diagnostic_only':float(fresh[lab].mean()),'rules_tested':int(len(R)),'passing_rules':int(R.clean_pass.sum()) if len(R) else 0,'best_pre_aug13_rule':best}
-    status['governance']='Path labels may use realized historical outcomes, MFE/MAE, target reach and post-target path only to train/test discovery and pre-Aug13 validation cohorts. Runtime/replay eligibility for a later trade uses only causal decision-time features. Aug13-14 is reported diagnostically but cannot select a rule. Every nominated rule must return to full 34x15x510 authentic portfolio replay.'
+    status['governance']='Path labels may use realized historical outcomes, MFE/MAE, target reach and post-target path only to train/test discovery and pre-Aug13 validation cohorts. Payoff-extension labels include only unmodified original 3R target exits, matching the runtime mechanism. Runtime/replay eligibility for a later trade uses only causal decision-time features. Aug13-14 is diagnostic only. Every nominated rule must return to full 34x15x510 authentic portfolio replay.'
     (out/'R5_5_LANE6_PATH_SPECIFIC_STATUS.json').write_text(json.dumps(status,indent=2,default=str));print(json.dumps(status,indent=2,default=str))
 if __name__=='__main__':main()
