@@ -1,0 +1,69 @@
+name: Trailaris R5.5 Lane 6 Path-Targeted Winner Matrix
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['trailaris_r5_5/lane6_path_targeted_trigger.json']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: trailaris-r5-5-lane6-path-targeted
+  cancel-in-progress: false
+env:
+  BRANCH: trailaris-ephemeral-research-20260815
+  CACHE_KEY: trailaris-r5-m1-34-20260504-20260814-v1
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-ephemeral-research-20260815, fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --quiet pandas numpy
+      - name: Require path-specific attribution evidence
+        run: |
+          python - <<'PY'
+          import json
+          t=json.load(open('trailaris_r5_5/lane6_path_targeted_trigger.json'))
+          assert t['state']=='R5_5_LANE6_PATH_TARGETED_TRIGGER'
+          s=json.load(open('trailaris_r5_5/lane6_path_specific_results/R5_5_LANE6_PATH_SPECIFIC_STATUS.json'))
+          assert s['state']=='R5_5_LANE6_PATH_SPECIFIC_ATTRIBUTION_COMPLETE'
+          assert s['fresh_outcomes_used_for_selection'] is False
+          for p in ['AMPLIFICATION','PAYOFF_EXTENSION','PRIORITY_CAPTURE']:
+              assert s['paths'][p]['passing_rules']>0, (p,s['paths'][p])
+          PY
+      - name: Reconstruct immutable engine
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+      - uses: actions/cache@v4
+        with:
+          path: trailaris_r5/raw_m1
+          key: ${{ env.CACHE_KEY }}
+          fail-on-cache-miss: true
+      - name: Run three path-specific mechanisms from one universe build
+        run: |
+          python trailaris_r5_3/build_released_event_factor_feed.py --rawdir trailaris_r5/raw_m1 --out trailaris_r5/raw_m1/Trailaris_R3_FactorFeed.csv --audit EVENT_AUDIT_L6_PATH_TARGETED.csv
+          python trailaris_r4/build_research_specs.py
+          python -m py_compile trailaris_r5_5/lane6_targeted_causal_winner_replay.py trailaris_r5_5/lane6_path_targeted_matrix.py
+          rm -rf /tmp/l6path_target && mkdir -p /tmp/l6path_target
+          PYTHONPATH=trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5 python trailaris_r5_5/lane6_path_targeted_matrix.py \
+            --rawdir trailaris_r5/raw_m1 \
+            --specs trailaris_r4/research_proxy_specs.csv \
+            --rule-dir trailaris_r5_5/lane6_path_specific_results \
+            --outdir /tmp/l6path_target
+      - name: Publish path-targeted evidence
+        run: |
+          cp -a /tmp/l6path_target /tmp/l6path_target_publish
+          git fetch origin "$BRANCH"
+          git reset --hard "origin/$BRANCH"
+          rm -rf trailaris_r5_5/lane6_path_targeted_results
+          cp -a /tmp/l6path_target_publish trailaris_r5_5/lane6_path_targeted_results
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_r5_5/lane6_path_targeted_results
+          git commit -m 'test: R5.5 path-specific winner monetization evidence [skip ci]' || exit 0
+          for i in 1 2 3; do git push origin HEAD:"$BRANCH" && exit 0; git pull --rebase origin "$BRANCH"; done
+          exit 1
