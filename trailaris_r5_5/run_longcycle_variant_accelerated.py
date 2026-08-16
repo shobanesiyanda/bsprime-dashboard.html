@@ -9,7 +9,7 @@ import pandas as pd
 CONTROL = {
     'end_equity':1136.4556497760627,'compounded_return_pct':1036.4556497760627,'executed_trades':2152,'wins':856,'losses':505,'flats':791,
     'nonflat_win_rate':0.6289493019838354,'profit_factor':2.791840637059962,'max_weekly_drawdown_pct':-2.9475910077805922,'max_event_equity_drawdown_pct':-3.1202037867421484,
-    'positive_weeks':26,'rolling_11w_min_return_pct':151.2997031258902,'rolling_11w_median_return_pct':175.621313340644,'rolling_11w_mean_return_pct':176.56265438902557,'rolling_11w_max_return_pct':212.75588274483837,
+    'positive_weeks':26,'rolling_11w_min_return_pct':151.2997031258902,'rolling_11w_median_return_pct':175.621313340644,'rolling_11w_upper_quartile_return_pct':184.1460988919503,'rolling_11w_mean_return_pct':176.56265438902557,'rolling_11w_max_return_pct':212.75588274483837,
 }
 _G_CANDS=None;_G_MOD=None
 
@@ -79,8 +79,11 @@ def main():
     m={'end_equity':float(W.end_equity.iloc[-1]),'compounded_return_pct':float((W.end_equity.iloc[-1]/100-1)*100),'evaluated_weeks':len(W),'positive_weeks':int((W.weekly_return_pct>0).sum()),'negative_weeks':int((W.weekly_return_pct<0).sum()),'mean_week_pct':float(W.weekly_return_pct.mean()),'median_week_pct':float(W.weekly_return_pct.median()),'weeks_ge5':int((W.weekly_return_pct>=5).sum()),'weeks_ge10':int((W.weekly_return_pct>=10).sum()),'executed_trades':len(EV),'wins':wins,'losses':losses,'flats':flats,'loss_rate':float(losses/len(EV)),'flat_rate':float(flats/len(EV)),'nonflat_win_rate':float(wins/(wins+losses)),'profit_factor':float(gw/gl) if gl else 999.,'max_weekly_drawdown_pct':float(W.max_drawdown_pct.min()),'max_event_equity_drawdown_pct':float(dd.min()),'assets_with_selected':int(DE.loc[DE.selected,'asset'].nunique()),'rolling_11w_windows':len(R),'rolling_11w_min_return_pct':float(R.compounded_return_pct.min()),'rolling_11w_median_return_pct':float(R.compounded_return_pct.median()),'rolling_11w_upper_quartile_return_pct':float(R.compounded_return_pct.quantile(.75)),'rolling_11w_mean_return_pct':float(R.compounded_return_pct.mean()),'rolling_11w_max_return_pct':float(R.compounded_return_pct.max())}
     keys=[k for k in CONTROL if k in m];delta={k:m[k]-CONTROL[k] for k in keys}
     extra={}
-    for col in ['recovery_reallocated','recovery_qualified']:
-        if col in DE.columns:extra[col+'_selected_count']=int((DE.selected & DE[col].fillna(False).astype(bool)).sum())
+    for col in ['recovery_reallocated','recovery_qualified','adverse_displaced','displacement_qualified']:
+        if col in DE.columns:
+            flag=DE[col].fillna(False).astype(bool)
+            extra[col+'_decision_count']=int(flag.sum())
+            extra[col+'_selected_count']=int((DE.selected & flag).sum())
     status={'state':'R5_5_26W_CAUSAL_VARIANT_REPLAY_COMPLETE','variant':a.name,'parallel_semantic_guard':'PASS','scope':{'routes':34,'strategy_families':15,'route_strategy_cells':510},'frozen_control':CONTROL,'candidate':m,'delta_candidate_minus_control':delta,'variant_counters':extra,'automatic_baseline_promotion':False,'evidence_class':'FULL_26_WEEK_CAUSAL_WALK_FORWARD_RESEARCH_PROXY; BROKER_PRODUCTION_CERTIFICATION_SEPARATE'}
     stem=a.name.upper();W.to_csv(out/f'{stem}_WEEKLY.csv',index=False);R.to_csv(out/f'{stem}_ROLLING_11W.csv',index=False);EV.to_csv(out/f'{stem}_EVENTS.csv',index=False);DE.to_csv(out/f'{stem}_DECISIONS.csv',index=False);PR.to_csv(out/f'{stem}_PROMOTED.csv',index=False);(out/f'{stem}_STATUS.json').write_text(json.dumps(status,indent=2,default=str));print(json.dumps(status,indent=2,default=str))
 if __name__=='__main__':main()
