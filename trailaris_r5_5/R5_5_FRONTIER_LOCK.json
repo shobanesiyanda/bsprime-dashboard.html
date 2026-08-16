@@ -1,5 +1,5 @@
 {
-  "state": "R5_5_DUAL_FRONTIER_LOCKED",
+  "state": "R5_5_LANE5_WINNER_QUALITY_FRONTIER_LOCKED",
   "control": {
     "name": "R5.4_FROZEN_CONTROL",
     "end_equity": 337.4231242104393,
@@ -14,7 +14,7 @@
     "nonflat_win_rate": 0.6587887740029542,
     "assets_with_selected": 33
   },
-  "incumbent_return_leader": {
+  "prior_incumbent_return_leader": {
     "name": "R5.5_LANE1B2_RULE_3",
     "end_equity": 343.5447309255116,
     "compounded_return_pct": 243.5447309255116,
@@ -28,23 +28,46 @@
     "managed_executions": 11,
     "promotion_candidate": false
   },
+  "provisional_lane5_historical_leader": {
+    "name": "R5.5_LANE5_B3_B4_B8_EQUIVALENT_B3_B5_B8",
+    "end_equity": 345.3896887826546,
+    "compounded_return_pct": 245.38968878265464,
+    "fresh_return_pct": 7.261646557142409,
+    "max_weekly_dd_pct": -4.637645574907678,
+    "fresh_max_dd_pct": -0.5196525640746019,
+    "executed_trades": 1119,
+    "wins": 470,
+    "losses": 228,
+    "flat": 421,
+    "nonflat_win_rate": 0.673352435530086,
+    "assets_with_selected": 33,
+    "scope_recertification": "IN_PROGRESS",
+    "promotion_candidate": false,
+    "reason_not_frozen": "Fresh Aug13-14 return did not improve and corrected immutable 34x15x510 certification replay is still running."
+  },
   "challenger_must": {
-    "end_equity_strictly_above": 343.5447309255116,
+    "end_equity_strictly_above": 345.3896887826546,
     "fresh_return_pct_strictly_above": 7.261646557142409,
     "max_weekly_dd_pct_not_below": -4.637645574907678,
     "fresh_max_dd_pct_not_below": -0.5196525640746019,
-    "losses_max": 230,
-    "flat_max": 424,
-    "nonflat_win_rate_min": 0.6671428571428571,
+    "losses_max": 228,
+    "flat_max": 421,
+    "nonflat_win_rate_min": 0.673352435530086,
     "assets_with_selected_min": 33,
     "routes_evaluated_exact": 34,
     "strategy_families_actual_exact": 15,
     "route_strategy_cells_exact": 510
   },
-  "disqualified_as_incumbents": {
-    "lane1c": "Full replay equalled R5.4 and did not improve the frontier.",
-    "lane1d": "Discovery only; its selected rule was tested authentically in Lane 1E.",
-    "lane1e": "Authentic replay ended at 300.0212798550797, despite loss/flat repair; rejected for severe return and selected-asset regression."
+  "winner_program": {
+    "lane6a": "Winner attribution: identify causal pre-decision signatures behind the winning cohort.",
+    "lane6b": "Winner amplification: add exposure only after validated winner-like trades prove the thesis in-market.",
+    "lane6c": "Winner payoff extension: retain protected runners beyond the ordinary 3R ceiling toward validated 4R-6R continuation.",
+    "lane6d": "Winner priority capture: allocate scarce portfolio capacity preferentially to validated winner-like opportunities when alternatives compete."
   },
-  "governance": "R5.4 remains the immutable control and risk-quality floor. Lane 1B-2 rule 3 is the incumbent return floor. No future R5.5 candidate is a frontier winner unless it clears both simultaneously using all 34 approved routes and the actual complete 15-family strategy universe (510 cells). Discovery-only evidence can nominate challengers but cannot change this frontier. Final promotion additionally requires a new unseen forward holdout and target-server broker execution certification."
+  "fallback_if_no_winner_path_improves_fresh": {
+    "action": "AUG13_14_WINNER_STATE_DIFFERENCE_FORENSIC",
+    "objective": "Compare winner-like Aug13-14 trades with the earlier validated winning cohort, identify which causal decision-time condition stopped winner amplification/capture from activating or paying, repair that state dependency, then rerun the complete 34x15x510 portfolio.",
+    "prohibited": "Do not continue random historical threshold tuning if 6B, 6C and 6D all fail the fresh-return barrier."
+  },
+  "governance": "R5.4 remains the immutable control. The active R5.5 challenge frontier is now the provisional Lane 5 historical leader's return and quality profile plus strict fresh improvement. No candidate may lower the frontier simply to pass. The Lane 5 leader itself remains provisional until corrected immutable 34-route, 15-family, 510-cell replay certification completes. Final candidate freeze additionally requires the R5.5 forensic-completeness gates; final promotion requires a new unseen forward holdout and target-server broker execution certification."
 }
