@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
   group: trailaris-r5-5-integrated-cache-bridge-once
@@ -41,8 +42,19 @@ jobs:
           key: trailaris-r5-4-m1-34-20260119-20260814-v1
           fail-on-cache-miss: true
 
+      - name: Restore preserved frozen 510-cell factory audit
+        uses: actions/download-artifact@v4
+        with:
+          name: trailaris-r5-4-frozen-26week-validation
+          path: trailaris_r5_5/frozen_control_evidence
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: shobanesiyanda/bsprime-dashboard.html
+          run-id: 31964294244
+
       - name: Verify immutable full-universe inputs
         run: |
+          mkdir -p trailaris_longcycle/results
+          cp trailaris_r5_5/frozen_control_evidence/results/R4_FACTORY_AUDIT.csv trailaris_longcycle/results/R4_FACTORY_AUDIT.csv
           python - <<'PY'
           import json, pandas as pd
           from pathlib import Path
@@ -55,7 +67,7 @@ jobs:
           assert len(a)==510 and a.strategy_family.nunique()==15
           files=list(Path('trailaris_longcycle/raw_m1').glob('*_M1_normalized.csv'))
           assert len(files)==34, f'raw route files={len(files)}'
-          print('Preserved cache and 34x15=510 scope verified.')
+          print('Preserved raw cache + frozen 510-cell audit verified.')
           PY
 
       - name: Rebuild identical factors and specs from preserved cache
