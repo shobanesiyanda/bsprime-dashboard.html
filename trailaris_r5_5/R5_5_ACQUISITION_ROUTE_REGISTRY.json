@@ -1,0 +1,24 @@
+{
+  "state": "R5_5_GLOBAL_ACQUISITION_ROUTE_REGISTRY_ACTIVE",
+  "principle": "No market is forced through a single broker, legal entity or jurisdiction. Research acquisition uses the appropriate authentic global source for the market class; live execution remains separately bound to a certified broker legal entity + server + account + symbol contract.",
+  "research_window_source_contract": {
+    "DUKASCOPY": {"source_label":"DUKASCOPY_OFFICIAL_M1_BID_RESEARCH_PROXY","data_type":"official historical M1 bid candles","execution_equivalence":false,"requires_execution_degradation":true},
+    "BINANCE": {"source_label":"BINANCE_OFFICIAL_SPOT_M1","data_type":"official spot M1 klines with checksum verification","execution_equivalence":false,"requires_execution_degradation":true},
+    "DERIV": {"source_label":"DERIV_OFFICIAL_M1_CANDLES","data_type":"official synthetic-index M1 candles","execution_equivalence":false,"requires_execution_degradation":true}
+  },
+  "routes": [
+    {"asset":"EURUSD","class":"FX","research_source":"DUKASCOPY"},{"asset":"GBPUSD","class":"FX","research_source":"DUKASCOPY"},{"asset":"USDJPY","class":"FX","research_source":"DUKASCOPY"},{"asset":"AUDUSD","class":"FX","research_source":"DUKASCOPY"},{"asset":"USDCAD","class":"FX","research_source":"DUKASCOPY"},{"asset":"USDCHF","class":"FX","research_source":"DUKASCOPY"},{"asset":"NZDUSD","class":"FX","research_source":"DUKASCOPY"},{"asset":"EURJPY","class":"FX","research_source":"DUKASCOPY"},{"asset":"GBPJPY","class":"FX","research_source":"DUKASCOPY"},{"asset":"EURGBP","class":"FX","research_source":"DUKASCOPY"},{"asset":"AUDJPY","class":"FX","research_source":"DUKASCOPY"},{"asset":"CADJPY","class":"FX","research_source":"DUKASCOPY"},{"asset":"GBPCHF","class":"FX","research_source":"DUKASCOPY"},
+    {"asset":"XAUUSD","class":"METALS","research_source":"DUKASCOPY"},{"asset":"XAGUSD","class":"METALS","research_source":"DUKASCOPY"},
+    {"asset":"BTCUSD","class":"CRYPTO","research_source":"BINANCE","provider_symbol":"BTCUSDT"},{"asset":"ETHUSD","class":"CRYPTO","research_source":"BINANCE","provider_symbol":"ETHUSDT"},{"asset":"SOLUSD","class":"CRYPTO","research_source":"BINANCE","provider_symbol":"SOLUSDT"},{"asset":"BNBUSD","class":"CRYPTO","research_source":"BINANCE","provider_symbol":"BNBUSDT"},{"asset":"XRPUSD","class":"CRYPTO","research_source":"BINANCE","provider_symbol":"XRPUSDT"},
+    {"asset":"US100","class":"INDICES","research_source":"DUKASCOPY"},{"asset":"US500","class":"INDICES","research_source":"DUKASCOPY"},{"asset":"US30","class":"INDICES","research_source":"DUKASCOPY"},{"asset":"GER40","class":"INDICES","research_source":"DUKASCOPY"},{"asset":"UK100","class":"INDICES","research_source":"DUKASCOPY"},{"asset":"JP225","class":"INDICES","research_source":"DUKASCOPY"},
+    {"asset":"WTI","class":"ENERGY","research_source":"DUKASCOPY"},{"asset":"BRENT","class":"ENERGY","research_source":"DUKASCOPY"},{"asset":"NATGAS","class":"ENERGY","research_source":"DUKASCOPY"},
+    {"asset":"V75","class":"SYNTHETICS","research_source":"DERIV","provider_symbol":"R_75"},{"asset":"V50","class":"SYNTHETICS","research_source":"DERIV","provider_symbol":"R_50"},{"asset":"V100","class":"SYNTHETICS","research_source":"DERIV","provider_symbol":"R_100"},{"asset":"V25","class":"SYNTHETICS","research_source":"DERIV","provider_symbol":"R_25"},{"asset":"V10","class":"SYNTHETICS","research_source":"DERIV","provider_symbol":"R_10"}
+  ],
+  "normalization_required_fields": ["timestamp","open","high","low","close","bid","ask","spread","volume","source","asset"],
+  "integrity_requirements": ["UTC_timestamp_integrity","M1_chronology","OHLC_consistency","duplicate_timestamp_rejection","source_label_preservation","provider_symbol_mapping","full_target_window_coverage","checksum_validation_where_provider_supports_it"],
+  "execution_binding_required_fields": ["broker","broker_legal_entity","server","account_type","broker_symbol","contract_size","tick_size","tick_value","volume_min","volume_step","volume_max","spread_model","commission_model","swap_or_funding","margin_model","leverage_constraints","stop_level","freeze_level","sessions","execution_mode","fill_rules","slippage_model","reject_model","latency_model","strategy_eligibility"],
+  "execution_binding_state": "FAIL_CLOSED_UNTIL_TARGET_SERVER_BROKER_AUTHORIZATION",
+  "scope_assertion": {"routes":34,"fx":13,"metals":2,"crypto":5,"indices":6,"energy":3,"synthetics":5},
+  "evidence": ["trailaris_r4/acquire_m1.js","trailaris_r4/acquire_binance_m1.py","trailaris_r5_4/R5_4_BROKER_ROUTE_CERTIFICATION_STATUS.json"],
+  "governance": "Research data-source authenticity does not imply live execution certification. A source may establish market path evidence while a separately authorized broker/server/account contract establishes production execution authenticity."
+}
