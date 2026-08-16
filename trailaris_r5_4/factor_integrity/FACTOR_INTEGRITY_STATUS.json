@@ -1,0 +1,11 @@
+{
+  "event_rows_original": 342,
+  "event_rows_merged": 342,
+  "event_abs_ge_070_original": 174,
+  "event_abs_ge_070_merged": 174,
+  "event_assets_original": 29,
+  "event_assets_merged": 29,
+  "event_score_sum_original": 52.43581134698531,
+  "event_score_sum_merged": 52.43581134698531,
+  "merge_preserves_event_scores": true
+}
