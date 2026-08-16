@@ -1,21 +1,22 @@
 {
-  "state": "AUTHORIZED_INTEGRATED_R5_5_REFINEMENT",
+  "state": "AUTHORIZED_INTEGRATED_R5_5_REFINEMENT_V2",
   "control": "R5_4_FROZEN_26W_20260816",
+  "upstream_leader": "R5_5_MEMORY112_26W",
   "scope": {
     "weeks": 26,
     "routes": 34,
     "strategy_families": 15,
     "route_strategy_cells": 510
   },
-  "mandate": "Preserve winner mechanisms; explain and reduce the 505-loss population; explain and monetize structural flats; reduce negative P&L and drawdown without narrowing the universe or strategy set.",
+  "mandate": "Preserve winner mechanisms; explain and reduce the loss population; monetize structural flats; reduce negative P&L and drawdown without narrowing the universe or strategy set.",
   "forensic_findings": {
-    "losses": {
+    "r5_4_losses": {
       "total": 505,
       "no_development_mfe_lt_0_20r": 256,
       "developed_0_20_to_0_50r": 147,
       "giveback_0_50_to_0_75r": 102
     },
-    "flats": {
+    "r5_4_flats": {
       "total": 791,
       "exit_reason": "PROTECTED_STOP",
       "all_reached_mfe_ge_0_75r": true,
@@ -23,30 +24,66 @@
       "reached_mfe_ge_1_25r": 151,
       "reached_mfe_ge_1_50r": 0,
       "structural_dead_zone": "frozen protection floor remains 0R from +0.75R until +1.50R"
+    },
+    "valid_memory112_loss_cohort": {
+      "rule": "promotion_tier == A AND quality <= 0.65 AND reliability_score <= 0.15",
+      "executed_n": 52,
+      "wins": 23,
+      "losses": 26,
+      "flats": 3,
+      "mean_r": -0.12331606481602395,
+      "profit_factor": 0.7463387803582608,
+      "first_half_mean_r_negative": true,
+      "second_half_mean_r_negative": true,
+      "first_half_pf_below_1": true,
+      "second_half_pf_below_1": true
+    },
+    "developed_loss_stop_tightening_rejected": {
+      "state": "REJECTED_AS_DESTRUCTIVE",
+      "weak_state_trigger_population": "rank_score <= 0.42 AND reliability_score <= 0 AND MFE >= 0.50R (diagnostic only)",
+      "eventual_winners_with_mae_ge_0_50r": 55,
+      "winner_r_at_risk": 70.95470452618552,
+      "eventual_losses_reaching_0_50r": 46,
+      "loss_r": -45.99999999999905,
+      "reason": "tightening the stop after +0.50R risks destroying more right-tail winner R than the loss R available to save"
+    },
+    "valid_memory112_flat_partial_cohort": {
+      "entry_state": "rank_score <= 0.42 AND reliability_score <= 0",
+      "trigger_r": 0.75,
+      "partial_fraction": 0.25,
+      "triggered_n": 627,
+      "eventual_winners": 238,
+      "eventual_flats": 389,
+      "static_delta_r": 38.26455422290843,
+      "positive_week_deltas": 23,
+      "negative_week_deltas": 3
     }
   },
   "integrated_repairs": {
     "configuration_generation": "retain validated 112-day bounded proposal memory with frozen 56-day reliability memory and 14-day validation",
-    "negative_edge_entry_gate": {
+    "negative_edge_entry_gate_r5_4": {
       "rule": "quality <= 0.76 AND reliability_asset_strategy_mean_r <= 0.05",
       "causal_only": true,
-      "rationale": "broad 26-week cohort was negative expectancy and unstable across weeks"
+      "status": "retain for integrated replay because it was derived from the frozen R5.4 forensic estate"
     },
-    "developed_loss_protection": {
-      "eligible_entry_state": "rank_score <= 0.42 AND reliability_score <= 0",
-      "trigger_r": 0.50,
-      "floor_r": -0.50,
-      "activation": "next M1 bar after trigger to avoid same-bar ordering assumptions"
+    "negative_edge_entry_gate_memory112": {
+      "rule": "promotion_tier == A AND quality <= 0.65 AND reliability_score <= 0.15",
+      "causal_only": true,
+      "status": "add; negative expectancy and PF below 1 in both chronological halves of the valid memory112 replay"
     },
+    "developed_loss_protection": "REMOVED; do not tighten stops after +0.50R because winner-path overlap is destructive",
     "flat_monetization": {
       "eligible_entry_state": "rank_score <= 0.42 AND reliability_score <= 0",
       "trigger_r": 0.75,
-      "floor_r": 0.15,
-      "activation": "next M1 bar after trigger to avoid same-bar ordering assumptions"
+      "partial_fraction_of_original_position": 0.25,
+      "remaining_runner_fraction": 0.75,
+      "exit_timing": "unchanged; partial is realized when +0.75R is first reached and the remainder follows the frozen exit path",
+      "capital_assumption": "conservative: replay does not grant extra capacity from the partial size reduction"
     },
     "recovery_reallocation": "do not reintroduce previously failed broad recovery repair",
     "adverse_displacement": "do not reintroduce previously higher-return but lower-quality broad adverse-displacement variant"
   },
-  "causality": "MFE/MAE were used only to diagnose archetypes. Eligibility and live management use entry-time fields and contemporaneous price path only.",
-  "promotion": "No automatic promotion. Integrated result must be compared against both frozen R5.4 and the prior 112-day component leader."
+  "execution_authenticity": "The replay feature cache must be reconstructed with the exact frozen R4 build_asset_components() path, not raw M1 frames directly.",
+  "causality": "MFE/MAE remain forensic labels only. Production entry gates use decision-time fields. The +0.75R partial is a contemporaneous management trigger detected from the exact R4 feature path, never from final MFE eligibility.",
+  "promotion": "No automatic promotion. Result must dominate or materially improve the negative side versus the frozen R5.4 control and the memory112 component leader without unacceptable drawdown/right-tail regression."
 }
