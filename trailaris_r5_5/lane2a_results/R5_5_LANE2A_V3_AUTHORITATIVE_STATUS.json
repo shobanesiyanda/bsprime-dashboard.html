@@ -1,0 +1,102 @@
+{
+  "state": "R5_5_LANE2A_CLEAN_V3_CLOSED_NO_PASSING_ENTRY_GATE",
+  "evidence_class": "SELECTION_FROZEN_CHRONOLOGICAL_ENTRY_GATE_DISCOVERY_ONLY",
+  "revision": "FORENSIC_COHORT_RECONCILED_FRESH_QUARANTINE_V3",
+  "source_workflow_run_id": 31960902446,
+  "source_job_id": 95198625363,
+  "source_run_conclusion": "success",
+  "evidence_commit_note": "The computation, assertions and status generation succeeded. Its automated result-file push encountered a rebase conflict because an older concurrent Lane 2A run changed the same paths. This file persists the successful V3 computation as the authoritative governance outcome; the older V2 result file is retained only as superseded historical evidence.",
+  "r5_4_control": {
+    "end_equity": 337.4231242104393,
+    "compounded_return_pct": 237.42312421043928,
+    "executed_trades": 1102,
+    "wins": 446,
+    "losses": 231,
+    "flat": 425,
+    "nonflat_win_rate": 0.6587887740029542,
+    "max_weekly_dd_pct": -4.637645574907678,
+    "fresh_return_pct": 7.261646557142409,
+    "assets_with_selected": 33
+  },
+  "scope": {
+    "approved_routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510
+  },
+  "forensic_definitions": {
+    "barely_developed_loss": {
+      "definition": "loss and MFE < 0.20R",
+      "locked_count": 107,
+      "reproduced_count": 107
+    },
+    "brief_favourable_then_loss": {
+      "definition": "loss and MFE >= 0.50R",
+      "locked_count": 54,
+      "reproduced_count": 54
+    },
+    "severe_mae_loss": {
+      "definition": "loss and MAE magnitude >= 1.5063700312482555R",
+      "locked_count": 68,
+      "reproduced_count": 68,
+      "threshold_exact_match": true
+    }
+  },
+  "clean_partition": {
+    "discovery_first8_events": 823,
+    "validation_pre_fresh_events": 237,
+    "fresh_quarantine_start": "2026-08-13T00:00:00Z",
+    "fresh_quarantine_events": 42,
+    "fresh_outcomes_used_for_selection": false
+  },
+  "search": {
+    "preentry_fields_tested": [
+      "reliability_score",
+      "reliability_expected_r",
+      "reliability_win",
+      "reliability_strategy_mean_r",
+      "reliability_strategy_win",
+      "reliability_asset_strategy_mean_r",
+      "reliability_asset_strategy_win",
+      "expected_r",
+      "trailing_win_rate",
+      "stability",
+      "trailing_giveback",
+      "quality",
+      "rank_score",
+      "cost_r",
+      "decision_hour"
+    ],
+    "rules_tested": 540,
+    "passing_rules": 0,
+    "passing_rules_by_target": {
+      "barely_developed_loss": 0,
+      "severe_mae_loss": 0
+    },
+    "best_barely_developed_nonpass": {
+      "field": "rank_score",
+      "direction": "<=",
+      "threshold": 0.3262616466952146,
+      "discovery_target_removed": 10,
+      "discovery_wins_removed": 28,
+      "discovery_delta_usd": -10.32792579878549,
+      "validation_target_removed": 2,
+      "validation_wins_removed": 3,
+      "validation_delta_usd": -2.304643271428512
+    },
+    "best_severe_mae_nonpass": {
+      "field": "reliability_asset_strategy_mean_r",
+      "direction": "<=",
+      "threshold": 0.031966292844013824,
+      "discovery_target_removed": 3,
+      "discovery_wins_removed": 29,
+      "discovery_delta_usd": -10.503713790214341,
+      "validation_target_removed": 0,
+      "validation_wins_removed": 2,
+      "validation_delta_usd": -2.743112628571345
+    }
+  },
+  "lane2b_state": "DO_NOT_RUN_NO_CLEAN_ENTRY_GATE",
+  "conclusion": "The existing decision-time reliability, rank, quality, cost, stability and hour fields do not discriminate the 107 barely-developed or 68 severe-MAE losses without removing economically superior winners. Entry-thesis repair must therefore move to new asset/strategy/regime-native causal features rather than thresholding the current reliability state.",
+  "promotion_candidate": false,
+  "governance": "No entry gate from this lane may be promoted or passed into Lane 2B. Aug13-14 was not used for selection. Any successor entry-thesis model must introduce genuinely new causal explanatory features and restart discovery/validation under the clean partition; final R5.5 promotion still requires a new unseen forward holdout and target-server broker execution certification."
+}
