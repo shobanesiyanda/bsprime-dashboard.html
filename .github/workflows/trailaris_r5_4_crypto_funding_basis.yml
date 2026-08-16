@@ -2,7 +2,7 @@ name: Trailaris R5.4 Crypto Funding Basis Evidence
 on:
   push:
     branches: [trailaris-ephemeral-research-20260815]
-    paths: ['.github/workflows/trailaris_r5_4_crypto_funding_basis.yml']
+    paths: ['.github/workflows/trailaris_r5_4_crypto_funding_basis.yml','trailaris_r5_4/build_crypto_funding_basis_feed.py']
 permissions:
   contents: write
 jobs:
@@ -24,17 +24,17 @@ jobs:
         run: |
           python - <<'PY'
           import json,pandas as pd
-          from pathlib import Path
           a=json.load(open('trailaris_r5_4/crypto_funding/CRYPTO_FUNDING_BASIS_AUDIT.csv.json'));f=pd.read_csv('trailaris_r5_4/crypto_funding/CRYPTO_FUNDING_BASIS_FACTOR_FEED.csv')
           assert a['assets_pass']==5 and set(f.asset)=={'BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD'}
           assert a['trigger_rows_abs_ge_070']>0
-          assert f.evidence_state.eq('VERIFIED_BINANCE_PUBLIC_FUTURES_FUNDING_BASIS_CAUSAL').all()
+          assert f.evidence_state.eq('VERIFIED_BINANCE_PUBLIC_ARCHIVE_FUNDING_BASIS_CAUSAL').all()
           print(json.dumps(a,indent=2))
           PY
-      - name: Commit compact native evidence
+      - name: Commit compact native evidence safely
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -f trailaris_r5_4/crypto_funding/CRYPTO_FUNDING_BASIS_AUDIT.csv trailaris_r5_4/crypto_funding/CRYPTO_FUNDING_BASIS_AUDIT.csv.json trailaris_r5_4/crypto_funding/CRYPTO_FUNDING_BASIS_FACTOR_FEED.csv
           git commit -m 'evidence: R5.4 native crypto funding-basis feed [skip ci]' || true
+          git pull --rebase origin trailaris-ephemeral-research-20260815
           git push origin HEAD:trailaris-ephemeral-research-20260815
