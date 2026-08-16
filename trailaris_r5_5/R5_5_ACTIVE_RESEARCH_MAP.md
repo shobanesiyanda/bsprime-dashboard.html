@@ -1,84 +1,55 @@
 # Trailaris R5.5 — Canonical Active Research Map
 
-## Active state
+## Active locked baseline
 
-- Active branch: `trailaris-ephemeral-research-20260815`.
-- Exactly one Trailaris workflow launcher is permitted: `.github/workflows/trailaris_r5_5_26w_forensic_attribution.yml`.
-- Closed legacy lanes and their scripts/results are audit evidence only. They are not active launch paths and must not be reactivated.
-- Every promotable result must preserve the full approved 34 routes × 15 strategy families = 510 route-strategy cells.
+**R5.5 Integrated Negative Refinement V2** is now the explicit locked baseline for all further refinement.
 
-## Immutable R5.4 26-week control
-
+- Baseline ID: `R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816`
+- Active branch: `trailaris-ephemeral-research-20260815`
+- Scope: **26 weeks × 34 routes × 15 strategy families = 510 route-strategy cells**
 - Starting equity: **$100**
-- Ending equity: **$1,136.4556497760627**
-- Compounded return: **+1,036.4556497760627%**
-- Positive weeks: **26 / 26**
-- Executions: **2,152**
+- Ending equity: **$1,366.8938578865148**
+- Compounded return: **+1,266.8938578865148%**
+- Positive / negative weeks: **26 / 0**
+- Mean / median weekly return: **10.6240% / 11.5154%**
+- Weeks ≥5% / ≥10%: **22 / 21**
+- Executions: **2,136**
+- Wins / losses / flats: **1,221 / 478 / 437**
+- Non-flat win rate: **71.8658%**
+- Profit Factor: **2.9195**
+- Max weekly drawdown: **-3.7441%**
+- Max event-equity drawdown: **-2.7024%**
+- Rolling 11-week minimum / median / mean / maximum return: **175.6827% / 198.2718% / 200.3838% / 223.8214%**
+
+The V2 architecture retains the validated 112-day bounded proposal memory, 56-day reliability memory and 14-day validation layer; applies causal negative-edge entry exclusions; and monetizes the identified weak-state flat population with a 25% realization at first +0.75R while preserving the remaining runner and not crediting early released capacity.
+
+## Governance lock
+
+All subsequent refinement starts from V2. No silent baseline substitution, universe narrowing, strategy-family narrowing, predecessor reversion or parallel legacy-lane reactivation is permitted. Any future baseline replacement requires explicit user authorization.
+
+## Historical controls retained for audit
+
+### Frozen R5.4 control
+
+- End equity: **$1,136.4556497760627**
+- Return: **+1,036.4556497760627%**
 - Wins / losses / flats: **856 / 505 / 791**
-- Non-flat win rate: **62.8949301984%**
 - Profit Factor: **2.7918406371**
 - Max weekly drawdown: **-2.9475910078%**
 - Max event-equity drawdown: **-3.1202037867%**
 
-R5.4 remains frozen and immutable. It is the only control reference for current R5.5 long-cycle refinement.
+R5.4 remains immutable historical evidence but is no longer the active refinement baseline.
 
-## Current R5.5 26-week refinement leader
+### Bounded-memory 112-day predecessor
 
-**R5.5 Bounded Memory 112D** is the current leader. It is a causal configuration-generation-memory refinement only: proposal memory is bounded to 112 days while the frozen R5.4 56-day hierarchical reliability layer and 14-day validation contract remain unchanged.
-
-- Ending equity: **$1,272.6945454530814**
-- Compounded return: **+1,172.6945454530814%**
-- Positive / negative weeks: **26 / 0**
-- Mean weekly return: **10.3265647590%**
-- Median weekly return: **10.9644006079%**
-- Weeks ≥5%: **22 / 26**
-- Weeks ≥10%: **18 / 26**
-- Executions: **2,206**
+- End equity: **$1,272.6945454530814**
+- Return: **+1,172.6945454530814%**
 - Wins / losses / flats: **879 / 505 / 822**
-- Non-flat win rate: **63.5115606936%**
 - Profit Factor: **2.8370396693**
-- Max weekly drawdown: **-2.6697987101%**
-- Max event-equity drawdown: **-2.6697987101%**
-- Selected assets: **33**
-- Rolling 11-week minimum / median / mean / maximum return: **157.3451% / 209.0913% / 203.3551% / 222.8140%**
+- Max weekly/event drawdown: **-2.6697987101% / -2.6697987101%**
 
-### Improvement vs frozen R5.4
+This remains preserved as predecessor evidence.
 
-- Ending equity: **+$136.2388956770**
-- Compounded return: **+136.2388956770 percentage points**
-- Wins: **+23**
-- Losses: **+0**
-- Non-flat win rate: **+0.6166304953 percentage points**
-- Profit Factor: **+0.0451990323**
-- Max weekly drawdown improves by **0.2777922977 percentage points**
-- Max event-equity drawdown improves by **0.4504050767 percentage points**
-- Weeks ≥5%: **+1**
-- Weeks ≥10%: **+2**
+## Active refinement mandate
 
-This leader is **not yet frozen or promoted**. It is the benchmark that any further R5.5 refinement must beat without sacrificing causal integrity, full-universe scope, loss quality, drawdown quality or weekly consistency.
-
-## Rejected challengers
-
-### Adverse-incumbent displacement
-
-- Ending equity: **$1,298.9309413437006**
-- Return: **+1,198.9309413437006%**
-- 26 / 26 positive weeks
-- 937 wins / **543 losses** / 862 flats
-- Profit Factor: **2.6784036433**
-- Max event-equity drawdown: **-3.8803990176%**
-
-It is **not the leader**. The extra endpoint return is bought with 38 additional losses, lower Profit Factor, slightly worse weekly drawdown and materially worse event drawdown.
-
-### Atomic recovery-state reallocation
-
-- Ending equity: **$1,045.4331989372376**
-- 26 / 26 positive weeks
-- 853 wins / 487 losses / 796 flats
-- Profit Factor: **2.8954834259**
-
-It is **rejected** because its quality improvements do not compensate for material endpoint underperformance versus frozen R5.4.
-
-## Active refinement rule
-
-Continue from the bounded-memory leader only. Further work must be one coherent 26-week refinement lane, not multiple historical lanes. No baseline rerun, legacy-lane reactivation, blanket leverage increase or universe narrowing is permitted. Any challenger must be evaluated apples-to-apples against both the frozen R5.4 control and the current bounded-memory leader.
+Refine the V2 baseline as one coherent market-execution engine. Preserve the winner mechanisms, explain and reduce the remaining 478 losses, continue monetizing the remaining 437 flat outcomes, test whether liquidity/market-capacity state explains weak follow-through, improve profit protection without truncating the right tail, and reduce the weekly drawdown regression. All changes must remain causal and full-universe.
