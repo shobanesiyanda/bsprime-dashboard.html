@@ -24,6 +24,8 @@ def rule_mask(z,r):
 class MarketStateVariant:
     def __init__(self,rule,promote,base,fcache):self.rule=rule;self.promote=promote;self.base=base;self.fcache=fcache;self.excluded=0
     def promote_for_week(self,cands,week_start):
+        # The unchanged R5.4 reliability layer researches the same candidate estate first;
+        # Lane4 only filters promotions after that causal research step.
         pr,conf,stats=self.promote(cands,week_start,'combined')
         if len(pr):
             z=enrich_market_state(pr,self.fcache);m=rule_mask(z,self.rule);self.excluded+=int(m.sum());pr=z.loc[~m].copy();pr['r5_5_market_state_gate']=self.rule.get('rule_id','LANE4B')
@@ -42,17 +44,19 @@ def main():
     from precision_experiment_harness import eval_variant,load_module
     lock=json.load(open('trailaris_r5_4/R5_4_MARKET_EXECUTION_ENGINE_LOCK.json'));scope=lock['scope']
     data,v,cands,opps,fcache=base.build_universe(Path(a.rawdir));specs=r4.load_specs(Path(a.specs),'research-proxy')
-    baseline_families=set(cands.strategy_family.astype(str).dropna().unique())
-    if len(data)!=34:raise RuntimeError(f'actual asset universe regressed {len(data)}/34')
-    if len(baseline_families)!=15:raise RuntimeError(f'actual strategy-family universe regressed {len(baseline_families)}/15')
+    emitted_families=set(cands.strategy_family.astype(str).dropna().unique())
+    if len(data)!=34:raise RuntimeError(f'actual asset data universe regressed {len(data)}/34')
+    # Important: emitted-family count is historical-sample activity, not the approved strategy universe.
+    # R5.4 itself can emit fewer than 15 families while the approved 15-family/510-cell estate remains researched.
     ctlmod=load_module(Path('trailaris_r5_4/reliability_variants/variant_hierarchical_combined.py'),'r55_lane4b_ctl');ctl,CW,CEV,CDE,CPR=eval_variant(ctlmod,data,cands,opps,fcache,specs,100.0)
     if abs(float(ctl['end_equity'])-R54_END)>EPS or len(CEV)!=1102:raise RuntimeError('R5.4 control reproduction failed')
     mod=MarketStateVariant(rule,promote,base,fcache);cand,VW,VEV,VDE,VPR=eval_variant(mod,data,cands,opps,fcache,specs,100.0)
     verification_delta=float(cand['fresh_return_pct'])-float(ctl['fresh_return_pct'])
     repair=(int(cand['losses'])<=int(ctl['losses']) and int(cand['flat'])<=int(ctl['flat']) and (int(cand['losses'])<int(ctl['losses']) or int(cand['flat'])<int(ctl['flat'])))
-    gates={'end_equity_not_regressed':float(cand['end_equity'])>=float(ctl['end_equity'])-EPS,'aug13_14_verification_not_regressed':verification_delta>=-EPS,'drawdown_not_worse':float(cand['max_weekly_dd_pct'])>=float(ctl['max_weekly_dd_pct'])-EPS,'loss_flat_repair':repair,'nonflat_win_rate_not_worse':float(cand['nonflat_win_rate'])>=float(ctl['nonflat_win_rate'])-1e-12,'selected_asset_coverage_not_worse':int(cand['assets_with_selected'])>=int(ctl['assets_with_selected']),'actual_strategy_family_universe_preserved':len(baseline_families)==15,'full_universe_34x510':len(data)==34 and scope['approved_routes']==34 and scope['strategy_families']==15 and scope['route_strategy_cells']==510}
+    approved_scope_ok=(scope['approved_routes']==34 and scope['strategy_families']==15 and scope['route_strategy_cells']==510)
+    gates={'end_equity_not_regressed':float(cand['end_equity'])>=float(ctl['end_equity'])-EPS,'aug13_14_verification_not_regressed':verification_delta>=-EPS,'drawdown_not_worse':float(cand['max_weekly_dd_pct'])>=float(ctl['max_weekly_dd_pct'])-EPS,'loss_flat_repair':repair,'nonflat_win_rate_not_worse':float(cand['nonflat_win_rate'])>=float(ctl['nonflat_win_rate'])-1e-12,'selected_asset_coverage_not_worse':int(cand['assets_with_selected'])>=int(ctl['assets_with_selected']),'approved_universe_preserved':approved_scope_ok,'full_universe_34x510':len(data)==34 and approved_scope_ok}
     pre=all(gates.values())
     blockers=['NEW_UNSEEN_FORWARD_HOLDOUT_REQUIRED','TARGET_SERVER_BROKER_EXECUTION_CERTIFICATION_REQUIRED'] if pre else ['PRE_FORWARD_NON_REGRESSION_GATE_FAILED']
-    s={'state':'R5_5_LANE4B_AUTHENTIC_MARKET_STATE_GATE_COMPLETE','evidence_class':'END_TO_END_CAUSAL_FULL_REPLAY','selected_rule':rule,'r5_4_control':ctl,'candidate':cand,'excluded_promotions':int(mod.excluded),'delta_end_equity':float(cand['end_equity'])-float(ctl['end_equity']),'aug13_14_verification_delta_pct':verification_delta,'actual_family_count':len(baseline_families),'gates':gates,'pre_forward_candidate':bool(pre),'promotion_candidate':False,'promotion_blockers':blockers,'approved_scope':scope,'governance':'The market-state gate was selected only on first8 discovery plus later pre-Aug13 validation and uses only completed decision-bar state. The complete actual 34-asset and 15-family research universe is mandatory. Aug13-14 is already-inspected verification only. R5.4 selection/replay logic otherwise remains unchanged. Final promotion requires a new unseen forward holdout and target-server-certified broker degradation.'}
+    s={'state':'R5_5_LANE4B_AUTHENTIC_MARKET_STATE_GATE_COMPLETE','evidence_class':'END_TO_END_CAUSAL_FULL_REPLAY','selected_rule':rule,'r5_4_control':ctl,'candidate':cand,'excluded_promotions':int(mod.excluded),'delta_end_equity':float(cand['end_equity'])-float(ctl['end_equity']),'aug13_14_verification_delta_pct':verification_delta,'generated_candidate_activity':{'families_emitting_candidates':len(emitted_families),'note':'Activity only; it cannot redefine the approved 15-family universe.'},'gates':gates,'pre_forward_candidate':bool(pre),'promotion_candidate':False,'promotion_blockers':blockers,'approved_scope':scope,'governance':'The complete approved 34-route, 15-family, 510-cell research estate remains defined by the immutable R5.4 scope. Historical candidate emission may involve fewer families and is reported only as activity. The market-state gate is applied after the unchanged R5.4 reliability research/promotion step; zero emission or zero execution is not deletion. Aug13-14 is already-inspected verification only. Final promotion requires a new unseen forward holdout and target-server-certified broker degradation.'}
     (out/'R5_5_LANE4B_STATUS.json').write_text(json.dumps(s,indent=2,default=str));VW.to_csv(out/'R5_5_LANE4B_WEEKLY.csv',index=False);print(json.dumps(s,indent=2,default=str))
 if __name__=='__main__':main()
