@@ -1,0 +1,10 @@
+{
+  "routes": 34,
+  "asset_days": 2274,
+  "directional_open_close_pct_sum": 2507.246488262097,
+  "executable_swing_pct_sum": 38151.484083635834,
+  "gross_session_open_range_pct_sum": 4298.506402859843,
+  "open_60m_move_pct_sum": 521.3670630452793,
+  "close_60m_move_pct_sum": 446.95839661550565,
+  "segments": 721391
+}
