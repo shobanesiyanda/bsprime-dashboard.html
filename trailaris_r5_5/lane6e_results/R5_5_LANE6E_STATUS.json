@@ -1,0 +1,206 @@
+{
+  "state": "R5_5_LANE6E_AUG13_14_WINNER_STATE_DIFFERENCE_FORENSIC_COMPLETE",
+  "evidence_class": "QUARANTINED_FRESH_DIAGNOSTIC_NOT_SELECTION_EVIDENCE",
+  "scope": {
+    "approved_routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510
+  },
+  "partition": {
+    "discovery_events": 843,
+    "validation_pre_aug13_events": 239,
+    "fresh_aug13_14_events": 44
+  },
+  "best_pre_aug13_rule": {
+    "scope_type": "STRATEGY_FAMILY",
+    "scope_value": "MEAN_REVERSION",
+    "rule_type": "2D",
+    "feature1": "reliability_asset_strategy_mean_r",
+    "dir1": "le",
+    "threshold1": 0.2735179291978221,
+    "q1": 0.4,
+    "feature2": "reliability_score",
+    "dir2": "ge",
+    "threshold2": 0.1491441678623905,
+    "q2": 0.1,
+    "disc_n": 30,
+    "disc_share": 0.0355871886120996,
+    "disc_wins": 21,
+    "disc_losses": 9,
+    "disc_flats": 0,
+    "disc_win_rate_all": 0.7,
+    "disc_baseline_win_rate_all": 0.4080664294187426,
+    "disc_win_lift": 1.715406976744186,
+    "disc_mean_net_pnl": 0.0758141822380894,
+    "disc_total_net_pnl": 2.274425467142683,
+    "disc_profit_factor": 1.9127073233551537,
+    "valid_n": 17,
+    "valid_share": 0.0711297071129707,
+    "valid_wins": 16,
+    "valid_losses": 1,
+    "valid_flats": 0,
+    "valid_win_rate_all": 0.9411764705882352,
+    "valid_baseline_win_rate_all": 0.4393305439330544,
+    "valid_win_lift": 2.142296918767507,
+    "valid_mean_net_pnl": 0.494848230504186,
+    "valid_total_net_pnl": 8.412419918571162,
+    "valid_profit_factor": 27.54537806477475,
+    "clean_pass": true,
+    "score": 41.58762205563017
+  },
+  "best_rule_validation": {
+    "n": 17,
+    "wins": 16,
+    "losses": 1,
+    "flats": 0,
+    "win_rate_all": 0.9411764705882353,
+    "mean_net_pnl": 0.494848230504186,
+    "total_net_pnl": 8.412419918571162
+  },
+  "best_rule_fresh": {
+    "n": 2,
+    "wins": 2,
+    "losses": 0,
+    "flats": 0,
+    "win_rate_all": 1.0,
+    "mean_net_pnl": 0.42483707142854915,
+    "total_net_pnl": 0.8496741428570983
+  },
+  "fresh_mechanism_counts": {
+    "winner_like_parent_candidates": 4,
+    "winner_like_parent_selected": 2,
+    "qualified_winner_only_addon_candidates": 1,
+    "qualified_winner_only_addons_selected": 0,
+    "winner_like_executions": 2,
+    "winner_like_execution_wins": 2,
+    "winner_like_3R_target_hits": 0
+  },
+  "root_cause_class": "CONTINUATION_TRIGGER_PRESENT_BUT_ADDON_NOT_SELECTED_CAPACITY_OR_FACTOR_CONSTRAINT",
+  "largest_state_shifts": [
+    {
+      "feature": "reliability_strategy_mean_r",
+      "validation_median": 0.03843813737767587,
+      "fresh_median": 0.044170726155284536,
+      "median_delta": 0.005732588777608669,
+      "standardized_shift": 2.729551369128901,
+      "validation_n": 17,
+      "fresh_n": 2
+    },
+    {
+      "feature": "reliability_expected_r",
+      "validation_median": 0.11518704736569069,
+      "fresh_median": 0.1263735870736653,
+      "median_delta": 0.011186539707974619,
+      "standardized_shift": 1.3552252761727208,
+      "validation_n": 17,
+      "fresh_n": 2
+    },
+    {
+      "feature": "body_frac",
+      "validation_median": 0.6133333333333314,
+      "fresh_median": 0.07024265644939516,
+      "median_delta": -0.5430906768839362,
+      "standardized_shift": -1.2764612989534367,
+      "validation_n": 17,
+      "fresh_n": 2
+    },
+    {
+      "feature": "adverse_wick_frac",
+      "validation_median": 0.20851063829786168,
+      "fresh_median": 0.744572158365332,
+      "median_delta": 0.5360615200674703,
+      "standardized_shift": 1.1722491068045684,
+      "validation_n": 17,
+      "fresh_n": 2
+    },
+    {
+      "feature": "reliability_asset_strategy_mean_r",
+      "validation_median": 0.18504721078017453,
+      "fresh_median": 0.20194923930274944,
+      "median_delta": 0.016902028522574913,
+      "standardized_shift": 1.1262044634616684,
+      "validation_n": 17,
+      "fresh_n": 2
+    },
+    {
+      "feature": "trailing_giveback",
+      "validation_median": 0.7982069519604944,
+      "fresh_median": 0.7644681046491901,
+      "median_delta": -0.033738847311304276,
+      "standardized_shift": -0.6471525726975761,
+      "validation_n": 17,
+      "fresh_n": 2
+    },
+    {
+      "feature": "signed_mom6_atr",
+      "validation_median": -2.7637540453074076,
+      "fresh_median": -3.6775119617220415,
+      "median_delta": -0.9137579164146339,
+      "standardized_shift": -0.6238898051178114,
+      "validation_n": 17,
+      "fresh_n": 2
+    },
+    {
+      "feature": "signed_impulse_atr",
+      "validation_median": 0.18918918918904387,
+      "fresh_median": -0.25962012469159973,
+      "median_delta": -0.4488093138806436,
+      "standardized_shift": -0.4002778981950767,
+      "validation_n": 17,
+      "fresh_n": 2
+    },
+    {
+      "feature": "reliability_score",
+      "validation_median": 0.22655196166758704,
+      "fresh_median": 0.23923190998491461,
+      "median_delta": 0.012679948317327577,
+      "standardized_shift": 0.39771194891578976,
+      "validation_n": 17,
+      "fresh_n": 2
+    },
+    {
+      "feature": "compression",
+      "validation_median": 0.9273927392738006,
+      "fresh_median": 1.0651718425156775,
+      "median_delta": 0.13777910324187692,
+      "standardized_shift": 0.3711176298842151,
+      "validation_n": 17,
+      "fresh_n": 2
+    }
+  ],
+  "top20_rule_fresh_survival": [
+    {
+      "rule_rank": 0,
+      "scope_type": "STRATEGY_FAMILY",
+      "scope_value": "MEAN_REVERSION",
+      "feature1": "reliability_asset_strategy_mean_r",
+      "dir1": "le",
+      "threshold1": 0.2735179291978221,
+      "feature2": "reliability_score",
+      "dir2": "ge",
+      "threshold2": 0.1491441678623905,
+      "discovery_n": 30,
+      "discovery_wins": 21,
+      "discovery_losses": 9,
+      "discovery_flats": 0,
+      "discovery_win_rate_all": 0.7,
+      "discovery_mean_net_pnl": 0.07581418223808943,
+      "discovery_total_net_pnl": 2.274425467142683,
+      "validation_n": 17,
+      "validation_wins": 16,
+      "validation_losses": 1,
+      "validation_flats": 0,
+      "validation_win_rate_all": 0.9411764705882353,
+      "validation_mean_net_pnl": 0.494848230504186,
+      "validation_total_net_pnl": 8.412419918571162,
+      "fresh_n": 2,
+      "fresh_wins": 2,
+      "fresh_losses": 0,
+      "fresh_flats": 0,
+      "fresh_win_rate_all": 1.0,
+      "fresh_mean_net_pnl": 0.42483707142854915,
+      "fresh_total_net_pnl": 0.8496741428570983
+    }
+  ],
+  "selection_governance": "Candidate winner qualification is reconstructed from weekly-causal reliability state. Aug13-14 outcomes are quarantine evidence used only to diagnose state dependency and cannot nominate or promote a candidate."
+}
