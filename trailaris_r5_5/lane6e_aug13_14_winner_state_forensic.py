@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np,pandas as pd
 from lane1b_full_replay import ManagedVariant
 from lane4_market_state_entry_repair import enrich_market_state
+from winner_causal_features import causal_decision_features
 
 R54_END=337.4231242104393
 INC_END=343.5447309255116
@@ -14,8 +15,7 @@ B3={'behavior':'close_a0.50_r0.20_1b','kind':'close','activate_mfe_r':0.50,'para
 FIELDS=['reliability_score','reliability_expected_r','reliability_win','reliability_strategy_mean_r','reliability_strategy_win','reliability_asset_strategy_mean_r','reliability_asset_strategy_win','expected_r','trailing_win_rate','stability','trailing_giveback','quality','rank_score','cost_r','trend_alignment','h1_strength','compression','signed_z30','ema20_distance_stop_r','stop_atr_ratio','body_frac','signed_impulse_atr','signed_mom6_atr','directional_range20_pos','signed_ret1_atr','adverse_wick_frac']
 
 def num(x,d=np.nan):
-    try:
-        v=float(x);return v if np.isfinite(v) else d
+    try:v=float(x);return v if np.isfinite(v) else d
     except Exception:return d
 
 def cond(z,f,d,th):
@@ -66,20 +66,13 @@ def main():
         for p,s in [('discovery',stats(early,me)),('validation',stats(valid,mv)),('fresh',stats(fresh,mf))]:row.update({f'{p}_{k}':v for k,v in s.items()})
         rule_rows.append(row)
     rule_df=pd.DataFrame(rule_rows);rule_df.to_csv(out/'R5_5_LANE6E_RULE_FRESH_BEHAVIOUR.csv',index=False)
-    best=R.iloc[0].to_dict();mv=rule_mask(valid,best);mf=rule_mask(fresh,best);vq=valid.loc[mv].copy();fq=fresh.loc[mf].copy()
-    drift=shifts(vq,fq,[f for f in FIELDS if f in z.columns]);drift.to_csv(out/'R5_5_LANE6E_BEST_RULE_STATE_DRIFT.csv',index=False)
-
-    ce=enrich_market_state(cands.copy(),fcache);ce['decision_time']=pd.to_datetime(ce.decision_time,utc=True);ce['winner_like']=rule_mask(ce,best)
-    fresh_c=ce[ce.decision_time>=FRESH0].copy();fresh_parent=fresh_c[~fresh_c.get('is_addon',False).astype(bool)].copy();selected_ids=set(fresh.campaign_id.astype(str)) if 'campaign_id' in fresh else set()
-    fresh_qual=fresh_parent[fresh_parent.winner_like].copy();qual_selected=int(fresh_qual.campaign_id.astype(str).isin(selected_ids).sum()) if 'campaign_id' in fresh_qual else 0
-    parent_qual=dict(zip(fresh_parent.campaign_id.astype(str),fresh_parent.winner_like.astype(bool))) if 'campaign_id' in fresh_parent else {}
-    addons=fresh_c[fresh_c.strategy.astype(str).eq('WINNER_ONLY_ADDON')].copy() if 'strategy' in fresh_c else fresh_c.iloc[0:0].copy()
+    best=R.iloc[0].to_dict();mv=rule_mask(valid,best);mf=rule_mask(fresh,best);vq=valid.loc[mv].copy();fq=fresh.loc[mf].copy();drift=shifts(vq,fq,[f for f in FIELDS if f in z.columns]);drift.to_csv(out/'R5_5_LANE6E_BEST_RULE_STATE_DRIFT.csv',index=False)
+    ce=causal_decision_features(cands,fcache);ce['decision_time']=pd.to_datetime(ce.decision_time,utc=True);ce['winner_like']=rule_mask(ce,best)
+    fresh_c=ce[ce.decision_time>=FRESH0].copy();fresh_parent=fresh_c[~fresh_c.get('is_addon',False).astype(bool)].copy();selected_ids=set(fresh.campaign_id.astype(str)) if 'campaign_id' in fresh else set();fresh_qual=fresh_parent[fresh_parent.winner_like].copy();qual_selected=int(fresh_qual.campaign_id.astype(str).isin(selected_ids).sum()) if 'campaign_id' in fresh_qual else 0
+    parent_qual=dict(zip(fresh_parent.campaign_id.astype(str),fresh_parent.winner_like.astype(bool))) if 'campaign_id' in fresh_parent else {};addons=fresh_c[fresh_c.strategy.astype(str).eq('WINNER_ONLY_ADDON')].copy() if 'strategy' in fresh_c else fresh_c.iloc[0:0].copy()
     if len(addons) and 'parent_id' in addons:addons['qualified_parent']=addons.parent_id.astype(str).map(parent_qual).fillna(False)
     else:addons['qualified_parent']=False
-    qual_addons=addons[addons.qualified_parent].copy();addon_selected=int(qual_addons.campaign_id.astype(str).isin(selected_ids).sum()) if len(qual_addons) and 'campaign_id' in qual_addons else 0
-    fresh_exec_qual=fq.copy();target_hits=int((fresh_exec_qual.get('exit_reason',pd.Series('',index=fresh_exec_qual.index)).astype(str)=='TARGET').sum())
-    winner_like_wins=int((pd.to_numeric(fresh_exec_qual.get('net_pnl',0),errors='coerce')>EPS).sum())
-
+    qual_addons=addons[addons.qualified_parent].copy();addon_selected=int(qual_addons.campaign_id.astype(str).isin(selected_ids).sum()) if len(qual_addons) and 'campaign_id' in qual_addons else 0;fresh_exec_qual=fq.copy();target_hits=int((fresh_exec_qual.get('exit_reason',pd.Series('',index=fresh_exec_qual.index)).astype(str)=='TARGET').sum());winner_like_wins=int((pd.to_numeric(fresh_exec_qual.get('net_pnl',0),errors='coerce')>EPS).sum())
     if len(fresh_qual)==0:root='WINNER_SIGNATURE_NOT_PRESENT_IN_FRESH_CANDIDATES'
     elif qual_selected==0:root='WINNER_SIGNATURE_PRESENT_BUT_NOT_SELECTED_CAPITAL_OR_PROMOTION_COMPETITION'
     elif len(qual_addons)==0 and target_hits==0:root='WINNER_SIGNATURE_SELECTED_BUT_NO_CONTINUATION_OR_3R_EXTENSION_TRIGGER'
@@ -87,7 +80,6 @@ def main():
     elif target_hits==0:root='WINNER_LIKE_TRADES_SELECTED_BUT_NONE_REACHED_3R_PAYOFF_EXTENSION_GATE'
     elif winner_like_wins==0:root='WINNER_SIGNATURE_PRESENT_BUT_FRESH_REGIME_BROKE_OUTCOME_RELATIONSHIP'
     else:root='WINNER_SIGNATURE_AND_ACTIVATION_PRESENT; MONETIZATION_OR_PORTFOLIO_INTERACTION_IS_BOTTLENECK'
-
-    status={'state':'R5_5_LANE6E_AUG13_14_WINNER_STATE_DIFFERENCE_FORENSIC_COMPLETE','evidence_class':'QUARANTINED_FRESH_DIAGNOSTIC_NOT_SELECTION_EVIDENCE','scope':{'approved_routes':34,'strategy_families':15,'route_strategy_cells':510},'partition':{'discovery_events':len(early),'validation_pre_aug13_events':len(valid),'fresh_aug13_14_events':len(fresh)},'best_pre_aug13_rule':best,'best_rule_validation':stats(valid,mv),'best_rule_fresh':stats(fresh,mf),'fresh_mechanism_counts':{'winner_like_parent_candidates':int(len(fresh_qual)),'winner_like_parent_selected':qual_selected,'qualified_winner_only_addon_candidates':int(len(qual_addons)),'qualified_winner_only_addons_selected':addon_selected,'winner_like_executions':int(len(fresh_exec_qual)),'winner_like_execution_wins':winner_like_wins,'winner_like_3R_target_hits':target_hits},'root_cause_class':root,'largest_state_shifts':drift.head(10).to_dict('records') if len(drift) else [],'top20_rule_fresh_survival':rule_df.sort_values(['fresh_total_net_pnl','fresh_win_rate_all','fresh_n'],ascending=False).head(10).to_dict('records') if len(rule_df) else [],'selection_governance':'Aug13-14 outcomes are already-inspected quarantine evidence and are used here only to diagnose state dependency. This forensic cannot itself nominate or promote a candidate. Any repair derived from it must be causal, frozen before new unseen forward acquisition, and replayed over the complete 34x15x510 engine.'}
+    status={'state':'R5_5_LANE6E_AUG13_14_WINNER_STATE_DIFFERENCE_FORENSIC_COMPLETE','evidence_class':'QUARANTINED_FRESH_DIAGNOSTIC_NOT_SELECTION_EVIDENCE','scope':{'approved_routes':34,'strategy_families':15,'route_strategy_cells':510},'partition':{'discovery_events':len(early),'validation_pre_aug13_events':len(valid),'fresh_aug13_14_events':len(fresh)},'best_pre_aug13_rule':best,'best_rule_validation':stats(valid,mv),'best_rule_fresh':stats(fresh,mf),'fresh_mechanism_counts':{'winner_like_parent_candidates':int(len(fresh_qual)),'winner_like_parent_selected':qual_selected,'qualified_winner_only_addon_candidates':int(len(qual_addons)),'qualified_winner_only_addons_selected':addon_selected,'winner_like_executions':int(len(fresh_exec_qual)),'winner_like_execution_wins':winner_like_wins,'winner_like_3R_target_hits':target_hits},'root_cause_class':root,'largest_state_shifts':drift.head(10).to_dict('records') if len(drift) else [],'top20_rule_fresh_survival':rule_df.sort_values(['fresh_total_net_pnl','fresh_win_rate_all','fresh_n'],ascending=False).head(10).to_dict('records') if len(rule_df) else [],'selection_governance':'Candidate winner qualification is reconstructed from weekly-causal reliability state. Aug13-14 outcomes are quarantine evidence used only to diagnose state dependency and cannot nominate or promote a candidate.'}
     (out/'R5_5_LANE6E_STATUS.json').write_text(json.dumps(status,indent=2,default=str));print(json.dumps(status,indent=2,default=str))
 if __name__=='__main__':main()
