@@ -1,6 +1,7 @@
 {
   "state": "R5_5_LANE2A_ENTRY_THESIS_DISCOVERY_COMPLETE",
   "evidence_class": "SELECTION_FROZEN_CHRONOLOGICAL_ENTRY_GATE_DISCOVERY_ONLY",
+  "revision": "FORENSIC_COHORT_RECONCILED_V2",
   "r5_4_control": {
     "end_equity": 337.4231242104393,
     "compounded_return_pct": 237.42312421043928,
@@ -29,6 +30,126 @@
     "strategy_families": 15,
     "route_strategy_cells": 510
   },
+  "forensic_definitions": {
+    "barely_developed_loss": {
+      "definition": "loss and MFE < 0.20R",
+      "locked_count": 107,
+      "reproduced_count": 107
+    },
+    "brief_favourable_then_loss": {
+      "definition": "loss and MFE >= 0.50R",
+      "locked_count": 54,
+      "reproduced_count": 54
+    },
+    "severe_mae_loss": {
+      "definition": "loss and MAE magnitude >= 1.50R",
+      "locked_count": 68,
+      "reproduced_count": 68,
+      "threshold_exact_match": true,
+      "threshold_grid": [
+        {
+          "threshold": 1.5,
+          "count": 68,
+          "distance_to_locked_68": 0
+        },
+        {
+          "threshold": 1.4,
+          "count": 87,
+          "distance_to_locked_68": 19
+        },
+        {
+          "threshold": 1.75,
+          "count": 44,
+          "distance_to_locked_68": 24
+        },
+        {
+          "threshold": 2.0,
+          "count": 32,
+          "distance_to_locked_68": 36
+        },
+        {
+          "threshold": 1.3,
+          "count": 110,
+          "distance_to_locked_68": 42
+        },
+        {
+          "threshold": 2.25,
+          "count": 20,
+          "distance_to_locked_68": 48
+        },
+        {
+          "threshold": 2.5,
+          "count": 17,
+          "distance_to_locked_68": 51
+        },
+        {
+          "threshold": 1.25,
+          "count": 126,
+          "distance_to_locked_68": 58
+        },
+        {
+          "threshold": 3.0,
+          "count": 10,
+          "distance_to_locked_68": 58
+        },
+        {
+          "threshold": 1.2,
+          "count": 141,
+          "distance_to_locked_68": 73
+        },
+        {
+          "threshold": 1.15,
+          "count": 158,
+          "distance_to_locked_68": 90
+        },
+        {
+          "threshold": 1.1,
+          "count": 175,
+          "distance_to_locked_68": 107
+        },
+        {
+          "threshold": 1.05,
+          "count": 211,
+          "distance_to_locked_68": 143
+        },
+        {
+          "threshold": 1.0,
+          "count": 228,
+          "distance_to_locked_68": 160
+        },
+        {
+          "threshold": 0.9,
+          "count": 229,
+          "distance_to_locked_68": 161
+        },
+        {
+          "threshold": 0.8,
+          "count": 230,
+          "distance_to_locked_68": 162
+        },
+        {
+          "threshold": 0.75,
+          "count": 231,
+          "distance_to_locked_68": 163
+        },
+        {
+          "threshold": 0.7,
+          "count": 231,
+          "distance_to_locked_68": 163
+        },
+        {
+          "threshold": 0.6,
+          "count": 231,
+          "distance_to_locked_68": 163
+        },
+        {
+          "threshold": 0.5,
+          "count": 231,
+          "distance_to_locked_68": 163
+        }
+      ]
+    }
+  },
   "segment": {
     "first8": {
       "trades": 823,
@@ -36,9 +157,9 @@
       "losses": 167,
       "flats": 327,
       "cohorts": {
-        "low_mfe_loss": 122,
+        "barely_developed_loss": 74,
         "brief_fav_loss": 45,
-        "severe_mae_loss": 0,
+        "severe_mae_loss": 49,
         "all_loss": 167
       },
       "threshold_reconciliation": {
@@ -51,12 +172,26 @@
         "loss_mfe_lt_0.60": 140,
         "loss_mfe_lt_0.75": 167,
         "loss_mfe_lt_1.00": 167,
-        "loss_mae_le_-0.75": 0,
-        "loss_mae_le_-0.90": 0,
-        "loss_mae_le_-1.00": 0,
-        "loss_mae_le_-1.10": 0,
-        "loss_mae_le_-1.25": 0,
-        "loss_mae_le_-1.50": 0
+        "loss_mae_ge_0.50": 167,
+        "loss_mae_ge_0.60": 167,
+        "loss_mae_ge_0.70": 167,
+        "loss_mae_ge_0.75": 167,
+        "loss_mae_ge_0.80": 167,
+        "loss_mae_ge_0.90": 166,
+        "loss_mae_ge_1.00": 166,
+        "loss_mae_ge_1.05": 153,
+        "loss_mae_ge_1.10": 129,
+        "loss_mae_ge_1.15": 118,
+        "loss_mae_ge_1.20": 105,
+        "loss_mae_ge_1.25": 91,
+        "loss_mae_ge_1.30": 82,
+        "loss_mae_ge_1.40": 63,
+        "loss_mae_ge_1.50": 49,
+        "loss_mae_ge_1.75": 27,
+        "loss_mae_ge_2.00": 19,
+        "loss_mae_ge_2.25": 13,
+        "loss_mae_ge_2.50": 11,
+        "loss_mae_ge_3.00": 8
       }
     },
     "last3_untouched": {
@@ -65,9 +200,9 @@
       "losses": 64,
       "flats": 98,
       "cohorts": {
-        "low_mfe_loss": 55,
+        "barely_developed_loss": 33,
         "brief_fav_loss": 9,
-        "severe_mae_loss": 0,
+        "severe_mae_loss": 19,
         "all_loss": 64
       },
       "threshold_reconciliation": {
@@ -80,12 +215,26 @@
         "loss_mfe_lt_0.60": 58,
         "loss_mfe_lt_0.75": 64,
         "loss_mfe_lt_1.00": 64,
-        "loss_mae_le_-0.75": 0,
-        "loss_mae_le_-0.90": 0,
-        "loss_mae_le_-1.00": 0,
-        "loss_mae_le_-1.10": 0,
-        "loss_mae_le_-1.25": 0,
-        "loss_mae_le_-1.50": 0
+        "loss_mae_ge_0.50": 64,
+        "loss_mae_ge_0.60": 64,
+        "loss_mae_ge_0.70": 64,
+        "loss_mae_ge_0.75": 64,
+        "loss_mae_ge_0.80": 63,
+        "loss_mae_ge_0.90": 63,
+        "loss_mae_ge_1.00": 62,
+        "loss_mae_ge_1.05": 58,
+        "loss_mae_ge_1.10": 46,
+        "loss_mae_ge_1.15": 40,
+        "loss_mae_ge_1.20": 36,
+        "loss_mae_ge_1.25": 35,
+        "loss_mae_ge_1.30": 28,
+        "loss_mae_ge_1.40": 24,
+        "loss_mae_ge_1.50": 19,
+        "loss_mae_ge_1.75": 17,
+        "loss_mae_ge_2.00": 13,
+        "loss_mae_ge_2.25": 7,
+        "loss_mae_ge_2.50": 6,
+        "loss_mae_ge_3.00": 2
       }
     },
     "all": {
@@ -94,9 +243,9 @@
       "losses": 231,
       "flats": 425,
       "cohorts": {
-        "low_mfe_loss": 177,
+        "barely_developed_loss": 107,
         "brief_fav_loss": 54,
-        "severe_mae_loss": 0,
+        "severe_mae_loss": 68,
         "all_loss": 231
       },
       "threshold_reconciliation": {
@@ -109,12 +258,26 @@
         "loss_mfe_lt_0.60": 198,
         "loss_mfe_lt_0.75": 231,
         "loss_mfe_lt_1.00": 231,
-        "loss_mae_le_-0.75": 0,
-        "loss_mae_le_-0.90": 0,
-        "loss_mae_le_-1.00": 0,
-        "loss_mae_le_-1.10": 0,
-        "loss_mae_le_-1.25": 0,
-        "loss_mae_le_-1.50": 0
+        "loss_mae_ge_0.50": 231,
+        "loss_mae_ge_0.60": 231,
+        "loss_mae_ge_0.70": 231,
+        "loss_mae_ge_0.75": 231,
+        "loss_mae_ge_0.80": 230,
+        "loss_mae_ge_0.90": 229,
+        "loss_mae_ge_1.00": 228,
+        "loss_mae_ge_1.05": 211,
+        "loss_mae_ge_1.10": 175,
+        "loss_mae_ge_1.15": 158,
+        "loss_mae_ge_1.20": 141,
+        "loss_mae_ge_1.25": 126,
+        "loss_mae_ge_1.30": 110,
+        "loss_mae_ge_1.40": 87,
+        "loss_mae_ge_1.50": 68,
+        "loss_mae_ge_1.75": 44,
+        "loss_mae_ge_2.00": 32,
+        "loss_mae_ge_2.25": 20,
+        "loss_mae_ge_2.50": 17,
+        "loss_mae_ge_3.00": 10
       }
     }
   },
@@ -135,41 +298,115 @@
     "cost_r",
     "decision_hour"
   ],
-  "rules_tested": 810,
+  "rules_tested": 540,
   "passing_rules": 0,
+  "passing_rules_by_target": {
+    "barely_developed_loss": 0,
+    "severe_mae_loss": 0
+  },
+  "best_by_target": {
+    "barely_developed_loss": {
+      "target": "barely_developed_loss",
+      "rule_type": "1D",
+      "field1": "rank_score",
+      "dir1": "le",
+      "threshold1": 0.3262616466952146,
+      "quantile1": 0.1,
+      "field2": "",
+      "dir2": "",
+      "threshold2": NaN,
+      "quantile2": NaN,
+      "disc_excluded": 83,
+      "disc_excluded_pct": 0.10085054678007291,
+      "disc_target_removed": 10,
+      "disc_wins_removed": 28,
+      "disc_losses_removed": 17,
+      "disc_flats_removed": 38,
+      "disc_selection_frozen_delta_usd": -10.32792579878549,
+      "disc_winner_pnl_removed": 16.992199989857284,
+      "disc_loss_pnl_removed": -6.664274191071793,
+      "disc_target_precision": 0.12048192771084337,
+      "hold_excluded": 11,
+      "hold_excluded_pct": 0.03942652329749104,
+      "hold_target_removed": 2,
+      "hold_wins_removed": 3,
+      "hold_losses_removed": 3,
+      "hold_flats_removed": 5,
+      "hold_selection_frozen_delta_usd": -2.304643271428512,
+      "hold_winner_pnl_removed": 3.2983254142857312,
+      "hold_loss_pnl_removed": -0.9936821428572191,
+      "hold_target_precision": 0.18181818181818182,
+      "discovery_pass": false,
+      "repair_score": -117.5
+    },
+    "severe_mae_loss": {
+      "target": "severe_mae_loss",
+      "rule_type": "1D",
+      "field1": "reliability_asset_strategy_mean_r",
+      "dir1": "le",
+      "threshold1": 0.031966292844013824,
+      "quantile1": 0.1,
+      "field2": "",
+      "dir2": "",
+      "threshold2": NaN,
+      "quantile2": NaN,
+      "disc_excluded": 83,
+      "disc_excluded_pct": 0.10085054678007291,
+      "disc_target_removed": 3,
+      "disc_wins_removed": 29,
+      "disc_losses_removed": 15,
+      "disc_flats_removed": 39,
+      "disc_selection_frozen_delta_usd": -10.503713790214341,
+      "disc_winner_pnl_removed": 18.251572524143242,
+      "disc_loss_pnl_removed": -7.747858733928899,
+      "disc_target_precision": 0.03614457831325301,
+      "hold_excluded": 3,
+      "hold_excluded_pct": 0.010752688172043012,
+      "hold_target_removed": 0,
+      "hold_wins_removed": 2,
+      "hold_losses_removed": 0,
+      "hold_flats_removed": 1,
+      "hold_selection_frozen_delta_usd": -2.743112628571345,
+      "hold_winner_pnl_removed": 2.743112628571345,
+      "hold_loss_pnl_removed": 0.0,
+      "hold_target_precision": 0.0,
+      "discovery_pass": false,
+      "repair_score": -144.5
+    }
+  },
   "best_rule": {
-    "target": "all_loss",
+    "target": "barely_developed_loss",
     "rule_type": "1D",
     "field1": "rank_score",
     "dir1": "le",
-    "threshold1": 0.3572763578368383,
-    "quantile1": 0.2,
+    "threshold1": 0.3262616466952146,
+    "quantile1": 0.1,
     "field2": "",
     "dir2": "",
     "threshold2": NaN,
     "quantile2": NaN,
-    "disc_excluded": 165,
-    "disc_excluded_pct": 0.20048602673147023,
-    "disc_target_removed": 44,
-    "disc_wins_removed": 44,
-    "disc_losses_removed": 44,
-    "disc_flats_removed": 77,
-    "disc_selection_frozen_delta_usd": -5.614936728645105,
-    "disc_winner_pnl_removed": 27.24362299828857,
-    "disc_loss_pnl_removed": -21.62868626964346,
-    "disc_target_precision": 0.26666666666666666,
-    "hold_excluded": 45,
-    "hold_excluded_pct": 0.16129032258064516,
-    "hold_target_removed": 16,
-    "hold_wins_removed": 9,
-    "hold_losses_removed": 16,
-    "hold_flats_removed": 20,
-    "hold_selection_frozen_delta_usd": -0.2602068214285245,
-    "hold_winner_pnl_removed": 7.836007307143131,
-    "hold_loss_pnl_removed": -7.575800485714606,
-    "hold_target_precision": 0.35555555555555557,
+    "disc_excluded": 83,
+    "disc_excluded_pct": 0.10085054678007291,
+    "disc_target_removed": 10,
+    "disc_wins_removed": 28,
+    "disc_losses_removed": 17,
+    "disc_flats_removed": 38,
+    "disc_selection_frozen_delta_usd": -10.32792579878549,
+    "disc_winner_pnl_removed": 16.992199989857284,
+    "disc_loss_pnl_removed": -6.664274191071793,
+    "disc_target_precision": 0.12048192771084337,
+    "hold_excluded": 11,
+    "hold_excluded_pct": 0.03942652329749104,
+    "hold_target_removed": 2,
+    "hold_wins_removed": 3,
+    "hold_losses_removed": 3,
+    "hold_flats_removed": 5,
+    "hold_selection_frozen_delta_usd": -2.304643271428512,
+    "hold_winner_pnl_removed": 3.2983254142857312,
+    "hold_loss_pnl_removed": -0.9936821428572191,
+    "hold_target_precision": 0.18181818181818182,
     "discovery_pass": false,
-    "repair_score": -72.5
+    "repair_score": -117.5
   },
-  "governance": "Thresholds are estimated only from the first 8 evaluation weeks. The final 3 evaluation weeks are untouched validation. Only decision-time/pre-entry fields are eligible; net P&L, net R, MFE, MAE, giveback, exit fields and future path information are targets/evaluation only. Selection-frozen results rank hypotheses and cannot promote R5.5. Any selected entry gate must next survive the full causal portfolio replay with R5.4 selector/reliability logic otherwise unchanged."
+  "governance": "Forensic cohort labels are reconciled to the locked R5.4 counts before predictive gate search. The 107 barely-developed losses are exactly MFE <0.20R. MAE is stored as positive adverse-excursion magnitude, so severe-MAE uses >= not a negative sign. Predictive thresholds are estimated only from the first 8 evaluation weeks; final 3 are untouched validation. Only decision-time/pre-entry fields may gate entry. Selection-frozen results cannot promote R5.5; any passing gate must survive the full causal portfolio replay."
 }
