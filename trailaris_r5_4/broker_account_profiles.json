@@ -1,0 +1,16 @@
+{
+  "state": "R5_4_BROKER_ACCOUNT_PROFILE_ESTATE",
+  "selection_granularity": "ROUTE_X_ACCOUNT_PROFILE_X_SESSION_X_REGIME",
+  "truth_rule": "Published account terms define research candidates only. Promotion requires exact target-server symbol availability, contract specification and empirical execution evidence.",
+  "profiles": [
+    {"profile_id":"EXNESS_RAW_SPREAD_MT5","broker_id":"EXNESS","account_type":"RAW_SPREAD","scope":["FX","METAL","CRYPTO","INDEX","ENERGY"],"certification_state":"TARGET_SERVER_EVIDENCE_REQUIRED"},
+    {"profile_id":"IC_MARKETS_RAW_SPREAD_MT5","broker_id":"IC_MARKETS","account_type":"RAW_SPREAD","scope":["FX","METAL","CRYPTO","INDEX","ENERGY"],"certification_state":"TARGET_SERVER_EVIDENCE_REQUIRED"},
+    {"profile_id":"PEPPERSTONE_RAZOR_MT5","broker_id":"PEPPERSTONE","account_type":"RAZOR","scope":["FX","METAL","CRYPTO","INDEX","ENERGY"],"certification_state":"TARGET_SERVER_EVIDENCE_REQUIRED"},
+    {"profile_id":"FP_MARKETS_RAW_MT5","broker_id":"FP_MARKETS","account_type":"RAW","scope":["FX","METAL","CRYPTO","INDEX","ENERGY"],"certification_state":"TARGET_SERVER_EVIDENCE_REQUIRED"},
+    {"profile_id":"HFM_ZERO_MT5","broker_id":"HFM","account_type":"ZERO","scope":["FX","METAL","CRYPTO","INDEX","ENERGY"],"certification_state":"TARGET_SERVER_EVIDENCE_REQUIRED"},
+    {"profile_id":"HFM_CENT_GOLD_MT5","broker_id":"HFM","account_type":"CENT","scope":["XAUUSD"],"published_research_terms":{"xau_contract_size_oz_per_lot":1.0,"xau_min_lot":0.01,"xau_lot_step":0.01,"xau_tick_size":0.01,"xau_tick_value_usd_per_lot":0.01,"published_margin_rate":0.0005,"commission_model":"NO_COMMISSION_PUBLISHED_CENT_PROFILE"},"role":"SMALL_ACCOUNT_XAU_GRANULARITY_CANDIDATE","certification_state":"TARGET_SERVER_EVIDENCE_REQUIRED"},
+    {"profile_id":"TICKMILL_RAW_MT5","broker_id":"TICKMILL","account_type":"RAW","scope":["FX","METAL","CRYPTO","INDEX","ENERGY"],"certification_state":"TARGET_SERVER_EVIDENCE_REQUIRED"},
+    {"profile_id":"DERIV_MT5_SYNTHETIC","broker_id":"DERIV","account_type":"SYNTHETIC_MT5","scope":["V10","V25","V50","V75","V100"],"role":"SPECIALIST_SYNTHETIC_PROFILE","certification_state":"TARGET_SERVER_EVIDENCE_REQUIRED"}
+  ],
+  "ib_constraint":"Introducing Broker remuneration is measured after execution-quality ranking and can never promote an inferior customer execution profile."
+}
