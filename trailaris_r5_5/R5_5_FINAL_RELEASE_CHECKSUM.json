@@ -1,0 +1,11 @@
+{
+  "release_id": "TRAILARIS_R5_5_FINAL_20260817",
+  "canonical_engine": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
+  "closure_commits": [
+    "b6995a730a2dc440527a4c8f52210c312ea8a27e",
+    "1ab973087fcedee1beac5b9d8840cd380e8846bd",
+    "2094e7f60bf93eaf38c9367cd8aaaeee27c88c4b",
+    "a503a275efdb0490e368cc998922194dfcc77ec7"
+  ],
+  "note": "This manifest records the closure sequence for the immutable R5.5 final research release."
+}
