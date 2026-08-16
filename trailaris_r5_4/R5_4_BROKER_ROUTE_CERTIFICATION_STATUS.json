@@ -1,0 +1,9 @@
+{
+  "routes": 34,
+  "brokers": 7,
+  "cells": 238,
+  "native_candidate_cells": 179,
+  "gated_non_native_cells": 59,
+  "certified_cells": 0,
+  "selection_state": "FAIL_CLOSED_UNTIL_TARGET_SERVER_EVIDENCE"
+}
