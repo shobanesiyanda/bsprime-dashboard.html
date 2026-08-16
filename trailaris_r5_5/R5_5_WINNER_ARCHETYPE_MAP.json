@@ -1,0 +1,64 @@
+{
+  "state": "R5_5_WINNER_ARCHETYPE_PATH_SPLIT_ACTIVE",
+  "evidence_source": "Lane6A frozen winner attribution on Lane1B2 incumbent",
+  "winner_population": {
+    "wins": 467,
+    "winner_net_pnl": 361.82331882515365,
+    "mean_mfe_r": 2.302930744150551,
+    "median_mfe_r": 2.0564042303172463,
+    "mean_mae_r": 0.4155573537994783
+  },
+  "concentration_findings": {
+    "ensemble_regime_plus_relative_value_pairs_share_of_wins": 0.7301927194860813,
+    "ensemble_regime_plus_relative_value_pairs_share_of_winner_pnl": 0.7694345454409044,
+    "fx_share_of_wins": 0.6359743040685225,
+    "fx_share_of_winner_pnl": 0.6744993577832836,
+    "implication": "Winner amplification cannot be implemented as blind concentration into the historically largest contributors. Factor, asset, campaign, risk and concentration counterfactual controls remain authoritative."
+  },
+  "archetypes": {
+    "ENSEMBLE_REGIME": {
+      "wins": 177,
+      "winner_pnl": 176.08223100015147,
+      "winner_mean_mfe_r": 2.5028132017355107,
+      "winner_mean_mae_r": 0.36615001609979886,
+      "interpretation": "Large aggregate winner engine with strong favorable excursion and low adverse excursion; natural candidate for proof-based continuation/add-on attribution."
+    },
+    "RELATIVE_VALUE_PAIRS": {
+      "wins": 164,
+      "winner_pnl": 102.31712985000004,
+      "winner_mean_mfe_r": 2.221444744088199,
+      "winner_mean_mae_r": 0.3532920671264854,
+      "interpretation": "High-volume, low-MAE winner engine; natural candidate for controlled proof-based amplification and priority analysis."
+    },
+    "MEAN_REVERSION": {
+      "wins": 97,
+      "all_trade_win_rate": 0.6879432624113475,
+      "winner_pnl": 40.652672978571225,
+      "winner_mean_mfe_r": 1.8525307578286276,
+      "winner_mean_mae_r": 0.5279676186426979,
+      "interpretation": "High hit-rate winner archetype, but materially shorter favorable excursion. The Lane6A top rule is therefore suitable for win-probability attribution/priority but should not automatically be assumed optimal for 4R-6R payoff extension."
+    },
+    "SESSION_TIME": {
+      "wins": 10,
+      "winner_pnl": 27.246771428573922,
+      "winner_mean_mfe_r": 4.001847815657737,
+      "winner_mean_mae_r": 1.2468492113423175,
+      "interpretation": "Very long right tail but small support and high adverse excursion. Interesting for payoff-extension research only after strict support/robustness controls."
+    },
+    "CRYPTO": {
+      "wins": 45,
+      "winner_pnl": 35.614832642856705,
+      "winner_mean_mfe_r": 2.8629011045236763,
+      "winner_mean_mae_r": 0.3121691454644171,
+      "interpretation": "Asset-class right-tail candidate with high favorable and low adverse excursion; should be tested as a payoff-extension archetype without narrowing the full-universe replay."
+    }
+  },
+  "path_specific_selection_objectives": {
+    "6A_WINNER_ATTRIBUTION": "Identify causal pre-decision features that predict profitable outcomes broadly.",
+    "6B_WINNER_AMPLIFICATION": "Identify causal pre-decision cohorts that not only win but historically develop enough favorable excursion and continuation to earn additional exposure after the market proves the thesis.",
+    "6C_WINNER_PAYOFF_EXTENSION": "Identify causal pre-decision cohorts associated with actual 3R target reach and positive post-3R continuation/right-tail value. Do not rank extension candidates solely by win probability.",
+    "6D_WINNER_PRIORITY_CAPTURE": "Identify causal pre-decision cohorts with strong realized economic contribution and opportunity-capture value under capital competition, not merely highest raw win rate."
+  },
+  "causality_rule": "MFE, MAE, target reach and post-target continuation may label historical discovery/validation outcomes, but may never be used from the future of the trade being decided. Live/replay eligibility must use information available by the decision or management timestamp.",
+  "governance": "All path-specific winner rules must be selected on discovery plus pre-Aug13 validation only, then re-enter the unchanged full 34-route x 15-family = 510-cell portfolio replay. Aug13-14 remains quarantine diagnostic evidence and cannot be used to select a production candidate."
+}
