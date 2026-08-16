@@ -1,0 +1,90 @@
+{
+  "state": "R5_5_PRODUCTION_SAFETY_CONTRACT_ACTIVE_NOT_YET_CERTIFIED",
+  "principle": "No single bug, data fault, broker fault, node fault or infrastructure failure may create uncontrolled portfolio exposure. Uncertain state fails closed: NO_NEW_RISK.",
+  "separation_of_authority": {
+    "market_execution_engine": "Generates and manages market opportunities subject to safety authority.",
+    "risk_guardian": "Independent process using broker/account truth; may override, restrict, reduce or stop execution regardless of strategy conviction."
+  },
+  "risk_guardian_required_truth": [
+    "actual_broker_positions",
+    "actual_pending_orders",
+    "account_balance_equity_margin_free_margin",
+    "total_open_risk",
+    "aggregate_factor_and_correlated_exposure",
+    "portfolio_drawdown_and_intraday_loss",
+    "campaign_count_and_campaign_ownership",
+    "order_rate_and_retry_rate",
+    "abnormal_position_growth",
+    "data_freshness_and_server_synchronization",
+    "contract_specification_hash_and_symbol_mapping"
+  ],
+  "fail_closed_preconditions_for_new_risk": [
+    "ACCOUNT_STATE_RECONCILED",
+    "POSITION_STATE_RECONCILED",
+    "PENDING_ORDER_STATE_RECONCILED",
+    "MARKET_DATA_FRESH_AND_VALID",
+    "BROKER_CONNECTION_VALID",
+    "TARGET_SERVER_AUTHORIZED",
+    "SYMBOL_CONTRACT_CERTIFIED",
+    "RISK_STATE_RECONCILED",
+    "CAMPAIGN_OWNERSHIP_RECONCILED",
+    "EXECUTION_NODE_LEASE_VALID"
+  ],
+  "circuit_breaker_levels": {
+    "1_WARNING": "Abnormal condition; alert and restrict only unsafe actions.",
+    "2_RESTRICTED": "No new campaigns; existing campaigns may be managed defensively.",
+    "3_SAFE_MODE": "No new orders or add-ons; protect/reduce existing risk using deterministic emergency policy.",
+    "4_EMERGENCY_STOP": "Cancel eligible pending orders, block all new execution and reduce/close positions according to emergency policy.",
+    "5_FULL_ISOLATION": "Disconnect affected node/broker/strategy or entire system until reconciliation proves safe restart."
+  },
+  "independent_breakers_required": [
+    "MAX_INTRADAY_LOSS",
+    "MAX_PORTFOLIO_DRAWDOWN",
+    "ABNORMAL_LOSS_VELOCITY",
+    "CONSECUTIVE_LOSS_ANOMALY",
+    "UNEXPECTED_RISK_CONCENTRATION",
+    "MARGIN_STRESS",
+    "CORRELATION_CONVERGENCE",
+    "EXECUTION_COST_SPIKE",
+    "BROKER_SPREAD_EXPLOSION",
+    "ORDER_RATE_ANOMALY",
+    "POSITION_GROWTH_ANOMALY",
+    "DATA_STALENESS",
+    "BROKER_STATE_DIVERGENCE"
+  ],
+  "runaway_order_controls": [
+    "globally_unique_idempotent_instruction_id",
+    "broker_order_and_campaign_deduplication",
+    "single_execution_owner_lease_per_account_or_shard",
+    "bounded_retry_budget_with_exponential_backoff",
+    "retry_storm_kill_switch",
+    "stale_instruction_expiry",
+    "reconnect_replay_protection",
+    "expected_vs_actual_position_delta_check_before_and_after_order",
+    "lot_size_contract_decimal_sanity_check",
+    "maximum_order_and_position_growth_rate",
+    "duplicate_node_instruction_rejection",
+    "server_time_and_command_sequence_monotonicity"
+  ],
+  "risk_guardian_actions": [
+    "BLOCK_NEW_ORDERS",
+    "CANCEL_PENDING_ORDERS",
+    "DISABLE_ADDONS",
+    "REDUCE_EXPOSURE",
+    "CLOSE_SPECIFIC_CAMPAIGNS",
+    "LIQUIDATE_PORTFOLIO_UNDER_EMERGENCY_POLICY",
+    "DISABLE_STRATEGY",
+    "DISABLE_ASSET",
+    "DISABLE_BROKER_SERVER",
+    "SUSPEND_ENGINE"
+  ],
+  "restart_rule": "Restart is prohibited until broker/account/position/order/campaign/contract/data/risk state is independently reconciled and the triggering fault is cleared or explicitly quarantined.",
+  "certification_state": {
+    "risk_guardian_implemented": false,
+    "five_level_breaker_state_machine_implemented": false,
+    "runaway_order_protection_implemented": false,
+    "target_server_state_reconciliation_implemented": false,
+    "production_eligible": false
+  },
+  "governance": "This contract is a production eligibility requirement. It does not alter historical alpha selection, R5.4 control logic or R5.5 research outcomes."
+}
