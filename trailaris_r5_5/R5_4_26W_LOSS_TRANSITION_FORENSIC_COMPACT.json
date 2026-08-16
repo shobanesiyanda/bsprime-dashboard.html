@@ -1,0 +1,30 @@
+{
+  "state": "R5_4_26W_LOSS_TRANSITION_FORENSIC_COMPLETE",
+  "source": "certified trailaris-r5-4-frozen-26week-validation artifact; 2152 executed trades",
+  "tier_outcomes": {
+    "A": {"n":1893,"wins":757,"losses":465,"flats":671,"loss_rate":0.24564183835182252,"nonflat_win_rate":0.6194762684124386,"profit_factor":2.2236808354729107},
+    "B": {"n":259,"wins":99,"losses":40,"flats":120,"loss_rate":0.15444015444015444,"nonflat_win_rate":0.7122302158273381,"profit_factor":4.4235758398307645}
+  },
+  "loss_surfaces_nonexclusive": {
+    "weak_initial_thesis_quality_below_frozen_tierB_0_68": {"losses_flagged":118,"share_of_505_losses":0.23366336633663368},
+    "tierA_configuration_recent_state_tension": {"losses_flagged":374,"share_of_505_losses":0.7405940594059406,"definition":"Tier A and either causal trailing expected_r <= 0.10 or trailing_win_rate < 0.45; these are frozen Tier-B recent-evidence requirements and are diagnostic only, not a removal rule."},
+    "nonpositive_reliability_state_with_strategy_n_ge_12": {"losses_flagged":247,"share_of_505_losses":0.4891089108910891},
+    "execution_cost_pressure_above_frozen_tierB_0_35R": {"losses_flagged":0,"share_of_505_losses":0.0},
+    "management_rescue_candidate_mfe_ge_0_50R": {"losses_flagged":102,"share_of_505_losses":0.201980198019802,"note":"hindsight diagnostic only; no eventual loss reached the existing +0.75R protected-state threshold"},
+    "same_timestamp_capacity_regret": {"losses_flagged":36,"share_of_505_losses":0.07128712871287128,"definition":"a selected loss shared its exact decision timestamp with a candidate rejected by OPEN_RISK_BUDGET that later realized positive net_r"},
+    "same_timestamp_factor_regret": {"losses_flagged":19,"share_of_505_losses":0.03762376237623762},
+    "no_identified_surface": {"losses_flagged":31,"share_of_505_losses":0.061386138613861385}
+  },
+  "weak_vs_strong": {
+    "weak_lt5": {"weeks":5,"executions":284,"loss_rate":0.2640845070422535,"flat_rate":0.4295774647887324,"mean_net_r":0.15677389112732182,"promoted_candidates":633,"selected":284,"rejected":349,"selected_mean_quality":0.7676874322062074,"rejected_mean_quality":0.7076732654803808,"selected_mean_rank_score":0.47118525047508436,"rejected_mean_rank_score":0.4717439828254796,"selected_mean_reliability_score":0.07106285567601679,"rejected_mean_reliability_score":0.13631763296133173,"open_risk_budget_rejections":294,"open_risk_rejected_winners":147,"open_risk_rejected_losses":71,"open_risk_rejected_mean_net_r":0.2828670281036584},
+    "strong_ge10": {"weeks":16,"executions":1496,"loss_rate":0.23663101604278075,"flat_rate":0.3362299465240642,"mean_net_r":0.3769531561814441,"promoted_candidates":2143,"selected":1496,"rejected":647,"selected_mean_quality":0.7637880908016089,"rejected_mean_quality":0.7048488628366085,"selected_mean_rank_score":0.46460887705745013,"rejected_mean_rank_score":0.4557764013472425,"selected_mean_reliability_score":0.07204699735106732,"rejected_mean_reliability_score":0.11027067816783465,"open_risk_budget_rejections":271,"open_risk_rejected_winners":181,"open_risk_rejected_losses":71,"open_risk_rejected_mean_net_r":0.34209371569169994}
+  },
+  "engineering_interpretation": {
+    "primary_repair_surface": "configuration-generation memory / Tier-A proposal path",
+    "secondary_surface": "portfolio ordering and quality-adjusted capacity utilization",
+    "not_primary": ["execution cost degradation","flat frequency"],
+    "right_tail_warning": "The diagnostic flags are overlapping failure surfaces, not filters. Tier-A recent-state tension also contains economically important winners; suppressing it wholesale would violate right-tail preservation governance.",
+    "next_test": "bounded 112-day proposal memory with frozen 56-day reliability memory, 14-day validation, ranking, sizing, caps and management unchanged"
+  },
+  "hindsight_contract": "Realized payoff, MFE and rejected-candidate outcomes are used only after historical decisions for attribution. They are not fed backward into eligibility, ranking or risk."
+}
