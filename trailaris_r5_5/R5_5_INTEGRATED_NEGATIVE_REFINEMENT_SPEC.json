@@ -1,0 +1,52 @@
+{
+  "state": "AUTHORIZED_INTEGRATED_R5_5_REFINEMENT",
+  "control": "R5_4_FROZEN_26W_20260816",
+  "scope": {
+    "weeks": 26,
+    "routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510
+  },
+  "mandate": "Preserve winner mechanisms; explain and reduce the 505-loss population; explain and monetize structural flats; reduce negative P&L and drawdown without narrowing the universe or strategy set.",
+  "forensic_findings": {
+    "losses": {
+      "total": 505,
+      "no_development_mfe_lt_0_20r": 256,
+      "developed_0_20_to_0_50r": 147,
+      "giveback_0_50_to_0_75r": 102
+    },
+    "flats": {
+      "total": 791,
+      "exit_reason": "PROTECTED_STOP",
+      "all_reached_mfe_ge_0_75r": true,
+      "reached_mfe_ge_1_0r": 412,
+      "reached_mfe_ge_1_25r": 151,
+      "reached_mfe_ge_1_50r": 0,
+      "structural_dead_zone": "frozen protection floor remains 0R from +0.75R until +1.50R"
+    }
+  },
+  "integrated_repairs": {
+    "configuration_generation": "retain validated 112-day bounded proposal memory with frozen 56-day reliability memory and 14-day validation",
+    "negative_edge_entry_gate": {
+      "rule": "quality <= 0.76 AND reliability_asset_strategy_mean_r <= 0.05",
+      "causal_only": true,
+      "rationale": "broad 26-week cohort was negative expectancy and unstable across weeks"
+    },
+    "developed_loss_protection": {
+      "eligible_entry_state": "rank_score <= 0.42 AND reliability_score <= 0",
+      "trigger_r": 0.50,
+      "floor_r": -0.50,
+      "activation": "next M1 bar after trigger to avoid same-bar ordering assumptions"
+    },
+    "flat_monetization": {
+      "eligible_entry_state": "rank_score <= 0.42 AND reliability_score <= 0",
+      "trigger_r": 0.75,
+      "floor_r": 0.15,
+      "activation": "next M1 bar after trigger to avoid same-bar ordering assumptions"
+    },
+    "recovery_reallocation": "do not reintroduce previously failed broad recovery repair",
+    "adverse_displacement": "do not reintroduce previously higher-return but lower-quality broad adverse-displacement variant"
+  },
+  "causality": "MFE/MAE were used only to diagnose archetypes. Eligibility and live management use entry-time fields and contemporaneous price path only.",
+  "promotion": "No automatic promotion. Integrated result must be compared against both frozen R5.4 and the prior 112-day component leader."
+}
