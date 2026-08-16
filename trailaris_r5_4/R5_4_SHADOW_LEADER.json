@@ -1,31 +1,17 @@
 {
-  "state": "R5_4_ACTIVE_WORKING_LEADER",
+  "state": "R5_4_LOCKED_MARKET_EXECUTION_ENGINE",
   "candidate": "CAUSAL_HIERARCHICAL_RELIABILITY_GATE",
+  "lock_date": "2026-08-16",
   "base_checkpoint": "TRAILARIS_R5_3_PORTFOLIO_BASELINE_2026-08-16",
   "scope": {
     "routes": 34,
+    "routes_evaluated": 34,
     "routes_with_selected_trades": 33,
     "strategy_cells": 510,
-    "strategy_families_retained": 15
+    "strategy_families_retained": 15,
+    "full_universe_rule": "All 34 approved routes and all 510 route-strategy cells remain in every system-level evaluation. A route may legitimately execute zero trades when no candidate passes the locked causal/reliability/execution gates; zero execution is not scope removal."
   },
-  "baseline": {
-    "start_equity": 100.0,
-    "end_equity": 254.4465598357797,
-    "compounded_return_pct": 154.4465598357797,
-    "mean_week_pct": 9.004861168026705,
-    "median_week_pct": 10.760554729262605,
-    "weeks_ge5": 8,
-    "weeks_ge10": 6,
-    "max_weekly_dd_pct": -7.083721208160998,
-    "executed_trades": 1393,
-    "wins": 545,
-    "losses": 374,
-    "flat": 474,
-    "nonflat_win_rate": 0.5930359085963003,
-    "fresh_return_pct": 7.826996335713843,
-    "fresh_max_dd_pct": -0.9205380450303946
-  },
-  "active_r5_4": {
+  "locked_r5_4": {
     "start_equity": 100.0,
     "end_equity": 337.4231242104393,
     "compounded_return_pct": 237.42312421043928,
@@ -53,11 +39,19 @@
     "max_weekly_drawdown_improvement_percentage_points": 2.44607563325332,
     "fresh_return_change_percentage_points": -0.565349778571434
   },
-  "diagnostics": {
+  "xau_state": {
+    "route_present_in_34": true,
+    "route_strategy_cells_present": true,
+    "selected_trades_in_locked_r5_4": 0,
+    "separate_hfm_cent_full_portfolio_test_exists": true,
+    "target_server_certified": false,
+    "interpretation": "XAUUSD is fully included in the universe but did not qualify for execution in the exact locked leader. Do not force a gold trade merely to create 34 contributing assets. Continue target-server certification and causal XAU refinement separately without changing the locked R5.4 result."
+  },
+  "diagnostics_retained": {
     "fresh_holdout_regression_present": true,
     "fresh_holdout_regression_percentage_points": -0.565349778571434,
-    "status": "ACTIVE_REPAIR_TARGET_NOT_A_PROMOTION_BLOCK",
-    "note": "R5.4 is no longer blocked. Preserve R5.3 as the frozen forensic/control baseline. Continue refining R5.4 against full-universe, chronological, execution-authentic and counterfactual evidence; do not hide or waive the fresh-holdout regression."
+    "broker_target_server_certification_incomplete": true,
+    "current_r5_4_trade_level_loss_forensic_required": true
   },
-  "governance": "Validated R5.4 repairs may be retained and advanced without waiting for completion of the entire R5.3 forensic program. R5.3 remains immutable as control evidence."
+  "governance": "R5.4 is the locked Trailaris Market Execution Engine state. R5.3 remains immutable forensic/control evidence. Further improvements must be developed as post-R5.4 refinements or successor candidates and may not silently rewrite the locked R5.4 metrics, logic, universe, strategy estate or evidence record."
 }
