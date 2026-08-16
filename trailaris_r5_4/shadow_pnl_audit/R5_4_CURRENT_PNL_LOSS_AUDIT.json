@@ -1,0 +1,79 @@
+{
+  "state": "R5_4_CURRENT_SHADOW_PNL_AUDIT_COMPLETE",
+  "candidate": "variant_hierarchical_combined",
+  "scope": {
+    "routes": 34,
+    "strategy_cells": 510,
+    "strategy_families_retained": 15,
+    "assets_with_selected": 33
+  },
+  "portfolio": {
+    "end_equity": 337.4231242104393,
+    "compounded_return_pct": 237.42312421043928,
+    "weeks": 11,
+    "mean_week_pct": 11.742009304999732,
+    "median_week_pct": 12.49921336356319,
+    "weeks_ge5": 10,
+    "weeks_ge10": 9,
+    "max_weekly_dd_pct": -4.637645574907678,
+    "executed_trades": 1102,
+    "wins": 446,
+    "losses": 231,
+    "flat": 425,
+    "nonflat_win_rate": 0.6587887740029542,
+    "fresh_return_pct": 7.261646557142409,
+    "fresh_max_dd_pct": -0.5196525640746019,
+    "assets_with_selected": 33,
+    "beats_or_matches_return_baseline": true,
+    "fresh_not_regressed": false,
+    "losses_improved": true,
+    "drawdown_improved": true,
+    "promotion_eligible": false
+  },
+  "pnl": {
+    "gross_win_dollars": 354.80196469008155,
+    "gross_loss_dollars": 117.7897062053565,
+    "net_trade_pnl_dollars": 237.01225848472507,
+    "profit_factor": 3.0121644422095257,
+    "avg_win_dollars": 0.7955201002019766,
+    "median_win_dollars": 0.445268928571426,
+    "avg_loss_dollars": -0.5099121480751363,
+    "median_loss_dollars": -0.44997857142857356,
+    "loss_abs_p90_dollars": 0.9835949999999821,
+    "loss_abs_p95_dollars": 1.210889214285902,
+    "worst_loss_dollars": -1.564246428571703
+  },
+  "loss_path": {
+    "loss_count": 231,
+    "loss_rate_all_trades": 0.20961887477313976,
+    "loss_rate_nonflat": 0.3412112259970458,
+    "max_consecutive_losses": 5,
+    "worst_day_net_pnl": -2.3801867857139216,
+    "worst_day_losses": 11
+  },
+  "loss_source_proxies": {
+    "cost_flip_losses": 0,
+    "cost_flip_pnl": 0.0,
+    "positive_mfe_then_loss_ge_0_5R": 54,
+    "positive_mfe_then_loss_pnl": -24.204922279998865,
+    "severe_adverse_mae_ge_1_5R": 68,
+    "severe_adverse_pnl": -32.54136715000053,
+    "low_mfe_le_0_2R_losses": 107,
+    "low_mfe_pnl": -54.464019689642925
+  },
+  "risk_excursion": {
+    "loser_avg_mfe_r": 0.27453152410550297,
+    "loser_median_mfe_r": 0.24278459061084678,
+    "loser_avg_mae_r": 1.5182241636105336,
+    "loser_median_mae_r": 1.2831335793259875,
+    "loser_avg_giveback_r": 0.27453152410550297,
+    "winner_avg_giveback_r": 0.9447433454348978
+  },
+  "baseline_delta": {
+    "r5_3_losses": 374,
+    "losses_removed": 143,
+    "loss_reduction_pct": 38.23529411764706,
+    "trade_reduction_pct": 20.89016511127064,
+    "ending_equity_gain_vs_r5_3": 82.9765643746596
+  }
+}
