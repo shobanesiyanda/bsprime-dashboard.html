@@ -14,9 +14,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  integrated-replay-from-preserved-cache:
+  integrated-replay-from-preserved-evidence:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 120
     steps:
       - name: Checkout current R5.5 research branch
         uses: actions/checkout@v4
@@ -25,7 +25,8 @@ jobs:
           fetch-depth: 1
 
       - uses: actions/setup-python@v5
-        with: {python-version: '3.12'}
+        with:
+          python-version: '3.12'
 
       - name: Install dependencies
         run: python -m pip install --quiet pandas numpy
@@ -35,14 +36,14 @@ jobs:
           cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
           cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
 
-      - name: Restore preserved frozen 34-route M1 cache only
+      - name: Restore preserved frozen 34-route M1 cache
         uses: actions/cache/restore@v4
         with:
           path: trailaris_longcycle/raw_m1
           key: trailaris-r5-4-m1-34-20260119-20260814-v1
           fail-on-cache-miss: true
 
-      - name: Restore preserved frozen 510-cell factory audit
+      - name: Restore frozen 510-cell factory audit
         uses: actions/download-artifact@v4
         with:
           name: trailaris-r5-4-frozen-26week-validation
@@ -51,8 +52,19 @@ jobs:
           repository: shobanesiyanda/bsprime-dashboard.html
           run-id: 31964294244
 
-      - name: Verify immutable full-universe inputs
+      - name: Restore exact successful memory112 promotion estate
+        uses: actions/download-artifact@v4
+        with:
+          name: trailaris-r5-5-memory112-accelerated-26week
+          path: trailaris_r5_5/memory112_evidence
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: shobanesiyanda/bsprime-dashboard.html
+          run-id: 31969697656
+
+      - name: Verify preserved evidence estate
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p trailaris_longcycle/results
           cp trailaris_r5_5/frozen_control_evidence/results/R4_FACTORY_AUDIT.csv trailaris_longcycle/results/R4_FACTORY_AUDIT.csv
           python - <<'PY'
@@ -65,27 +77,27 @@ jobs:
           assert s['scope']=={'weeks':26,'routes':34,'strategy_families':15,'route_strategy_cells':510}
           a=pd.read_csv('trailaris_longcycle/results/R4_FACTORY_AUDIT.csv')
           assert len(a)==510 and a.strategy_family.nunique()==15
+          p=pd.read_csv('trailaris_r5_5/memory112_evidence/R5_5_MEMORY112_PROMOTED.csv')
+          assert len(p)==3417 and p.asset.nunique()==34 and pd.to_datetime(p.eval_week,utc=True).nunique()==26
           files=list(Path('trailaris_longcycle/raw_m1').glob('*_M1_normalized.csv'))
           assert len(files)==34, f'raw route files={len(files)}'
-          print('Preserved raw cache + frozen 510-cell audit verified.')
+          print('PASS: 34 raw paths + 510 factory cells + exact 3417 memory112 promotions / 26 weeks.')
           PY
 
-      - name: Rebuild identical factors and specs from preserved cache
-        run: |
-          python trailaris_longcycle/build_longcycle_factors.py --rawdir trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_longcycle/R5_5_INTEGRATED_FACTOR_EVIDENCE.json
-          python trailaris_r4/build_research_specs.py
+      - name: Rebuild research sizing specs only
+        run: python trailaris_r4/build_research_specs.py
 
-      - name: Execute one integrated full 26-week R5.5 refinement
+      - name: Execute one integrated downstream 26-week R5.5 replay
         env:
           PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
         run: |
           rm -rf trailaris_r5_5/integrated_negative_results
           mkdir -p trailaris_r5_5/integrated_negative_results
-          python trailaris_r5_5/run_longcycle_variant_accelerated.py \
+          python trailaris_r5_5/run_integrated_from_memory112_promoted.py \
             --rawdir trailaris_longcycle/raw_m1 \
             --specs trailaris_r4/research_proxy_specs.csv \
-            --variant trailaris_r5_5/longcycle_integrated_negative_refinement.py \
-            --name R5_5_INTEGRATED_NEGATIVE_REFINEMENT \
+            --promoted trailaris_r5_5/memory112_evidence/R5_5_MEMORY112_PROMOTED.csv \
+            --factory-audit trailaris_longcycle/results/R4_FACTORY_AUDIT.csv \
             --outdir trailaris_r5_5/integrated_negative_results
 
       - name: Upload full integrated evidence
