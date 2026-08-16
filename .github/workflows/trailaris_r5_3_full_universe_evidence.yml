@@ -1,0 +1,123 @@
+name: Trailaris R5.3 Full-Universe Evidence Continuation
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_3_full_universe_evidence.yml']
+permissions:
+  contents: write
+jobs:
+  r5_3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-ephemeral-research-20260815
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          python -m pip install --quiet pandas numpy
+          npm install --no-save --silent dukascopy-node@1.50.0 ws
+      - name: Reconstruct exact R4 and R5 engines
+        run: |
+          mkdir -p trailaris_r5_3
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          cat trailaris_r5/r5.part00 trailaris_r5/r5.part01 trailaris_r5/r5.part02 trailaris_r5/r5.part03 | base64 -d | gzip -d > trailaris_r5/trailaris_r5_capture_repair.py
+          PYTHONPATH=trailaris_r4 python -m py_compile trailaris_r4/trailaris_r4_full_universe_loop.py trailaris_r4/trailaris_r4_asset_adapter.py trailaris_r5/trailaris_r5_capture_repair.py trailaris_r5_3/build_released_event_factor_feed.py
+      - name: Restore full 34-route M1 cache through 14 August
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: trailaris_r5/raw_m1
+          key: trailaris-r5-m1-34-20260504-20260814-v1
+      - name: Reacquire all 34 global market paths if cache is absent
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf trailaris_r5/raw_m1 && mkdir -p trailaris_r5/raw_m1
+          sed "s#const RAW='trailaris_r4/raw_m1'#const RAW='trailaris_r5/raw_m1'#; s#2026-08-13T00:00:00Z#2026-08-15T00:00:00Z#" trailaris_r4/acquire_m1.js > trailaris_r5/acquire_m1.js
+          sed "s#OUT=Path('trailaris_r4/raw_m1')#OUT=Path('trailaris_r5/raw_m1')#; s#END=date(2026,8,12)#END=date(2026,8,14)#; s#trailaris_r4/coverage_m1_binance.json#trailaris_r5/coverage_m1_binance.json#" trailaris_r4/acquire_binance_m1.py > trailaris_r5/acquire_binance_m1.py
+          node trailaris_r5/acquire_m1.js > trailaris_r5_3/acquire_node.log 2>&1 & P1=$!
+          python trailaris_r5/acquire_binance_m1.py > trailaris_r5_3/acquire_binance.log 2>&1 & P2=$!
+          wait $P1; wait $P2
+      - name: Assert 34-route market-path scope
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import pandas as pd, json
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          rows=[]
+          for a in routes:
+            p=Path('trailaris_r5/raw_m1')/f'{a}_M1_normalized.csv'
+            if not p.exists(): rows.append({'asset':a,'state':'MISSING','rows':0}); continue
+            d=pd.read_csv(p,usecols=['timestamp','source']); ts=pd.to_datetime(d.timestamp,utc=True,errors='coerce')
+            rows.append({'asset':a,'state':'PASS' if len(d)>100 and not ts.isna().any() else 'FAIL','rows':len(d),'source':str(d.source.dropna().iloc[0]) if d.source.notna().any() else ''})
+          q=pd.DataFrame(rows); q.to_csv('trailaris_r5_3/34_ROUTE_MARKET_PATH_AUDIT.csv',index=False)
+          s={'routes_required':34,'routes_pass':int((q.state=='PASS').sum()),'gate_pass':bool((q.state=='PASS').all())}
+          Path('trailaris_r5_3/34_ROUTE_MARKET_PATH_AUDIT.json').write_text(json.dumps(s,indent=2)); print(json.dumps(s,indent=2)); assert s['gate_pass']
+          PY
+      - name: Build causal released-event evidence into factor feed
+        run: |
+          python trailaris_r5_3/build_released_event_factor_feed.py --rawdir trailaris_r5/raw_m1 --out trailaris_r5/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_r5_3/EVENT_RESPONSE_EVIDENCE_AUDIT.csv
+      - name: Build explicitly non-certified research sizing specs
+        run: |
+          python trailaris_r4/build_research_specs.py
+          cp trailaris_r4/research_proxy_specs.csv trailaris_r5_3/research_proxy_specs.csv
+      - name: Execute full R4 34-route 510-cell factory with released-event evidence
+        env:
+          PYTHONPATH: trailaris_r4
+        run: |
+          rm -rf trailaris_r5_3/r4_results && mkdir -p trailaris_r5_3/r4_results
+          python trailaris_r4/trailaris_r4_full_universe_loop.py research-proxy --rawdir trailaris_r5/raw_m1 --specs trailaris_r5_3/research_proxy_specs.csv --outdir trailaris_r5_3/r4_results | tee trailaris_r5_3/r4.log
+      - name: Enforce full universe and full strategy factory retention
+        run: |
+          python - <<'PY'
+          import json,pandas as pd
+          from pathlib import Path
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          fams=['SUPPLY_DEMAND','LIQUIDITY_STRUCTURE','TREND_FOLLOWING','MOMENTUM_PULLBACK','BREAKOUT_RETEST','MEAN_REVERSION','VOLATILITY_REGIME','SESSION_TIME','ORDER_FLOW_MICROSTRUCTURE','RELATIVE_VALUE_PAIRS','INTERMARKET','CARRY_VALUE','CRYPTO_FUNDING_BASIS','EVENT_RESPONSE','ENSEMBLE_REGIME']
+          a=pd.read_csv('trailaris_r5_3/r4_results/04b_strategy_factory_510_audit.csv')
+          cov=pd.read_csv('trailaris_r5_3/r4_results/04_asset_strategy_coverage.csv')
+          event=a[a.strategy_family=='EVENT_RESPONSE']
+          statecol='audit_state' if 'audit_state' in a.columns else ('state' if 'state' in a.columns else None)
+          triggered=0
+          if statecol: triggered=int(event[statecol].astype(str).str.contains('TRIGGER|EXECUT',case=False,regex=True).sum())
+          s={'assets_required':34,'assets_present':int(cov.asset.nunique()),'strategy_cells_required':510,'strategy_cells_present':len(a),'strategy_families_required':15,'strategy_families_present':int(a.strategy_family.nunique()),'family_set_match':set(a.strategy_family)==set(fams),'route_set_match':set(cov.asset)==set(routes),'event_response_triggered_cells':triggered,'non_native_cells_retained':int(a.astype(str).apply(lambda c:c.str.contains('NON_NATIVE',case=False).any(),axis=1).sum())}
+          s['scope_gate_pass']=s['assets_present']==34 and s['strategy_cells_present']==510 and s['strategy_families_present']==15 and s['family_set_match'] and s['route_set_match']
+          Path('trailaris_r5_3/FULL_510_SCOPE_AUDIT.json').write_text(json.dumps(s,indent=2)); print(json.dumps(s,indent=2)); assert s['scope_gate_pass']
+          PY
+      - name: Execute causal R5 repair on the same full-universe evidence estate
+        env:
+          PYTHONPATH: trailaris_r4
+        run: |
+          rm -rf trailaris_r5_3/r5_results && mkdir -p trailaris_r5_3/r5_results
+          python trailaris_r5/trailaris_r5_capture_repair.py --rawdir trailaris_r5/raw_m1 --specs trailaris_r5_3/research_proxy_specs.csv --outdir trailaris_r5_3/r5_results --start 100 | tee trailaris_r5_3/r5.log
+      - name: Final R5.3 evidence firewall and scope audit
+        run: |
+          python - <<'PY'
+          import json,pandas as pd
+          from pathlib import Path
+          r4=json.load(open('trailaris_r5_3/FULL_510_SCOPE_AUDIT.json'))
+          s=json.load(open('trailaris_r5_3/r5_results/R5_STATUS.json'))
+          assets=pd.read_csv('trailaris_r5_3/r5_results/R5_34_asset_state.csv')
+          out={'state':'R5_3_FULL_UNIVERSE_EVIDENCE_CONTINUATION_EXECUTED','routes':s.get('routes'),'asset_rows':len(assets),'all_assets_active':bool((assets.state=='ACTIVE').all()),'strategy_cells_present':r4['strategy_cells_present'],'strategy_families_present':r4['strategy_families_present'],'event_response_triggered_cells':r4['event_response_triggered_cells'],'market_path_evidence_class':s.get('evidence_class'),'broker_certified':False,'performance_claim_allowed':False,'reason':'Global historical market paths and released-event evidence are research evidence; target execution venue contract, commission, slippage, financing and distributed executable bid/ask certification remain separate R5 promotion gates.'}
+          out['scope_pass']=out['routes']==34 and out['asset_rows']==34 and out['all_assets_active'] and out['strategy_cells_present']==510 and out['strategy_families_present']==15
+          Path('trailaris_r5_3/R5_3_STATUS.json').write_text(json.dumps(out,indent=2)); print(json.dumps(out,indent=2)); assert out['scope_pass']
+          PY
+      - name: Commit compact R5.3 evidence
+        if: always()
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_r5_3/34_ROUTE_MARKET_PATH_AUDIT.csv trailaris_r5_3/34_ROUTE_MARKET_PATH_AUDIT.json trailaris_r5_3/EVENT_RESPONSE_EVIDENCE_AUDIT.csv trailaris_r5_3/EVENT_RESPONSE_EVIDENCE_AUDIT.csv.json trailaris_r5_3/FULL_510_SCOPE_AUDIT.json trailaris_r5_3/R5_3_STATUS.json trailaris_r5_3/r4.log trailaris_r5_3/r5.log 2>/dev/null || true
+          git add -f trailaris_r5_3/r4_results/STATUS.json trailaris_r5_3/r4_results/04_asset_strategy_coverage.csv trailaris_r5_3/r4_results/04b_strategy_factory_510_audit.csv trailaris_r5_3/r4_results/14_untouched_test_weekly.csv trailaris_r5_3/r4_results/16_untouched_capture_attribution.csv 2>/dev/null || true
+          git add -f trailaris_r5_3/r5_results/R5_STATUS.json trailaris_r5_3/r5_results/R5_34_asset_state.csv trailaris_r5_3/r5_results/R5_walkforward_weekly.csv trailaris_r5_3/r5_results/R5_capture_attribution.csv 2>/dev/null || true
+          git commit -m 'test: R5.3 full-universe evidence continuation [skip ci]' || true
+          git push origin HEAD:trailaris-ephemeral-research-20260815
