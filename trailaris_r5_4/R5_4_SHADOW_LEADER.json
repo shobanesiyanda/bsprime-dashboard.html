@@ -1,0 +1,26 @@
+{
+  "state": "R5_4_SHADOW_LEADER_NOT_PROMOTED",
+  "candidate": "CAUSAL_HIERARCHICAL_RELIABILITY_GATE",
+  "base_checkpoint": "TRAILARIS_R5_3_PORTFOLIO_BASELINE_2026-08-16",
+  "scope": {"routes":34,"routes_with_selected_trades":33,"strategy_cells":510,"strategy_families_retained":15},
+  "baseline": {
+    "start_equity":100.0,"end_equity":254.4465598357797,"compounded_return_pct":154.4465598357797,
+    "mean_week_pct":9.004861168026705,"median_week_pct":10.760554729262605,"weeks_ge5":8,"weeks_ge10":6,
+    "max_weekly_dd_pct":-7.083721208160998,"executed_trades":1393,"wins":545,"losses":374,"flat":474,
+    "nonflat_win_rate":0.5930359085963003,"fresh_return_pct":7.826996335713843,"fresh_max_dd_pct":-0.9205380450303946
+  },
+  "shadow_leader": {
+    "start_equity":100.0,"end_equity":337.4231242104393,"compounded_return_pct":237.42312421043928,
+    "mean_week_pct":11.742009304999732,"median_week_pct":12.49921336356319,"weeks_ge5":10,"weeks_ge10":9,
+    "max_weekly_dd_pct":-4.637645574907678,"executed_trades":1102,"wins":446,"losses":231,"flat":425,
+    "nonflat_win_rate":0.6587887740029542,"fresh_return_pct":7.261646557142409,"fresh_max_dd_pct":-0.5196525640746019
+  },
+  "improvement_vs_baseline": {
+    "ending_equity_usd":82.9765643746596,"compounded_return_percentage_points":82.97656437465958,
+    "losses_removed":143,"nonflat_win_rate_percentage_points":6.57528654066539,"max_weekly_drawdown_improvement_percentage_points":2.44607563325332,
+    "fresh_return_change_percentage_points":-0.565349778571434
+  },
+  "promotion_state":"REJECTED_BY_STRICT_NON_REGRESSION_GATE",
+  "promotion_blocker":"Fresh holdout return 7.2616465571% is below hard-locked R5.3 fresh holdout 7.8269963357%.",
+  "hard_lock":"R5.3 remains promoted baseline. R5.4 shadow leader is retained for refinement and may not overwrite R5.3 until every behavioral non-regression gate passes."
+}
