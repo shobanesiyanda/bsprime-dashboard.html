@@ -1,7 +1,8 @@
 {
   "release_id": "TRAILARIS_R5_5_FINAL_20260817",
   "source_branch": "trailaris-ephemeral-research-20260815",
-  "intended_snapshot_branch": "trailaris-r5-5-final-20260817",
-  "source_head_after_closure": "33646676cfb176a10ca8c558a9fc6bc8ebd0deb3",
-  "purpose": "Immutable final R5.5 snapshot pointer. Future Trailaris work must branch into a separately versioned successor/update."
+  "snapshot_branch": "trailaris-r5-5-final-20260817",
+  "snapshot_created_from_closed_state": true,
+  "r5_5_status": "FINAL_IMMUTABLE_RELEASE",
+  "purpose": "Frozen final R5.5 snapshot. Future Trailaris work must use a separately versioned successor or update and must not mutate this release."
 }
