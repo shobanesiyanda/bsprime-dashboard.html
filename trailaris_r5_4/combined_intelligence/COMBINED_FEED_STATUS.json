@@ -1,0 +1,11 @@
+{
+  "event_rows": 342,
+  "funding_rows": 1265,
+  "combined_rows": 1607,
+  "assets_with_event": 29,
+  "assets_with_funding": 5,
+  "evidence_states": [
+    "RELEASED_OFFICIAL_CALENDAR_CAUSAL_POST_EVENT",
+    "VERIFIED_BINANCE_PUBLIC_ARCHIVE_FUNDING_BASIS_CAUSAL"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "baseline_end_equity": 254.4465598357797,
+  "new_end_equity": 224.1599403081311,
+  "baseline_return_pct": 154.4465598357797,
+  "new_return_pct": 124.15994030813108,
+  "baseline_mean_week_pct": 9.004861168026705,
+  "new_mean_week_pct": 7.751685787589751,
+  "baseline_max_weekly_dd_pct": -7.083721208160998,
+  "new_max_weekly_dd_pct": -6.957375821606182,
+  "baseline_fresh_return_pct": 7.826996335713843,
+  "new_fresh_return_pct": 8.681570182142128,
+  "executed_trades": 1271,
+  "wins": 493,
+  "losses": 347,
+  "flat": 431,
+  "nonflat_win_rate": 0.5869047619047619,
+  "assets_with_selected": 33,
+  "return_nonregression": false,
+  "fresh_nonregression": true,
+  "promotion_candidate": false
+}
