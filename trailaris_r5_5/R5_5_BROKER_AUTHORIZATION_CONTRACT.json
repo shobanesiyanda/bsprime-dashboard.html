@@ -1,0 +1,42 @@
+{
+  "state": "R5_5_BROKER_AUTHORIZATION_CONTRACT_ACTIVE_FAIL_CLOSED",
+  "authorization_key": ["broker","broker_legal_entity","server","account_type","broker_symbol","strategy_family"],
+  "rule": "Production execution is enabled only for an exact authorization key that has passed contract, availability and execution-quality certification. Broker brand alone is never sufficient.",
+  "required_checks": [
+    "instrument_available",
+    "symbol_alias_resolved",
+    "contract_size_exact",
+    "tick_size_exact",
+    "tick_value_exact",
+    "volume_min_exact",
+    "volume_step_exact",
+    "volume_max_exact",
+    "spread_distribution_certified",
+    "commission_certified",
+    "swap_or_funding_certified",
+    "margin_and_leverage_certified",
+    "stop_level_certified",
+    "freeze_level_certified",
+    "trading_sessions_certified",
+    "execution_mode_certified",
+    "filling_rules_certified",
+    "slippage_distribution_certified",
+    "partial_fill_behaviour_certified",
+    "rejection_behaviour_certified",
+    "latency_distribution_certified",
+    "fragmentation_or_liquidity_behaviour_certified",
+    "strategy_family_eligible"
+  ],
+  "quality_first_routing": "If multiple authorized execution routes exist, rank by expected net execution quality after spreads, commission, funding, slippage, fill probability, latency, margin efficiency and rejection risk. Introducing-broker remuneration is never allowed to promote an inferior route.",
+  "unsupported_environment_policy": "FAIL_CLOSED_NO_LIVE_TRAILARIS_EXECUTION; subscriber must use a Trailaris-authorized environment.",
+  "current_evidence": {
+    "source":"trailaris_r5_4/R5_4_BROKER_ROUTE_CERTIFICATION_STATUS.json",
+    "brokers_researched":7,
+    "broker_route_cells":238,
+    "scope_eligible_candidate_cells":179,
+    "confirmed_available_cells":0,
+    "certified_cells":0,
+    "production_state":"NOT_CERTIFIED"
+  },
+  "governance": "This contract does not force Trailaris through one jurisdiction or broker. Authorization is granular to the exact legal entity/server/account/symbol/strategy execution environment."
+}
