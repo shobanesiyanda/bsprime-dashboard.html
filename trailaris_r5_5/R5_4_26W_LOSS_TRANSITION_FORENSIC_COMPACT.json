@@ -2,8 +2,8 @@
   "state": "R5_4_26W_LOSS_TRANSITION_FORENSIC_COMPLETE",
   "source": "certified trailaris-r5-4-frozen-26week-validation artifact; 2152 executed trades",
   "tier_outcomes": {
-    "A": {"n":1893,"wins":757,"losses":465,"flats":671,"loss_rate":0.24564183835182252,"nonflat_win_rate":0.6194762684124386,"profit_factor":2.2236808354729107},
-    "B": {"n":259,"wins":99,"losses":40,"flats":120,"loss_rate":0.15444015444015444,"nonflat_win_rate":0.7122302158273381,"profit_factor":4.4235758398307645}
+    "A": {"n":1893,"wins":757,"losses":465,"flats":671,"loss_rate":0.24564183835182252,"nonflat_win_rate":0.6194762684124386,"pnl_profit_factor":2.697684407619878,"r_unit_profit_factor":2.2236808354729107},
+    "B": {"n":259,"wins":99,"losses":40,"flats":120,"loss_rate":0.15444015444015444,"nonflat_win_rate":0.7122302158273381,"pnl_profit_factor":5.113476613173536,"r_unit_profit_factor":4.4235758398307645}
   },
   "loss_surfaces_nonexclusive": {
     "weak_initial_thesis_quality_below_frozen_tierB_0_68": {"losses_flagged":118,"share_of_505_losses":0.23366336633663368},
@@ -26,5 +26,6 @@
     "right_tail_warning": "The diagnostic flags are overlapping failure surfaces, not filters. Tier-A recent-state tension also contains economically important winners; suppressing it wholesale would violate right-tail preservation governance.",
     "next_test": "bounded 112-day proposal memory with frozen 56-day reliability memory, 14-day validation, ranking, sizing, caps and management unchanged"
   },
+  "metric_note": "pnl_profit_factor uses realized net_pnl and is comparable to portfolio PF; r_unit_profit_factor uses unweighted realized net_r and is retained only for forensic payoff-shape attribution.",
   "hindsight_contract": "Realized payoff, MFE and rejected-candidate outcomes are used only after historical decisions for attribution. They are not fed backward into eligibility, ranking or risk."
 }
