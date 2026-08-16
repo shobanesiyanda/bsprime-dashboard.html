@@ -29,13 +29,17 @@ jobs:
           path: trailaris_r5/raw_m1
           key: trailaris-r5-m1-34-20260504-20260814-v1
           fail-on-cache-miss: true
+      - name: Rebuild exact R5.3 causal event-factor feed
+        run: |
+          mkdir -p trailaris_r5_metrics
+          python trailaris_r5_3/build_released_event_factor_feed.py --rawdir trailaris_r5/raw_m1 --out trailaris_r5/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_r5_metrics/EVENT_FACTOR_RECONCILIATION_AUDIT.csv
       - name: Build research sizing specs
         run: python trailaris_r4/build_research_specs.py
-      - name: Replay exact R5 baseline and preserve full ledger
+      - name: Replay exact R5.3 baseline and preserve full ledger
         env:
           PYTHONPATH: trailaris_r4
         run: |
-          rm -rf trailaris_r5_metrics && mkdir -p trailaris_r5_metrics/results
+          rm -rf trailaris_r5_metrics/results && mkdir -p trailaris_r5_metrics/results
           python trailaris_r5/trailaris_r5_capture_repair.py --rawdir trailaris_r5/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --outdir trailaris_r5_metrics/results --start 100
       - name: Aggregate exact trades lots pips points and IB scenarios
         run: |
@@ -48,6 +52,8 @@ jobs:
           de=pd.read_csv(p/'R5_decisions.csv')
           w=pd.read_csv(p/'R5_walkforward_weekly.csv')
           st=json.load(open(p/'R5_STATUS.json'))
+          EXPECTED=254.4465598357797
+          assert abs(float(st['end_equity'])-EXPECTED) < 1e-9, f"BASELINE RECONCILIATION FAIL: {st['end_equity']} != {EXPECTED}"
           for c in ['entry_price','exit_price','lot','direction','net_pnl','risk_cash']:
               if c in ev: ev[c]=pd.to_numeric(ev[c],errors='coerce')
           fx={'EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF'}
@@ -75,6 +81,7 @@ jobs:
           ib_side={str(x):(2*total_lots)*x for x in [0.5,1,2,3]}
           summary={
             'baseline_id':'TRAILARIS_R5_3_PORTFOLIO_BASELINE_2026-08-16',
+            'baseline_reconciled':True,
             'evidence_class':st['evidence_class'],
             'assets_in_universe':34,
             'assets_with_executed_trades':int(ev.asset.nunique()),
@@ -82,7 +89,7 @@ jobs:
             'selected_decisions':int(pd.to_numeric(de.selected,errors='coerce').fillna(0).astype(bool).sum()) if 'selected' in de else None,
             'total_lots_opened':total_lots,
             'total_round_turn_lot_sides':2*total_lots,
-            'total_net_pnl_dollars':float(ev.net_pnl.sum()),
+            'total_net_pnl_event_sum_dollars':float(ev.net_pnl.sum()),
             'winning_trades':int((ev.net_pnl>0).sum()),
             'losing_trades':int((ev.net_pnl<0).sum()),
             'flat_trades':int((ev.net_pnl==0).sum()),
@@ -92,7 +99,7 @@ jobs:
             'nonfx_note':'Non-FX movement is reported per asset in raw price points; raw points are not summed across unlike instruments because one BTCUSD point, one index point, one energy point and one synthetic point are not economically equivalent.',
             'ib_scenario_usd_per_round_turn_lot':ib_round,
             'ib_scenario_usd_per_side_lot':ib_side,
-            'ib_truth_constraint':'Potential only. Exact IB earnings require the selected execution broker, account type, instrument-specific rebate schedule, eligibility rules and whether remuneration is per round-turn lot, per side, spread share or commission share.',
+            'ib_truth_constraint':'Potential only. Exact IB earnings require the selected execution broker, account type, instrument-specific rebate schedule, eligibility rules and whether remuneration is per round-turn lot, per side, turnover, spread share or commission share.',
             'start_equity':float(st['start_equity']),'end_equity':float(st['end_equity']),'compounded_return_pct':100*(float(st['end_equity'])/float(st['start_equity'])-1),
             'weekly_compounding_verified':bool(np.allclose(w.start_equity.iloc[1:].to_numpy(float),w.end_equity.iloc[:-1].to_numpy(float),rtol=0,atol=1e-9)),
             'weekly_path':w[['week_start','start_equity','end_equity','weekly_return_pct']].to_dict('records')
@@ -104,6 +111,6 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -f trailaris_r5_metrics/R5_BASELINE_EXACT_TRADING_METRICS.json trailaris_r5_metrics/R5_BASELINE_BY_ASSET_TRADING_METRICS.csv
-          git commit -m 'audit: exact R5 baseline trade lot pip point metrics [skip ci]' || true
+          git add -f trailaris_r5_metrics/R5_BASELINE_EXACT_TRADING_METRICS.json trailaris_r5_metrics/R5_BASELINE_BY_ASSET_TRADING_METRICS.csv trailaris_r5_metrics/EVENT_FACTOR_RECONCILIATION_AUDIT.csv trailaris_r5_metrics/EVENT_FACTOR_RECONCILIATION_AUDIT.csv.json
+          git commit -m 'audit: reconciled exact R5.3 baseline trade lot pip point metrics [skip ci]' || true
           git push origin HEAD:trailaris-ephemeral-research-20260815
