@@ -1,18 +1,21 @@
 {
-  "state": "HARD_LOCKED_SINGLE_ACTIVE_LANE",
-  "active_lane": "R5_5_26W_FORENSIC_ATTRIBUTION",
+  "state": "HARD_LOCKED_SINGLE_ACTIVE_REFINEMENT_LANE",
+  "active_lane": "R5_5_INTEGRATED_REFINEMENT_FROM_V2_BASELINE",
   "active_branch": "trailaris-ephemeral-research-20260815",
-  "frozen_control": "R5_4_FROZEN_26W_20260816",
-  "frozen_control_end_equity": 1136.4556497760627,
-  "frozen_control_return_pct": 1036.4556497760627,
-  "executed_trades": 2152,
-  "wins": 856,
-  "losses": 505,
-  "flats": 791,
+  "active_baseline": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
+  "active_baseline_end_equity": 1366.8938578865148,
+  "active_baseline_return_pct": 1266.8938578865148,
+  "executed_trades": 2136,
+  "wins": 1221,
+  "losses": 478,
+  "flats": 437,
+  "positive_weeks": 26,
+  "negative_weeks": 0,
   "routes_required": 34,
   "strategy_families_required": 15,
   "route_strategy_cells_required": 510,
-  "sole_workflow_launcher": ".github/workflows/trailaris_r5_5_26w_forensic_attribution.yml",
+  "historical_control": "R5_4_FROZEN_26W_20260816",
+  "historical_control_preserved": true,
   "actions_policy": {
     "automatic_trigger": false,
     "baseline_rerun": "PROHIBITED",
@@ -21,6 +24,6 @@
     "optimization_sweep": "PROHIBITED_WITHOUT_EXPLICIT_USER_AUTHORIZATION",
     "legacy_lane_reactivation": "PROHIBITED"
   },
-  "evidence_policy": "Historical scripts and result artifacts remain audit evidence; obsolete workflow launchers are removed so they cannot be accidentally executed.",
-  "continuation_rule": "Advance by forensic attribution of the completed frozen 26-week evidence estate. Do not regress to an earlier lane or frontier."
+  "baseline_governance": "All future refinement starts from the locked V2 baseline. No silent scope narrowing, architecture reversion or baseline replacement is permitted. A replacement baseline requires explicit user authorization.",
+  "continuation_rule": "Refine the remaining 478 losses, 437 flat outcomes, liquidity/runway qualification, profit banking and weekly drawdown while preserving the validated winner mechanisms and full 34x15x510 scope."
 }
