@@ -1,16 +1,14 @@
 name: Trailaris R5.5 Lane 1E Authentic Clean Management
 on:
-  push:
-    branches: [trailaris-ephemeral-research-20260815]
-    paths:
-      - 'trailaris_r5_5/lane1e_authentic_clean_management.py'
-      - 'trailaris_r5_5/lane1d_results/R5_5_LANE1D_STATUS.json'
-      - '.github/workflows/trailaris_r5_5_lane1e_authentic_clean.yml'
+  workflow_run:
+    workflows: ['Trailaris R5.5 Lane 1D Holdout Clean Management']
+    types: [completed]
   workflow_dispatch:
 permissions:
   contents: write
 jobs:
   replay:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
