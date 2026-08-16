@@ -1,0 +1,90 @@
+name: Trailaris R5.4 Combined Intelligence Full Replay
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_4_combined_intelligence_replay.yml']
+permissions:
+  contents: write
+jobs:
+  combined:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-ephemeral-research-20260815}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --quiet pandas numpy
+      - name: Reconstruct exact R4/R5 engines
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          cat trailaris_r5/r5.part00 trailaris_r5/r5.part01 trailaris_r5/r5.part02 trailaris_r5/r5.part03 | base64 -d | gzip -d > trailaris_r5/trailaris_r5_capture_repair.py
+      - uses: actions/cache@v4
+        with:
+          path: trailaris_r5/raw_m1
+          key: trailaris-r5-m1-34-20260504-20260814-v1
+          fail-on-cache-miss: true
+      - name: Build combined causal intelligence feed
+        run: |
+          mkdir -p trailaris_r5_4/combined_intelligence
+          python trailaris_r5_3/build_released_event_factor_feed.py --rawdir trailaris_r5/raw_m1 --out trailaris_r5_4/combined_intelligence/EVENT.csv --audit trailaris_r5_4/combined_intelligence/EVENT_AUDIT.csv
+          cp trailaris_r5_4/crypto_funding/CRYPTO_FUNDING_BASIS_FACTOR_FEED.csv trailaris_r5_4/combined_intelligence/FUNDING.csv
+          python - <<'PY'
+          import pandas as pd,json
+          from pathlib import Path
+          a=pd.read_csv('trailaris_r5_4/combined_intelligence/EVENT.csv');b=pd.read_csv('trailaris_r5_4/combined_intelligence/FUNDING.csv')
+          cols=['timestamp','asset','orderflow_score','carry_score','funding_score','event_score','evidence_state']
+          for d in (a,b):
+            for c in cols:
+              if c not in d:d[c]=pd.NA
+          z=pd.concat([a[cols],b[cols]],ignore_index=True);z['timestamp']=pd.to_datetime(z.timestamp,utc=True);z=z.sort_values(['timestamp','asset']).drop_duplicates(['timestamp','asset','evidence_state'])
+          z.to_csv('trailaris_r5/raw_m1/Trailaris_R3_FactorFeed.csv',index=False)
+          s={'event_rows':len(a),'funding_rows':len(b),'combined_rows':len(z),'assets_with_event':int(a.asset.nunique()),'assets_with_funding':int(b.asset.nunique()),'evidence_states':sorted(z.evidence_state.dropna().unique().tolist())}
+          Path('trailaris_r5_4/combined_intelligence/COMBINED_FEED_STATUS.json').write_text(json.dumps(s,indent=2));print(json.dumps(s,indent=2))
+          assert len(a)==342 and b.asset.nunique()==5 and len(z)==len(a)+len(b)
+          PY
+          python trailaris_r4/build_research_specs.py
+      - name: Run full R4 34-route 510-cell factory with combined intelligence
+        env: {PYTHONPATH: trailaris_r4}
+        run: |
+          rm -rf trailaris_r5_4/combined_intelligence/r4_results && mkdir -p trailaris_r5_4/combined_intelligence/r4_results
+          python trailaris_r4/trailaris_r4_full_universe_loop.py research-proxy --rawdir trailaris_r5/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --outdir trailaris_r5_4/combined_intelligence/r4_results
+      - name: Audit funding family activation and full scope
+        run: |
+          python - <<'PY'
+          import pandas as pd,json
+          from pathlib import Path
+          a=pd.read_csv('trailaris_r5_4/combined_intelligence/r4_results/04b_strategy_factory_510_audit.csv')
+          f=a[a.strategy_family=='CRYPTO_FUNDING_BASIS']; ev=a[a.strategy_family=='EVENT_RESPONSE']
+          s={'strategy_cells':len(a),'families':int(a.strategy_family.nunique()),'funding_cells_triggered':int((f.state=='EXECUTED_TRIGGERED').sum()),'funding_cells_native':int(f.applicable.sum()) if 'applicable' in f else 5,'event_cells_triggered':int((ev.state=='EXECUTED_TRIGGERED').sum()),'scope_pass':len(a)==510 and a.strategy_family.nunique()==15}
+          Path('trailaris_r5_4/combined_intelligence/STRATEGY_ACTIVATION.json').write_text(json.dumps(s,indent=2));print(json.dumps(s,indent=2));assert s['scope_pass'] and s['funding_cells_triggered']>0
+          PY
+      - name: Run causal R5 full-universe combined-intelligence replay
+        env: {PYTHONPATH: trailaris_r4}
+        run: |
+          rm -rf trailaris_r5_4/combined_intelligence/r5_results && mkdir -p trailaris_r5_4/combined_intelligence/r5_results
+          python trailaris_r5/trailaris_r5_capture_repair.py --rawdir trailaris_r5/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --outdir trailaris_r5_4/combined_intelligence/r5_results --start 100
+      - name: Compare against hard-locked R5.3 baseline
+        run: |
+          python - <<'PY'
+          import json,pandas as pd
+          from pathlib import Path
+          base=json.load(open('trailaris_r5_3/R5_3_PERFORMANCE_BASELINE_LOCK.json'))['portfolio_baseline'];st=json.load(open('trailaris_r5_4/combined_intelligence/r5_results/R5_STATUS.json'));ev=pd.read_csv('trailaris_r5_4/combined_intelligence/r5_results/R5_events.csv');w=pd.read_csv('trailaris_r5_4/combined_intelligence/r5_results/R5_walkforward_weekly.csv')
+          wins=int((ev.net_pnl>0).sum());losses=int((ev.net_pnl<0).sum());flat=int((ev.net_pnl==0).sum())
+          cmp={'baseline_end_equity':base['ending_equity'],'new_end_equity':st['end_equity'],'baseline_return_pct':base['compounded_return_pct'],'new_return_pct':100*(st['end_equity']/st['start_equity']-1),'baseline_mean_week_pct':base['mean_weekly_return_pct'],'new_mean_week_pct':st['mean_week_pct'],'baseline_max_weekly_dd_pct':base['max_weekly_drawdown_pct'],'new_max_weekly_dd_pct':st['max_weekly_dd_pct'],'baseline_fresh_return_pct':base['fresh_holdout_return_pct'],'new_fresh_return_pct':st['fresh_return_pct'],'executed_trades':len(ev),'wins':wins,'losses':losses,'flat':flat,'nonflat_win_rate':wins/(wins+losses) if wins+losses else 0,'assets_with_selected':st['assets_with_selected']}
+          cmp['return_nonregression']=cmp['new_end_equity']>=cmp['baseline_end_equity']-1e-9
+          cmp['fresh_nonregression']=cmp['new_fresh_return_pct']>=cmp['baseline_fresh_return_pct']-1e-9
+          cmp['promotion_candidate']=cmp['return_nonregression'] and cmp['fresh_nonregression']
+          Path('trailaris_r5_4/combined_intelligence/R5_4_COMBINED_INTELLIGENCE_COMPARISON.json').write_text(json.dumps(cmp,indent=2));print(json.dumps(cmp,indent=2))
+          PY
+      - name: Commit compact results safely
+        if: always()
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_r5_4/combined_intelligence/COMBINED_FEED_STATUS.json trailaris_r5_4/combined_intelligence/STRATEGY_ACTIVATION.json trailaris_r5_4/combined_intelligence/R5_4_COMBINED_INTELLIGENCE_COMPARISON.json 2>/dev/null || true
+          git add -f trailaris_r5_4/combined_intelligence/r5_results/R5_STATUS.json trailaris_r5_4/combined_intelligence/r5_results/R5_34_asset_state.csv trailaris_r5_4/combined_intelligence/r5_results/R5_walkforward_weekly.csv 2>/dev/null || true
+          git commit -m 'test: R5.4 combined intelligence full-universe replay [skip ci]' || true
+          git pull --rebase origin trailaris-ephemeral-research-20260815 || true
+          git push origin HEAD:trailaris-ephemeral-research-20260815 || true
