@@ -1,0 +1,46 @@
+name: Trailaris R5.5 — 26W Forensic Attribution
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Type FORENSIC_ONLY. This lane must not replay, acquire data, optimize, or modify the frozen control."
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trailaris-r5-5-single-active-lane
+  cancel-in-progress: false
+
+jobs:
+  forensic-only-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-ephemeral-research-20260815
+      - name: Enforce forensic-only contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ inputs.confirmation }}" != "FORENSIC_ONLY" ]; then
+            echo "Refusing execution: explicit FORENSIC_ONLY confirmation required."
+            exit 1
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('trailaris_r5_5/R5_4_26W_CANONICAL_CONTROL.json')
+          d=json.loads(p.read_text())
+          assert d['control_id']=='R5_4_FROZEN_26W_20260816'
+          assert d['executed_trades']==2152
+          assert d['wins']==856 and d['losses']==505 and d['flats']==791
+          assert abs(d['end_equity']-1136.4556497760627)<1e-9
+          print('Frozen 26-week control verified.')
+          print('This is the only active Trailaris lane launcher.')
+          print('No replay, acquisition, optimization, or candidate execution is authorized by this workflow.')
+          PY

@@ -1,0 +1,26 @@
+{
+  "state": "HARD_LOCKED_SINGLE_ACTIVE_LANE",
+  "active_lane": "R5_5_26W_FORENSIC_ATTRIBUTION",
+  "active_branch": "trailaris-ephemeral-research-20260815",
+  "frozen_control": "R5_4_FROZEN_26W_20260816",
+  "frozen_control_end_equity": 1136.4556497760627,
+  "frozen_control_return_pct": 1036.4556497760627,
+  "executed_trades": 2152,
+  "wins": 856,
+  "losses": 505,
+  "flats": 791,
+  "routes_required": 34,
+  "strategy_families_required": 15,
+  "route_strategy_cells_required": 510,
+  "sole_workflow_launcher": ".github/workflows/trailaris_r5_5_26w_forensic_attribution.yml",
+  "actions_policy": {
+    "automatic_trigger": false,
+    "baseline_rerun": "PROHIBITED",
+    "candidate_replay": "PROHIBITED_WITHOUT_EXPLICIT_USER_AUTHORIZATION",
+    "data_acquisition": "PROHIBITED_WITHOUT_EXPLICIT_USER_AUTHORIZATION",
+    "optimization_sweep": "PROHIBITED_WITHOUT_EXPLICIT_USER_AUTHORIZATION",
+    "legacy_lane_reactivation": "PROHIBITED"
+  },
+  "evidence_policy": "Historical scripts and result artifacts remain audit evidence; obsolete workflow launchers are removed so they cannot be accidentally executed.",
+  "continuation_rule": "Advance by forensic attribution of the completed frozen 26-week evidence estate. Do not regress to an earlier lane or frontier."
+}
