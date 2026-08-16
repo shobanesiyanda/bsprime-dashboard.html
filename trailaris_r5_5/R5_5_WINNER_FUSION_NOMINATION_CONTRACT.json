@@ -1,0 +1,42 @@
+{
+  "state": "R5_5_WINNER_FUSION_NOMINATION_CONTRACT_ACTIVE",
+  "purpose": "Prevent an independently useful fresh-period winner mechanism from being discarded merely because it does not beat the certified Lane 5 historical frontier when tested by itself on the Lane 1B-2 base.",
+  "certified_fusion_base": {
+    "name": "R5.5_LANE5_B3_B4_B8_EQUIVALENT_B3_B5_B8",
+    "end_equity": 345.3896887826546,
+    "fresh_return_pct": 7.261646557142409,
+    "losses": 228,
+    "flat": 421,
+    "nonflat_win_rate": 0.673352435530086,
+    "max_weekly_dd_pct": -4.637645574907678,
+    "scope": {"routes":34,"strategy_families":15,"route_strategy_cells":510}
+  },
+  "independent_winner_mechanism_fusion_nomination": {
+    "fresh_return_pct_strictly_above": 7.261646557142409,
+    "fresh_max_dd_pct_not_below": -0.5196525640746019,
+    "max_weekly_dd_pct_not_materially_worse_than": -4.637645574907678,
+    "full_scope_required": {"routes":34,"strategy_families":15,"route_strategy_cells":510},
+    "causal_selection_required": true,
+    "positive_mechanism_activity_required": true,
+    "historical_end_equity_may_be_below_lane5": true,
+    "reason": "Lane 6 mechanisms are component tests. Their economic question is whether they contribute orthogonal winner/fresh alpha. Final frontier compliance is tested only after authentic fusion with the certified Lane 5 management base."
+  },
+  "direct_frontier_candidate": {
+    "end_equity_strictly_above": 345.3896887826546,
+    "fresh_return_pct_strictly_above": 7.261646557142409,
+    "losses_max": 228,
+    "flat_max": 421,
+    "nonflat_win_rate_min": 0.673352435530086,
+    "max_weekly_dd_pct_not_below": -4.637645574907678,
+    "fresh_max_dd_pct_not_below": -0.5196525640746019,
+    "assets_with_selected_min": 33,
+    "scope": {"routes":34,"strategy_families":15,"route_strategy_cells":510}
+  },
+  "fusion_rule": "Any causally valid Lane 6B/6C/6D or path-specific successor that creates strict positive fresh return delta with acceptable risk is eligible for one Lane 7 fusion replay even if its standalone historical ending equity is below $345.3896888. It is not promoted or called a system improvement until the fused 34x15x510 replay clears the full frontier.",
+  "prohibitions": [
+    "Do not select a mechanism using Aug13-14 outcomes if those outcomes were not part of the predeclared diagnostic-only process.",
+    "Do not weaken the final Lane 5 frontier to make a fusion pass.",
+    "Do not fuse a mechanism with zero actual activation simply because its headline metrics happen to match the control.",
+    "Do not treat discovery/attribution lift as portfolio performance."
+  ]
+}
