@@ -76,7 +76,7 @@ def replay_r5(cands,specs,start=100.,feature_cache=None):
                 float(r.get('reliability_score',0.0))>0.0)
 
     def recycle_recovery(new,t,u,new_risk,new_margin):
-        """Risk- and margin-neutral protected-position substitution only."""
+        """Prevalidated risk- and margin-neutral protected-position substitution only."""
         nonlocal balance,peak,factors,open_risk,open_margin
         choices=[]
         for pid,p in openpos.items():
@@ -85,14 +85,15 @@ def replay_r5(cands,specs,start=100.,feature_cache=None):
             if not s or s['floor']<0:continue
             u0=float(p.get('entry_utility',p.get('rank_score',p.get('quality',0))))
             if u<=u0+.05:continue
-            # The incoming recovery candidate cannot consume more risk cash or margin
-            # than the protected incumbent it replaces.
             if float(new_risk)>float(p['risk_cash'])+1e-12:continue
             if float(new_margin)>float(p['margin'])+1e-12:continue
             nf=factors-r4.factor_vec(p['asset'],int(p['direction']))+r4.factor_vec(new.asset,int(new.direction))
             if np.abs(nf).max()>1.25:continue
             choices.append((u0,pid,p,s))
         if not choices:return None
+        # Every admission condition for the incoming fixed lot/risk/margin has already
+        # passed before the incumbent is touched. The incoming trade is NOT resized after
+        # the close, so the swap cannot silently expand risk or margin.
         _,pid,p,s=min(choices,key=lambda z:z[0]);openpos.pop(pid,None);rr=float(s['current_r']);before=mtm(t);pnl=float(p['risk_cash'])*rr;balance+=pnl;factors-=r4.factor_vec(p['asset'],int(p['direction']));open_risk=max(0,open_risk-float(p['risk_cash']));open_margin=max(0,open_margin-float(p['margin']));eq=mtm(t);peak=max(peak,eq)
         events.append({**p,'timestamp':pd.Timestamp(t),'exit_time':pd.Timestamp(t),'exit_price':s['mark'],'net_r':rr,'net_pnl':pnl,'equity_before':before,'equity':eq,'balance_after':balance,'drawdown':eq/peak-1,'exit_reason':'RECOVERY_RISK_NEUTRAL_REALLOCATION_R5_5'})
         return pid
@@ -135,18 +136,10 @@ def replay_r5(cands,specs,start=100.,feature_cache=None):
             if reason=='SELECTED' and np.abs(proj).max()>1.25:reason='FACTOR_DUPLICATION'
             u=float(r.rank_score)-.20*(margin/max(eq,1e-12));recycled='';recovery_reallocated=False
 
-            # New R5.5 logic: in the protected weekly floor state, no new risk budget is
-            # created. A causally strong candidate may replace a protected incumbent only
-            # if risk cash, margin, utility and factor conditions all improve/preserve.
             if rq and reason in {'OPEN_RISK_BUDGET','MARGIN_BUDGET','FACTOR_DUPLICATION'} and u>=.12:
-                pre_risk=open_risk;pre_margin=open_margin
                 pid=recycle_recovery(r,t,u,risk,margin)
                 if pid:
-                    recycled=pid;eq=mtm(t);lot,risk,margin=r4.size_trade(r.asset,eq,rf,float(r.stop_distance),specs);proj=factors+r4.factor_vec(r.asset,int(r.direction))
-                    risk_neutral=(open_risk+risk)<=pre_risk+1e-12;margin_neutral=(open_margin+margin)<=pre_margin+1e-12
-                    if lot>0 and risk_neutral and margin_neutral and np.abs(proj).max()<=1.25:
-                        reason='SELECTED';recovery_reallocated=True
-                    else:reason='RECOVERY_REALLOCATION_NOT_NEUTRAL'
+                    recycled=pid;eq=mtm(t);proj=factors+r4.factor_vec(r.asset,int(r.direction));reason='SELECTED';recovery_reallocated=True
             elif reason in {'OPEN_RISK_BUDGET','MARGIN_BUDGET','FACTOR_DUPLICATION'} and u>=.12:
                 pid=recycle(r,t,u)
                 if pid:
