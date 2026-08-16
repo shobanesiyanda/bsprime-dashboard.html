@@ -4,7 +4,7 @@ import argparse,json
 from pathlib import Path
 import numpy as np,pandas as pd
 from lane1b_full_replay import ManagedVariant,apply_rule
-from lane4_market_state_entry_repair import enrich_market_state
+from winner_causal_features import causal_decision_features,combined_promote_clean_history
 
 R54_END=337.4231242104393
 INCUMBENT_END=343.5447309255116
@@ -24,6 +24,7 @@ def num(x,d=np.nan):
     except Exception:return d
 
 def rcond(z,f,d,th):
+    if f not in z.columns:return pd.Series(False,index=z.index)
     s=pd.to_numeric(z[f],errors='coerce');return s.le(th) if d=='le' else s.ge(th)
 
 def rule_mask(z,r):
@@ -36,15 +37,14 @@ def rule_mask(z,r):
     return m.fillna(False)
 
 class WinnerAmplifyVariant:
-    def __init__(self,base,promote,copies,boost):self.base=base;self.promote=promote;self.copies=int(copies);self.boost=float(boost)
+    def __init__(self,base,copies,boost,history):self.base=base;self.copies=int(copies);self.boost=float(boost);self.history=history
     def promote_for_week(self,cands,week_start):
         z=cands.copy();parts=[z]
         elig=z[(z.get('amp_parent_qualifies',False)==True)&z.strategy.astype(str).eq('WINNER_ONLY_ADDON')].copy()
         if len(elig):
             for k in range(self.copies):
-                q=elig.copy();q['strategy']=q['amp_parent_strategy'];q['strategy_family']=q['amp_parent_family'];q['quality']=np.minimum(.995,pd.to_numeric(q['quality'],errors='coerce').fillna(0)+self.boost);q['campaign_id']=q['campaign_id'].astype(str)+f'|WINAMP{k+1}'
-                parts.append(q)
-        return self.promote(pd.concat(parts,ignore_index=True,sort=False),week_start,'combined')
+                q=elig.copy();q['strategy']=q['amp_parent_strategy'];q['strategy_family']=q['amp_parent_family'];q['quality']=np.minimum(.995,pd.to_numeric(q['quality'],errors='coerce').fillna(0)+self.boost);q['campaign_id']=q['campaign_id'].astype(str)+f'|WINAMP{k+1}';parts.append(q)
+        return combined_promote_clean_history(pd.concat(parts,ignore_index=True,sort=False),self.history,week_start)
     def replay_r5(self,cands,specs,start=100.,feature_cache=None):return self.base.replay_r5(apply_rule(cands,feature_cache,B3),specs,start,feature_cache)
 
 def main():
@@ -63,17 +63,16 @@ def main():
     if abs(float(ctl['end_equity'])-R54_END)>1e-9:raise RuntimeError('R5.4 control reproduction failed')
     inc,*_=eval_variant(ManagedVariant(B3,base,promote),data,cands,opps,fcache,specs,100.0)
     if abs(float(inc['end_equity'])-INCUMBENT_END)>1e-6:raise RuntimeError('Lane1B2 incumbent reproduction failed')
-    z=cands.copy();z['decision_time']=pd.to_datetime(z.decision_time,utc=True)
-    parents=z[~z.get('is_addon',False).astype(bool)].copy();pe=enrich_market_state(parents,fcache);pm=rule_mask(pe,rule)
-    qual=dict(zip(pe.campaign_id.astype(str),pm.astype(bool)));ps=dict(zip(parents.campaign_id.astype(str),parents.strategy.astype(str)));pf=dict(zip(parents.campaign_id.astype(str),parents.strategy_family.astype(str)))
+    z=causal_decision_features(cands,fcache);parents=z[~z.get('is_addon',False).astype(bool)].copy();pm=rule_mask(parents,rule)
+    qual=dict(zip(parents.campaign_id.astype(str),pm.astype(bool)));ps=dict(zip(parents.campaign_id.astype(str),parents.strategy.astype(str)));pf=dict(zip(parents.campaign_id.astype(str),parents.strategy_family.astype(str)))
     z['amp_parent_qualifies']=z.parent_id.astype(str).map(qual).fillna(False) if 'parent_id' in z else False
     z['amp_parent_strategy']=z.parent_id.astype(str).map(ps).fillna(z.strategy.astype(str)) if 'parent_id' in z else z.strategy.astype(str)
     z['amp_parent_family']=z.parent_id.astype(str).map(pf).fillna(z.strategy_family.astype(str)) if 'parent_id' in z else z.strategy_family.astype(str)
-    cand,VW,VEV,VDE,VPR=eval_variant(WinnerAmplifyVariant(base,promote,a.copies,a.quality_boost),data,z,opps,fcache,specs,100.0)
+    cand,VW,VEV,VDE,VPR=eval_variant(WinnerAmplifyVariant(base,a.copies,a.quality_boost,z),data,z,opps,fcache,specs,100.0)
     amp_selected=int(VEV.campaign_id.astype(str).str.contains('WINAMP',regex=False).sum()) if len(VEV) and 'campaign_id' in VEV else 0
-    scope_ok=(len(data)==34 and scope['approved_routes']==34 and scope['strategy_families']==15 and scope['route_strategy_cells']==510)
+    scope_ok=(len(data)==34 and scope=={'approved_routes':34,'strategy_families':15,'route_strategy_cells':510})
     alpha={'end_equity_beats_1b2':float(cand['end_equity'])>INCUMBENT_END+EPS,'fresh_not_worse':float(cand['fresh_return_pct'])>=INCUMBENT_FRESH-EPS,'drawdown_not_worse':float(cand['max_weekly_dd_pct'])>=INCUMBENT_DD-EPS,'asset_coverage_not_worse':int(cand['assets_with_selected'])>=33,'full_universe_34x15x510':scope_ok}
     frontier={'end_equity_beats_lane5':float(cand['end_equity'])>CHALLENGE_END+EPS,'fresh_improved':float(cand['fresh_return_pct'])>INCUMBENT_FRESH+EPS,'drawdown_not_worse':float(cand['max_weekly_dd_pct'])>=INCUMBENT_DD-EPS,'fresh_dd_not_worse':float(cand['fresh_max_dd_pct'])>=-0.5196525640746019-EPS,'losses_at_or_below_lane5':int(cand['losses'])<=CHALLENGE_LOSSES,'flats_at_or_below_lane5':int(cand['flat'])<=CHALLENGE_FLATS,'nonflat_win_rate_at_least_lane5':float(cand['nonflat_win_rate'])>=CHALLENGE_NFWR-EPS,'asset_coverage_not_worse':int(cand['assets_with_selected'])>=33,'full_universe_34x15x510':scope_ok}
-    s={'state':'R5_5_LANE6B_WINNER_AMPLIFICATION_REPLAY_COMPLETE','evidence_class':'END_TO_END_CAUSAL_FULL_REPLAY','rule_rank':a.rule_rank,'winner_rule':rule,'copies':a.copies,'quality_boost':a.quality_boost,'qualifying_parent_candidates':int(z['amp_parent_qualifies'].sum()),'amplified_addons_selected':amp_selected,'r5_4_control':ctl,'lane1b2_incumbent':inc,'candidate':cand,'delta_vs_1b2':float(cand['end_equity'])-INCUMBENT_END,'delta_vs_lane5_frontier':float(cand['end_equity'])-CHALLENGE_END,'alpha_gates':alpha,'alpha_candidate':bool(all(alpha.values())),'frontier_gates':frontier,'frontier_candidate':bool(all(frontier.values())),'promotion_candidate':False,'promotion_blockers':['FUSION_WITH_CERTIFIED_LANE5_MANAGEMENT_REQUIRED_IF_STANDALONE_WINNER_PATH_ADDS_VALUE','FORENSIC_COMPLETENESS_GATES_REQUIRED','NEW_UNSEEN_FORWARD_HOLDOUT_REQUIRED','TARGET_SERVER_BROKER_EXECUTION_CERTIFICATION_REQUIRED'],'scope':scope,'governance':'Amplification is earned only after the existing causal winner-only continuation trigger and a pre-Aug13 validated parent cohort condition. Added tranches remain is_addon=True, so unchanged risk, margin, factor and breaker controls remain authoritative. Immutable R5.4 scope defines 34x15x510; candidate-emitting family count cannot redefine the universe. The active R5.5 challenge frontier is the certified Lane5 $345.3896888 quality profile plus strict fresh improvement.'}
+    s={'state':'R5_5_LANE6B_WINNER_AMPLIFICATION_REPLAY_COMPLETE','evidence_class':'END_TO_END_CAUSAL_FULL_REPLAY','rule_rank':a.rule_rank,'winner_rule':rule,'copies':a.copies,'quality_boost':a.quality_boost,'qualifying_parent_candidates':int(pm.sum()),'amplified_addons_selected':amp_selected,'r5_4_control':ctl,'lane1b2_incumbent':inc,'candidate':cand,'delta_vs_1b2':float(cand['end_equity'])-INCUMBENT_END,'delta_vs_lane5_frontier':float(cand['end_equity'])-CHALLENGE_END,'alpha_gates':alpha,'alpha_candidate':bool(all(alpha.values())),'frontier_gates':frontier,'frontier_candidate':bool(all(frontier.values())),'promotion_candidate':False,'promotion_blockers':['FUSION_WITH_CERTIFIED_LANE5_MANAGEMENT_REQUIRED_IF_STANDALONE_WINNER_PATH_ADDS_VALUE','FORENSIC_COMPLETENESS_GATES_REQUIRED','NEW_UNSEEN_FORWARD_HOLDOUT_REQUIRED','TARGET_SERVER_BROKER_EXECUTION_CERTIFICATION_REQUIRED'],'scope':scope,'governance':'Winner qualification uses market-state plus reliability fields reconstructed at each trade evaluation week from exits strictly before that week. Amplification copies compete in the current selector but cannot contaminate their own reliability history. Added tranches remain is_addon=True, so unchanged risk, margin, factor and breaker controls remain authoritative.'}
     (out/'result.json').write_text(json.dumps(s,indent=2,default=str));VW.to_csv(out/'weekly.csv',index=False);print(json.dumps(s,indent=2,default=str))
 if __name__=='__main__':main()
