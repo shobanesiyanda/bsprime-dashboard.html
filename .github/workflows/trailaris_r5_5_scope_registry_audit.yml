@@ -1,0 +1,64 @@
+name: Trailaris R5.5 Immutable Scope Registry Audit
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_5_scope_registry_audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-ephemeral-research-20260815, fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --quiet pandas numpy
+      - name: Reconstruct immutable R4 modules
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > /tmp/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > /tmp/trailaris_r4_asset_adapter.py
+      - name: Extract authoritative family definitions
+        run: |
+          PYTHONPATH=/tmp python - <<'PY'
+          import ast, json, re
+          from pathlib import Path
+          runner=Path('/tmp/trailaris_r4_full_universe_loop.py').read_text()
+          adapter=Path('/tmp/trailaris_r4_asset_adapter.py').read_text()
+          def literals(src):
+              tree=ast.parse(src); vals=[]
+              for n in ast.walk(tree):
+                  if isinstance(n,ast.Constant) and isinstance(n.value,str):
+                      s=n.value
+                      if re.fullmatch(r'[A-Z][A-Z0-9_]{2,}',s): vals.append(s)
+              return sorted(set(vals))
+          rlit=literals(runner); alit=literals(adapter)
+          # Extract direct strategy-family assignments/collections from immutable source.
+          family_tokens=sorted(set(re.findall(r"(?:strategy_family|family)\s*(?:==|=|:|in)?\s*['\"]([A-Z][A-Z0-9_]+)['\"]",runner+"\n"+adapter)))
+          # Candidate family names are uppercase literals associated with family applicability or generators.
+          noise={'UTC','M1','H1','M5','H4','OHLC','FAIL','OK','BUY','SELL','FX','METALS','CRYPTO','INDICES','ENERGY','SYNTHETICS'}
+          candidates=sorted({x for x in rlit+alit if '_' in x and x not in noise and not x.startswith(('R4_','R5_','TRAILARIS_','RESEARCH_','DYNAMIC_','WINNER_','ADDON_','WEEKLY_','PORTFOLIO_','TARGET_','BROKER_','FULL_','CAUSAL_','EVENT_AUDIT'))})
+          report={
+            'state':'R5_5_IMMUTABLE_SCOPE_REGISTRY_AUDIT_COMPLETE',
+            'runner_family_related_literals':rlit,
+            'adapter_family_related_literals':alit,
+            'direct_family_tokens':family_tokens,
+            'candidate_uppercase_strategy_tokens':candidates,
+            'r4_routes_literal_count':len(re.findall(r"['\"](?:EURUSD|GBPUSD|USDJPY|AUDUSD|USDCAD|USDCHF|NZDUSD|EURJPY|GBPJPY|EURGBP|AUDJPY|CADJPY|GBPCHF|XAUUSD|XAGUSD|BTCUSD|ETHUSD|SOLUSD|BNBUSD|XRPUSD|US100|US500|US30|GER40|UK100|JP225|WTI|BRENT|NATGAS|V75|V50|V100|V25|V10)['\"]",runner)),
+            'governance':'This report extracts immutable R4 source definitions. Candidate-emitting family count must never redefine the approved 15-family/510-cell research estate.'
+          }
+          out=Path('trailaris_r5_5/R5_5_IMMUTABLE_SCOPE_REGISTRY_AUDIT.json');out.write_text(json.dumps(report,indent=2))
+          print(json.dumps(report,indent=2))
+          PY
+      - name: Publish audit
+        run: |
+          cp trailaris_r5_5/R5_5_IMMUTABLE_SCOPE_REGISTRY_AUDIT.json /tmp/audit.json
+          git fetch origin trailaris-ephemeral-research-20260815
+          git reset --hard origin/trailaris-ephemeral-research-20260815
+          cp /tmp/audit.json trailaris_r5_5/R5_5_IMMUTABLE_SCOPE_REGISTRY_AUDIT.json
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_r5_5/R5_5_IMMUTABLE_SCOPE_REGISTRY_AUDIT.json
+          git commit -m 'audit: R5.5 immutable R4 family registry evidence [skip ci]' || exit 0
+          git push origin HEAD:trailaris-ephemeral-research-20260815
