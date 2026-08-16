@@ -1,0 +1,56 @@
+{
+  "state": "R5_5_LANE1_CHAMPIONS_REGISTERED_NOT_PROMOTED",
+  "immutable_control": {
+    "version": "R5.4",
+    "end_equity": 337.4231242104393,
+    "compounded_return_pct": 237.42312421043928,
+    "executions": 1102,
+    "wins": 446,
+    "losses": 231,
+    "flats": 425,
+    "max_weekly_dd_pct": -4.637645574907678,
+    "fresh_return_pct": 7.261646557142409
+  },
+  "return_champion": {
+    "source": "Lane 1B2 rank 3",
+    "behavior": "close_a0.50_r0.20_1b",
+    "gate": "reliability_win <= 0.2655132009803008",
+    "managed_executions": 11,
+    "end_equity": 343.5447309255116,
+    "compounded_return_pct": 243.5447309255116,
+    "delta_end_equity": 6.121606715072289,
+    "executions": 1126,
+    "wins": 467,
+    "losses": 233,
+    "flats": 426,
+    "nonflat_win_rate": 0.6671428571428571,
+    "max_weekly_dd_pct": -4.637645574907678,
+    "fresh_return_pct": 7.261646557142409,
+    "promotion_state": "REJECT_FOR_NOW",
+    "reason": "Return improved, but absolute loss and flat counts worsened and fresh holdout did not improve."
+  },
+  "repair_champion": {
+    "source": "Lane 1B2 rank 4 (rank 5 is economically identical)",
+    "behavior": "close_a0.50_r0.05_1b",
+    "gate": "reliability_asset_strategy_win <= 0.3265411458233644",
+    "managed_executions": 5,
+    "end_equity": 337.90138673186806,
+    "compounded_return_pct": 237.90138673186806,
+    "delta_end_equity": 0.47826252142874637,
+    "executions": 1102,
+    "wins": 451,
+    "losses": 228,
+    "flats": 423,
+    "nonflat_win_rate": 0.6642120765832106,
+    "max_weekly_dd_pct": -4.637645574907678,
+    "fresh_return_pct": 7.261646557142409,
+    "promotion_state": "PROVISIONAL_REPAIR_CHAMPION_NOT_PROMOTED",
+    "reason": "End equity improved, losses fell 231->228, flats fell 425->423, wins rose 446->451, execution count and maximum weekly drawdown were unchanged, but fresh holdout was unchanged rather than improved."
+  },
+  "scope": {
+    "approved_routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510
+  },
+  "governance": "Return and repair champions are tracked separately. A higher-return rule cannot displace the repair champion unless it also satisfies the R5.5 repair, holdout, full-universe and execution-authenticity promotion gates. R5.4 remains immutable."
+}
