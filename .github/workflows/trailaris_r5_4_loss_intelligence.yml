@@ -46,7 +46,6 @@ jobs:
           assert abs(float(st['end_equity'])-target)<=1e-9,(st['end_equity'],target)
           ev=pd.read_csv(p/'R5_events.csv');de=pd.read_csv(p/'R5_decisions.csv')
           ev['net_pnl']=pd.to_numeric(ev.net_pnl,errors='coerce').fillna(0);loss=ev[ev.net_pnl<0].copy();win=ev[ev.net_pnl>0].copy();flat=ev[ev.net_pnl==0].copy()
-          # Time-derived diagnostics are causal descriptors of already executed entries.
           for d in (ev,loss,win,flat):
             for tc in ['entry_time','entry_ts','timestamp','open_time']:
               if tc in d.columns:
@@ -56,21 +55,24 @@ jobs:
             if col not in ev.columns:return
             z=ev.groupby(col,dropna=False).agg(trades=('net_pnl','size'),net_pnl=('net_pnl','sum'),wins=('net_pnl',lambda s:int((s>0).sum())),losses=('net_pnl',lambda s:int((s<0).sum())),flat=('net_pnl',lambda s:int((s==0).sum())),avg_pnl=('net_pnl','mean')).reset_index()
             z['nonflat_win_rate']=z.wins/(z.wins+z.losses).replace(0,np.nan);z['dimension']=col;z['value']=z[col].astype(str);z=z.drop(columns=[col]);rows.append(z)
-          preferred=['asset','strategy_family','family','strategy','config_id','configuration','tier','direction','side','entry_hour_utc','entry_dow','session','regime','entry_reason','signal_type']
+          preferred=['asset','strategy_family','strategy','direction','entry_hour_utc','entry_dow']
           for c in preferred:add_group(c)
           slices=pd.concat(rows,ignore_index=True) if rows else pd.DataFrame()
           if len(slices):slices.sort_values(['dimension','net_pnl','losses'],ascending=[True,True,False]).to_csv(out/'R5_4_LOSS_SLICES.csv',index=False)
           loss_by_asset=loss.groupby('asset').agg(losses=('net_pnl','size'),loss_dollars=('net_pnl','sum'),avg_loss=('net_pnl','mean')).sort_values('loss_dollars').reset_index();loss_by_asset.to_csv(out/'R5_4_LOSS_BY_ASSET.csv',index=False)
-          # Schema permits next repair to use only actually available causal features.
-          schema={'event_columns':list(ev.columns),'decision_columns':list(de.columns)}
-          (out/'R5_4_LEDGER_SCHEMA.json').write_text(json.dumps(schema,indent=2))
-          summary={'baseline_reconciled':True,'start_equity':float(st['start_equity']),'end_equity':float(st['end_equity']),'executed_trades':int(len(ev)),'wins':int(len(win)),'losses':int(len(loss)),'flat':int(len(flat)),'nonflat_win_rate':float(len(win)/(len(win)+len(loss))),'gross_loss_dollars':float(-loss.net_pnl.sum()),'gross_win_dollars':float(win.net_pnl.sum()),'profit_factor_on_nonflat':float(win.net_pnl.sum()/(-loss.net_pnl.sum())),'worst_loss_assets':loss_by_asset.head(10).to_dict('records'),'diagnostic_dimensions_present':[c for c in preferred if c in ev.columns]}
+          schema={'event_columns':list(ev.columns),'decision_columns':list(de.columns)};(out/'R5_4_LEDGER_SCHEMA.json').write_text(json.dumps(schema,indent=2))
+          worst_by_dimension={}
+          if len(slices):
+            for dim,g in slices.groupby('dimension'):
+              worst_by_dimension[dim]=g.sort_values(['net_pnl','losses'],ascending=[True,False]).head(10)[['value','trades','net_pnl','wins','losses','flat','nonflat_win_rate']].to_dict('records')
+          summary={'baseline_reconciled':True,'start_equity':float(st['start_equity']),'end_equity':float(st['end_equity']),'executed_trades':int(len(ev)),'wins':int(len(win)),'losses':int(len(loss)),'flat':int(len(flat)),'nonflat_win_rate':float(len(win)/(len(win)+len(loss))),'gross_loss_dollars':float(-loss.net_pnl.sum()),'gross_win_dollars':float(win.net_pnl.sum()),'profit_factor_on_nonflat':float(win.net_pnl.sum()/(-loss.net_pnl.sum())),'worst_loss_assets':loss_by_asset.head(10).to_dict('records'),'worst_slices_by_dimension':worst_by_dimension,'diagnostic_dimensions_present':[c for c in preferred if c in ev.columns]}
           (out/'R5_4_LOSS_INTELLIGENCE_STATUS.json').write_text(json.dumps(summary,indent=2));print(json.dumps(summary,indent=2))
           PY
-      - name: Commit compact loss intelligence
+      - name: Commit compact loss intelligence safely
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -f trailaris_r5_4/loss_audit/R5_4_LOSS_INTELLIGENCE_STATUS.json trailaris_r5_4/loss_audit/R5_4_LOSS_BY_ASSET.csv trailaris_r5_4/loss_audit/R5_4_LOSS_SLICES.csv trailaris_r5_4/loss_audit/R5_4_LEDGER_SCHEMA.json
-          git commit -m 'audit: R5.4 losing-trade intelligence [skip ci]' || true
+          git commit -m 'audit: R5.4 detailed losing-trade intelligence [skip ci]' || true
+          git pull --rebase origin trailaris-ephemeral-research-20260815
           git push origin HEAD:trailaris-ephemeral-research-20260815
