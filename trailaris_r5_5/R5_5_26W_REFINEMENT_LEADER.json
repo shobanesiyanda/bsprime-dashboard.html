@@ -1,90 +1,60 @@
 {
-  "state": "CURRENT_R5_5_26W_REFINEMENT_LEADER_NOT_FROZEN",
-  "leader_id": "R5_5_BOUNDED_MEMORY_112D",
+  "state": "R5_5_V2_LOCKED_ACTIVE_BASELINE",
+  "baseline_id": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
   "active_branch": "trailaris-ephemeral-research-20260815",
   "scope": {
+    "weeks": 26,
     "routes": 34,
     "strategy_families": 15,
     "route_strategy_cells": 510
   },
-  "architecture_change": {
-    "type": "CONFIGURATION_GENERATION_MEMORY_ONLY",
-    "proposal_memory_days": 112,
+  "locked_baseline": {
+    "start_equity": 100.0,
+    "end_equity": 1366.8938578865148,
+    "compounded_return_pct": 1266.8938578865148,
+    "positive_weeks": 26,
+    "negative_weeks": 0,
+    "mean_week_pct": 10.624017604148746,
+    "median_week_pct": 11.515416074317496,
+    "weeks_ge5": 22,
+    "weeks_ge10": 21,
+    "executed_trades": 2136,
+    "wins": 1221,
+    "losses": 478,
+    "flats": 437,
+    "nonflat_win_rate": 0.7186580341377281,
+    "profit_factor": 2.9195127192871873,
+    "max_weekly_drawdown_pct": -3.7440606836682933,
+    "max_event_equity_drawdown_pct": -2.7023988320913572,
+    "assets_with_selected": 32,
+    "rolling_11w_min_return_pct": 175.6827305105836,
+    "rolling_11w_median_return_pct": 198.27176646902836,
+    "rolling_11w_mean_return_pct": 200.3837728607354,
+    "rolling_11w_max_return_pct": 223.82144949395718
+  },
+  "locked_architecture": {
+    "bounded_proposal_memory_days": 112,
     "reliability_memory_days": 56,
     "validation_days": 14,
-    "blanket_leverage_change": false,
-    "frozen_r5_4_reliability_contract_preserved": true
+    "entry_gate_rejected_promotions": 228,
+    "weak_state_partial_realization_trigger_r": 0.75,
+    "weak_state_partial_realization_fraction": 0.25,
+    "partial_realization_does_not_credit_early_capacity": true,
+    "winner_exit_timing_otherwise_preserved": true
   },
-  "frozen_r5_4_control": {
-    "start_equity": 100.0,
-    "end_equity": 1136.4556497760627,
-    "compounded_return_pct": 1036.4556497760627,
-    "evaluated_weeks": 26,
-    "positive_weeks": 26,
-    "negative_weeks": 0,
-    "executed_trades": 2152,
-    "wins": 856,
-    "losses": 505,
-    "flats": 791,
-    "nonflat_win_rate": 0.6289493019838354,
-    "profit_factor": 2.791840637059962,
-    "max_weekly_drawdown_pct": -2.9475910077805922,
-    "max_event_equity_drawdown_pct": -3.1202037867421484
-  },
-  "current_refinement_leader": {
-    "start_equity": 100.0,
-    "end_equity": 1272.6945454530814,
-    "compounded_return_pct": 1172.6945454530814,
-    "evaluated_weeks": 26,
-    "positive_weeks": 26,
-    "negative_weeks": 0,
-    "mean_week_pct": 10.326564758992504,
-    "median_week_pct": 10.964400607943414,
-    "weeks_ge5": 22,
-    "weeks_ge10": 18,
-    "executed_trades": 2206,
-    "wins": 879,
-    "losses": 505,
-    "flats": 822,
-    "nonflat_win_rate": 0.6351156069364162,
-    "profit_factor": 2.837039669341938,
-    "max_weekly_drawdown_pct": -2.669798710057736,
-    "max_event_equity_drawdown_pct": -2.669798710057736,
-    "assets_with_selected": 33,
-    "rolling_11w_min_return_pct": 157.34514876285473,
-    "rolling_11w_median_return_pct": 209.09129682460488,
-    "rolling_11w_mean_return_pct": 203.3551308151562,
-    "rolling_11w_max_return_pct": 222.81395939432213
-  },
-  "delta_vs_frozen_r5_4": {
-    "end_equity": 136.23889567701872,
-    "compounded_return_pct_points": 136.23889567701872,
-    "executed_trades": 54,
-    "wins": 23,
-    "losses": 0,
-    "flats": 31,
-    "nonflat_win_rate_points": 0.006166304952580859,
-    "profit_factor": 0.04519903228197597,
-    "max_weekly_drawdown_pct_points": 0.2777922977228564,
-    "max_event_equity_drawdown_pct_points": 0.45040507668441254,
-    "weeks_ge5": 1,
-    "weeks_ge10": 2,
-    "rolling_11w_min_return_pct_points": 6.04544563696453,
-    "rolling_11w_median_return_pct_points": 33.469983483960874,
-    "rolling_11w_mean_return_pct_points": 26.792476426130634,
-    "rolling_11w_max_return_pct_points": 10.058076649483752
-  },
-  "rejected_alternatives": {
-    "R5_5_ADVERSE_DISPLACEMENT": {
-      "end_equity": 1298.9309413437006,
-      "reason_not_leader": "Higher endpoint return but adds 38 losses, lowers profit factor below frozen control, slightly worsens weekly drawdown and materially worsens event-equity drawdown."
+  "historical_controls": {
+    "R5_4_FROZEN_26W_20260816": {
+      "end_equity": 1136.4556497760627,
+      "wins": 856,
+      "losses": 505,
+      "flats": 791
     },
-    "R5_5_RECOVERY_REALLOCATION_ATOMIC": {
-      "end_equity": 1045.4331989372376,
-      "reason_not_leader": "Improves some quality metrics but materially underperforms frozen R5.4 ending equity."
+    "R5_5_BOUNDED_MEMORY_112D": {
+      "end_equity": 1272.6945454530814,
+      "wins": 879,
+      "losses": 505,
+      "flats": 822
     }
   },
-  "selection_rationale": "Bounded 112-day proposal memory is the strongest balanced full-scope causal refinement currently evidenced: materially higher compounded return, 26/26 positive weeks, more wins with zero additional losses, higher non-flat win rate and profit factor, and improved weekly and event drawdowns.",
-  "promotion_state": "NOT_FROZEN_NOT_PROMOTED",
-  "continuation_rule": "Further R5.5 refinement may challenge this leader only inside the single active 26-week lane and must preserve the frozen R5.4 control and full 34x15x510 scope. Closed legacy lanes must not be reactivated."
+  "governance": "This V2 position is now the active locked refinement baseline by explicit user instruction. Future refinements must start from it and may not narrow the 34x15x510 scope, silently change baseline, or revert to prior architecture without explicit user authorization."
 }
