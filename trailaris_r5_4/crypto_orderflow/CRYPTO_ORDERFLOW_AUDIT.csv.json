@@ -1,0 +1,11 @@
+{
+  "assets_required": 5,
+  "assets_pass": 5,
+  "source_m1_bars": 741595,
+  "scored_15m_bars": 49380,
+  "factor_rows": 23149,
+  "trigger_rows_abs_ge_070": 23149,
+  "decision_interval": "15min_nonoverlapping_closed",
+  "causality": "15-minute bar is fully closed before timestamp; rolling normalization uses shifted prior 15-minute observations only",
+  "evidence_state": "VERIFIED_BINANCE_USDM_TAKER_FLOW_15M_CAUSAL"
+}
