@@ -1,0 +1,27 @@
+name: Trailaris Cancel All But Winner Capture Rescue
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_cancel_all_but_winner_capture_rescue.yml']
+permissions:
+  actions: write
+  contents: read
+jobs:
+  cancel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel all superseded R5.5 Lane 6 compute
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          for RUN in 31967080536 31966970916 31966851421 31966836456 31966775139 31966626366 31966346575; do
+            code=$(curl -sS -o /tmp/cancel-$RUN.json -w '%{http_code}' -X POST \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/$REPO/actions/runs/$RUN/cancel")
+            echo "run=$RUN http=$code"
+            if [ "$code" != "202" ] && [ "$code" != "409" ]; then cat /tmp/cancel-$RUN.json; exit 1; fi
+          done
