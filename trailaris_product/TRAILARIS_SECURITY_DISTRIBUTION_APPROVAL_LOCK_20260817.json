@@ -1,0 +1,16 @@
+{
+  "state": "APPROVED_AND_HARD_LOCKED",
+  "date": "2026-08-17",
+  "governing_record": "trailaris_product/TRAILARIS_SECURITY_ACCOUNT_BINDING_EXPLAINABILITY_ANTI_SIGNAL_HARDLOCK_20260817.json",
+  "approved_principles": [
+    "Trailaris Market Execution Engine remains in Trailaris-controlled infrastructure and is not distributed to customer-controlled machines.",
+    "Customer environments receive only the Trailaris Desktop terminal, MT5 Executor/Dashboard, hardened execution adapter, Position Guardian and telemetry/health components.",
+    "Customer-facing trade rationale is high-level and useful but must not disclose exact strategy formulas, weights, thresholds or ranking logic.",
+    "One paid live-account entitlement applies to one exact live trading account; additional live accounts require additional paid entitlements/fees.",
+    "No pre-trade signal broadcasting, live-signal API/webhook/export or reusable cross-account execution instruction is permitted.",
+    "MT5 receives only cryptographically authenticated, account-bound execution/management envelopes; no full Market Execution Engine logic is installed in MT5.",
+    "If central connectivity is lost, no new positions may be opened; existing positions may only be managed within a previously authorized contingency safety envelope.",
+    "Central telemetry, alerting, administrative suspension/revocation and result verification remain authoritative control-plane functions."
+  ],
+  "change_control": "Any departure from these security, licensing, distribution or anti-signal-resale principles requires explicit user authorization and a separately versioned architecture change."
+}
