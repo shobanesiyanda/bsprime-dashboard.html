@@ -1,0 +1,28 @@
+38:         m=cands.apply(lambda z:(z.strategy_family=='CAMPAIGN_MANAGEMENT') or r4a.family_applicable(str(z.asset),str(z.strategy_family)),axis=1)
+40:     cands['decision_time']=pd.to_datetime(cands.decision_time,utc=True);cands['exit_time']=pd.to_datetime(cands.exit_time,utc=True)
+87:     z=hist[(hist.exit_time<asof)&(hist.exit_time>=asof-pd.Timedelta(days=lookback_days))]
+94:     val0=week_start-pd.Timedelta(days=14);old=cands[(cands.exit_time<val0)].copy();recent=cands[(cands.exit_time>=val0)&(cands.exit_time<week_start)].copy()
+127:     # Causal expected-utility rank from trailing exited outcomes only.
+135:     # de-duplicate exact campaign ids, favor A then rank
+137:     promoted=promoted.sort_values(['campaign_id','tier_ord','rank_score'],ascending=[True,True,False]).drop_duplicates('campaign_id').drop(columns='tier_ord')
+143:     c=cands.copy();c['decision_time']=pd.to_datetime(c.decision_time,utc=True);c['exit_time']=pd.to_datetime(c.exit_time,utc=True)
+150:         lo=int(x.timestamp.searchsorted(pd.Timestamp(p['entry_time']),side='left'));hi=int(x.timestamp.searchsorted(pd.Timestamp(t),side='right'))
+152:         z=x.iloc[lo:hi];px=float(z.close.iloc[-1]);ent=float(p['entry_price']);sd=max(float(p['stop_distance']),1e-12);dr=int(p['direction']);cur=(px-ent)*dr/sd-float(p.get('cost_r',0))
+162:             if s:q+=float(p['risk_cash'])*s['current_r']
+169:             pnl=float(p['risk_cash'])*float(p['net_r']);before=mtm(p['exit_time']);balance+=pnl;factors-=r4.factor_vec(p['asset'],int(p['direction']));open_risk=max(0,open_risk-float(p['risk_cash']));open_margin=max(0,open_margin-float(p['margin']));eq=mtm(p['exit_time']);peak=max(peak,eq);dd=eq/peak-1
+170:             events.append({**p,'timestamp':p['exit_time'],'net_pnl':pnl,'equity_before':before,'equity':eq,'balance_after':balance,'drawdown':dd})
+171:             wk=r4.week_key(p['exit_time']);config_week_r[(wk,p['asset'],p['strategy'])]=config_week_r.get((wk,p['asset'],p['strategy']),0)+float(p['net_r']);asset_week_r[(wk,p['asset'])]=asset_week_r.get((wk,p['asset']),0)+float(p['net_r'])
+179:             u0=float(p.get('entry_utility',p.get('rank_score',p.get('quality',0))))
+185:         _,pid,p,s=min(choices,key=lambda z:z[0]);openpos.pop(pid,None);rr=float(s['current_r']);before=mtm(t);pnl=float(p['risk_cash'])*rr;balance+=pnl;factors-=r4.factor_vec(p['asset'],int(p['direction']));open_risk=max(0,open_risk-float(p['risk_cash']));open_margin=max(0,open_margin-float(p['margin']));eq=mtm(t);peak=max(peak,eq)
+186:         events.append({**p,'timestamp':pd.Timestamp(t),'exit_time':pd.Timestamp(t),'exit_price':s['mark'],'net_r':rr,'net_pnl':pnl,'equity_before':before,'equity':eq,'balance_after':balance,'drawdown':eq/peak-1,'exit_reason':'DYNAMIC_CAPITAL_RECYCLE_R5'})
+204:             rf=float(r.get('risk_fraction',.005))*rs;lot,risk,margin=r4.size_trade(r.asset,eq,rf,float(r.stop_distance),specs);reason='SELECTED';proj=factors+r4.factor_vec(r.asset,int(r.direction));ck=(wk,r.asset,r.strategy);ak=(wk,r.asset)
+210:             # R5 independent same-asset campaign rule: second foundation only after protection,
+214:                 protected=[(p,mark(p,t)) for p in same];indep=all(p['strategy_family']!=r.strategy_family for p,_ in protected);same_dir=all(int(p['direction'])==int(r.direction) for p,_ in protected);prot=all(s and s['floor']>=0 for _,s in protected);asset_r=sum(float(p['risk_cash']) for p in same)
+218:             if reason=='SELECTED' and lot<=0:reason='LOT_BELOW_MIN'
+227:                     recycled=pid;eq=mtm(t);lot,risk,margin=r4.size_trade(r.asset,eq,rf,float(r.stop_distance),specs);proj=factors+r4.factor_vec(r.asset,int(r.direction))
+228:                     if lot>0 and (open_risk+risk)/max(eq,1e-12)<=risk_budget+1e-12 and (open_margin+margin)/max(eq,1e-12)<=.60 and np.abs(proj).max()<=1.25:reason='SELECTED'
+230:             dec.append(dict(decision_time=t,campaign_id=r.campaign_id,asset=r.asset,strategy=r.strategy,strategy_family=r.strategy_family,promotion_tier=r.promotion_tier,selected=reason=='SELECTED',reason=reason,quality=float(r.quality),expected_r=float(r.expected_r),rank_score=float(r.rank_score),utility=u,recycled_incumbent_id=recycled,equity=eq,week_growth=growth,risk_budget=risk_budget,lot=lot,risk_cash=risk,margin=margin,projected_open_risk_pct=100*(open_risk+risk)/max(eq,1e-12)))
+232:                 p=r.to_dict();p.update(lot=lot,risk_cash=risk,margin=margin,equity_at_entry=eq,balance_at_entry=balance,entry_utility=u);openpos[r.campaign_id]=p;factors=proj;open_risk+=risk;open_margin+=margin;seq+=1;heapq.heappush(heap,(pd.Timestamp(r.exit_time),seq,r.campaign_id))
+257:             st=weeks[-1]['end_equity'] if weeks else start;rec=dict(week_start=wk,start_equity=st,end_equity=st,weekly_return_pct=0.,campaigns_entered=0,campaigns_closed=0,max_drawdown_pct=0.,ge5=False,ge10=False);equity=st
+266:     # positions from the already-observed Aug10-12 path contaminating the fresh test.
+275:         n=int((CF.asset==a).sum()) if len(CF) else 0;sel=int(((DE.asset==a)&DE.selected).sum()) if len(DE) else 0;zero.append(dict(asset=a,rolling_confirmed_configs=n,selected_campaigns=sel,state='ACTIVE' if (n or sel) else 'NEXT_VARIANT_REQUIRED'))
