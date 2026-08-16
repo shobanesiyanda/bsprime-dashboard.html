@@ -1,0 +1,115 @@
+{
+  "state": "HARD_LOCKED_SECURITY_AND_DISTRIBUTION_ARCHITECTURE",
+  "date": "2026-08-17",
+  "inherits": "TRAILARIS_PRODUCT_ARCHITECTURE_INCREMENTAL_HARDLOCK_20260817",
+  "engine_custody": {
+    "market_execution_engine_location": "TRAILARIS_CONTROLLED_INFRASTRUCTURE_ONLY",
+    "customer_receives_engine_copy": false,
+    "customer_receives": [
+      "Trailaris Desktop terminal/interface",
+      "Trailaris MT5 full-chart execution/dashboard client",
+      "Hardened execution adapter",
+      "Position Guardian contingency safety component",
+      "Telemetry and health client"
+    ],
+    "prohibited_customer_artifacts": [
+      "Strategy source code",
+      "Model logic or weights",
+      "Opportunity-ranking algorithms",
+      "Feature-engineering internals",
+      "Exact entry/exit thresholds",
+      "Internal reliability and strategy-selection parameters",
+      "Proprietary historical-memory estate"
+    ]
+  },
+  "explainability_boundary": {
+    "customer_explanation_required": true,
+    "level": "HIGH_LEVEL_CAUSAL_RATIONALE_ONLY",
+    "purpose": "Explain why Trailaris entered or managed a trade without exposing enough detail to reconstruct the exact strategy.",
+    "allowed_examples": [
+      "Market regime supportive",
+      "Directional/relative-value thesis confirmed",
+      "Cross-market confirmation present",
+      "Execution conditions acceptable",
+      "Strategy-family opportunity qualified",
+      "Risk and portfolio conditions permitted execution"
+    ],
+    "prohibited_explanation_detail": [
+      "Exact formulas",
+      "Threshold values",
+      "Feature weights",
+      "Model parameters",
+      "Exact signal-construction sequence",
+      "Internal candidate ranking values where disclosure would aid reverse engineering"
+    ],
+    "timing_rule": "Customer-facing rationale becomes available after the associated execution instruction has been accepted/executed, not as a pre-trade signal broadcast."
+  },
+  "license_account_binding": {
+    "commercial_rule": "ONE_PAID_LICENSE_ENTITLEMENT_PER_LIVE_TRADING_ACCOUNT",
+    "one_license_may_execute_on_live_accounts": 1,
+    "additional_account_rule": "Every additional live trading account requires an additional paid account entitlement/license fee.",
+    "binding_identity": [
+      "Trailaris license",
+      "Customer identity",
+      "Authorized deployment/device",
+      "Approved broker",
+      "Exact live trading account"
+    ],
+    "cross_account_reuse": "PROHIBITED",
+    "account_change": "Requires controlled re-binding/deactivation of the prior account under Trailaris administration; it is not a user-editable engine setting."
+  },
+  "anti_signal_resale": {
+    "objective": "Prevent Trailaris from becoming an easily extractable or redistributable live signal feed and make unauthorized signal commercialization difficult, detectable and enforceable.",
+    "controls": [
+      "No pre-trade BUY/SELL signal broadcast to customer surfaces",
+      "Execution occurs through the account-bound Trailaris executor before customer-facing rationale is revealed",
+      "No customer API, webhook or machine-readable live-signal export",
+      "No exportable strategy parameters or signal thresholds",
+      "Live execution instructions are cryptographically signed and bound to license, device, broker account, campaign and validity window",
+      "Captured instructions cannot be replayed on another licensed or unlicensed account",
+      "Result-sharing outputs are canonical Trailaris-verified result objects rather than live signal objects",
+      "Open-trade/customer views may be individually watermarked/traceable where appropriate",
+      "Central telemetry monitors abnormal activation, scraping, automation and redistribution patterns",
+      "Administrative suspension/revocation is available for material license abuse",
+      "Commercial terms explicitly prohibit unauthorized redistribution/resale of Trailaris execution signals or systematic copying services"
+    ],
+    "truth_boundary": "A customer who can see trades in their own brokerage account can manually tell another person what they see; architecture cannot make human observation impossible. The system must instead prevent scalable extraction, pre-trade broadcasting, automated redistribution, replay and unauthorized multi-account execution while making abuse traceable and commercially enforceable."
+  },
+  "mt5_distribution": {
+    "customer_does_not_install": "Market Execution Engine",
+    "customer_installs": [
+      "Trailaris MT5 Executor/Dashboard Expert Advisor (compiled EX5)",
+      "Trailaris Secure Connector/companion service"
+    ],
+    "expert_advisor_role": [
+      "Occupy/render the Trailaris full-chart MT5 interface",
+      "Read authorized local MT5 account/execution state",
+      "Receive only account-bound signed execution/management envelopes",
+      "Verify instruction authenticity and validity",
+      "Submit/modify/close permitted orders in MT5",
+      "Render high-level trade rationale and trade dossiers",
+      "Transmit execution telemetry and system health"
+    ],
+    "secure_connector_role": [
+      "Hold hardware/device identity where supported",
+      "Authenticate the installation to Trailaris-controlled infrastructure",
+      "Maintain secure session/heartbeat with Trailaris",
+      "Relay signed execution envelopes and telemetry",
+      "Support update/integrity checks and central alerting"
+    ],
+    "position_guardian": "If central connectivity is lost, no new entries are permitted. Existing positions may be managed only within a previously signed contingency safety envelope; this component does not contain trade-discovery or strategy-selection intelligence.",
+    "deployment_flow": [
+      "Valid purchase and one-account entitlement created",
+      "Secure installer/download entitlement issued",
+      "Installer deploys signed MT5 Executor/Dashboard and Secure Connector",
+      "Customer activates against the licensed Trailaris identity",
+      "Exact approved broker and MT5 trading account are bound",
+      "Executor is attached to a dedicated MT5 chart and takes over that chart canvas with the Trailaris full-screen dashboard",
+      "Connector establishes authenticated session to Trailaris-controlled infrastructure",
+      "Server-side Market Execution Engine sends only signed account-specific execution/management envelopes",
+      "MT5 executor validates and executes them",
+      "Health, alerts, fills and results return to the Trailaris control plane"
+    ]
+  },
+  "security_principle": "Anything sufficiently sensitive that disclosure would compromise Trailaris must never be delivered to the customer-controlled machine."
+}
