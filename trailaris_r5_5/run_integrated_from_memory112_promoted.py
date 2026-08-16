@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse, json, sys
+import argparse, json, os, sys
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -63,29 +64,39 @@ def rolling(W: pd.DataFrame, n: int = 11) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _build_component(job):
+    import trailaris_r4_full_universe_loop as r4
+    return r4.build_asset_components(job)
+
+
 def load_feature_cache(rawdir: Path, routes: list[str]) -> tuple[dict[str, pd.DataFrame], pd.Timestamp]:
-    cache = {}
-    last = None
-    for asset in routes:
-        p = rawdir / f'{asset}_M1_normalized.csv'
-        if not p.exists():
+    # Exact frozen engine semantics: build the same per-asset feature frame used
+    # by R5_BASE_CAUSAL_ENGINE.build_universe(), but do not regenerate candidates
+    # or factors because the exact memory112 promotion estate is already frozen.
+    jobs = [(asset, str(rawdir / f'{asset}_M1_normalized.csv')) for asset in routes]
+    for asset, p in jobs:
+        if not Path(p).exists():
             raise RuntimeError(f'missing preserved M1 path: {asset}')
-        d = pd.read_csv(p)
-        need = {'timestamp','high','low','close'}
-        missing = need - set(d.columns)
-        if missing:
-            raise RuntimeError(f'{asset} M1 missing columns {sorted(missing)}')
-        d['timestamp'] = pd.to_datetime(d['timestamp'], utc=True, errors='coerce')
-        for c in ('open','high','low','close'):
-            if c in d.columns:
-                d[c] = pd.to_numeric(d[c], errors='coerce')
-        d = d.dropna(subset=['timestamp','high','low','close']).drop_duplicates('timestamp').sort_values('timestamp').reset_index(drop=True)
-        if d.empty:
-            raise RuntimeError(f'empty preserved M1 path: {asset}')
-        cache[asset] = d
-        mx = pd.Timestamp(d.timestamp.iloc[-1])
-        last = mx if last is None or mx > last else last
-    return cache, last
+    cache = {}
+    workers = min(8, max(2, os.cpu_count() or 4))
+    with ProcessPoolExecutor(max_workers=workers) as ex:
+        futs = {ex.submit(_build_component, job): job[0] for job in jobs}
+        for fut in as_completed(futs):
+            asset, _cands, xf, _opps = fut.result()
+            if xf is None or len(xf) == 0:
+                raise RuntimeError(f'empty exact R4 feature frame: {asset}')
+            xf = xf.copy()
+            xf['timestamp'] = pd.to_datetime(xf['timestamp'], utc=True, errors='coerce')
+            xf = xf.dropna(subset=['timestamp']).sort_values('timestamp').reset_index(drop=True)
+            need = {'timestamp','high','low','close'}
+            missing = need - set(xf.columns)
+            if missing:
+                raise RuntimeError(f'{asset} exact R4 feature frame missing {sorted(missing)}')
+            cache[str(asset)] = xf
+    if set(cache) != set(routes):
+        raise RuntimeError(f'exact R4 feature cache gate failed: {len(cache)}/34')
+    raw_end = max(pd.Timestamp(x.timestamp.iloc[-1]) for x in cache.values())
+    return cache, raw_end
 
 
 def metrics(EV: pd.DataFrame, DE: pd.DataFrame, W: pd.DataFrame, roll: pd.DataFrame) -> dict:
@@ -148,7 +159,6 @@ def main():
     out = Path(a.outdir); out.mkdir(parents=True, exist_ok=True)
     sys.path[:0] = ['trailaris_r4','trailaris_r5_4','trailaris_r5_4/reliability_variants','trailaris_r5_5']
     import trailaris_r4_full_universe_loop as r4
-    import R5_BASE_CAUSAL_ENGINE as base
     import longcycle_integrated_negative_refinement as mod
 
     fa = pd.read_csv(a.factory_audit)
@@ -215,11 +225,13 @@ def main():
 
     mgmt = EV.get('r5_5_management_repaired', pd.Series(False, index=EV.index)).fillna(False).astype(bool) if len(EV) else pd.Series(dtype=bool)
     repair_counts = EV.loc[mgmt, 'exit_reason'].value_counts().to_dict() if len(EV) and mgmt.any() else {}
+    gate_counts = RJ.get('r5_5_negative_edge_gate_reason', pd.Series(dtype=str)).value_counts().to_dict() if len(RJ) else {}
     status = {
-        'state': 'R5_5_INTEGRATED_NEGATIVE_REFINEMENT_26W_REPLAY_COMPLETE',
+        'state': 'R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_REPLAY_COMPLETE',
         'source_promotion_estate': 'EXACT_R5_5_MEMORY112_PROMOTED_3417',
         'source_promotion_rows': int(len(PR0)),
         'source_promotion_weeks': int(len(weeks)),
+        'feature_cache_source': 'EXACT_R4_BUILD_ASSET_COMPONENTS_FROM_PRESERVED_34_ROUTE_M1_CACHE',
         'scope': {'routes':34,'strategy_families':15,'route_strategy_cells':510,'weeks':26},
         'frozen_control': CONTROL,
         'memory112_component_leader': MEMORY112,
@@ -229,11 +241,12 @@ def main():
         'integrated_counters': {
             'promoted_before_gate': int(len(PR0)),
             'entry_gate_rejected': int(len(RJ)),
+            'entry_gate_reasons': {str(k): int(v) for k,v in gate_counts.items()},
             'promoted_after_gate': int(len(PR)),
             'management_repaired_selected_trades': int(mgmt.sum()) if len(mgmt) else 0,
             'management_repair_exit_reasons': {str(k): int(v) for k,v in repair_counts.items()},
         },
-        'causality': 'Entry exclusion uses decision-time quality and reliability_asset_strategy_mean_r only. Management repairs use entry-time rank/reliability and then contemporaneous M1 path with next-bar activation after trigger. MFE/MAE are not eligibility inputs.',
+        'causality': 'Entry exclusion uses decision-time fields only. Flat partial realization uses entry-time rank/reliability and the exact contemporaneous R4 feature path to detect first +0.75R reach; final MFE/MAE are not eligibility inputs. Exit timing remains frozen and no extra capacity is credited after the partial.',
         'automatic_promotion': False,
         'evidence_class': 'FULL_26_WEEK_CAUSAL_WALK_FORWARD_RESEARCH_PROXY; BROKER_PRODUCTION_CERTIFICATION_SEPARATE',
     }
