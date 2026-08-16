@@ -1,38 +1,39 @@
 {
   "baseline_id": "TRAILARIS_R5_3_PORTFOLIO_BASELINE_2026-08-16",
+  "baseline_reconciled": true,
   "evidence_class": "HISTORICAL_MARKET_PROXY_NOT_BROKER_CERTIFIED",
   "assets_in_universe": 34,
   "assets_with_executed_trades": 33,
-  "executed_trades": 1297,
-  "selected_decisions": 1297,
-  "total_lots_opened": 294.686,
-  "total_round_turn_lot_sides": 589.372,
-  "total_net_pnl_dollars": 128.99667261061376,
-  "winning_trades": 498,
-  "losing_trades": 357,
-  "flat_trades": 442,
-  "fx_trades": 740,
-  "fx_signed_captured_pips": 411.5863928571577,
-  "fx_gross_traded_pips": 1811.29067857144,
+  "executed_trades": 1393,
+  "selected_decisions": 1393,
+  "total_lots_opened": 320.642,
+  "total_round_turn_lot_sides": 641.284,
+  "total_net_pnl_event_sum_dollars": 154.42164547149397,
+  "winning_trades": 545,
+  "losing_trades": 374,
+  "flat_trades": 474,
+  "fx_trades": 809,
+  "fx_signed_captured_pips": 506.92900000002993,
+  "fx_gross_traded_pips": 1957.184000000023,
   "nonfx_note": "Non-FX movement is reported per asset in raw price points; raw points are not summed across unlike instruments because one BTCUSD point, one index point, one energy point and one synthetic point are not economically equivalent.",
   "ib_scenario_usd_per_round_turn_lot": {
-    "1": 294.686,
-    "2": 589.372,
-    "3": 884.058,
-    "5": 1473.4299999999998,
-    "7": 2062.8019999999997,
-    "10": 2946.8599999999997
+    "1": 320.642,
+    "2": 641.284,
+    "3": 961.9259999999999,
+    "5": 1603.21,
+    "7": 2244.494,
+    "10": 3206.42
   },
   "ib_scenario_usd_per_side_lot": {
-    "0.5": 294.686,
-    "1": 589.372,
-    "2": 1178.744,
-    "3": 1768.116
+    "0.5": 320.642,
+    "1": 641.284,
+    "2": 1282.568,
+    "3": 1923.8519999999999
   },
-  "ib_truth_constraint": "Potential only. Exact IB earnings require the selected execution broker, account type, instrument-specific rebate schedule, eligibility rules and whether remuneration is per round-turn lot, per side, spread share or commission share.",
+  "ib_truth_constraint": "Potential only. Exact IB earnings require the selected execution broker, account type, instrument-specific rebate schedule, eligibility rules and whether remuneration is per round-turn lot, per side, turnover, spread share or commission share.",
   "start_equity": 100.0,
-  "end_equity": 228.6647147248994,
-  "compounded_return_pct": 128.66471472489937,
+  "end_equity": 254.4465598357797,
+  "compounded_return_pct": 154.44655983577974,
   "weekly_compounding_verified": true,
   "weekly_path": [
     {
@@ -50,56 +51,56 @@
     {
       "week_start": "2026-06-15",
       "start_equity": 100.67306855508798,
-      "end_equity": 111.36741953187334,
-      "weekly_return_pct": 10.622851900986262
+      "end_equity": 112.43670523187303,
+      "weekly_return_pct": 11.684988692232068
     },
     {
       "week_start": "2026-06-22",
-      "start_equity": 111.36741953187334,
-      "end_equity": 125.3357146917134,
-      "weekly_return_pct": 12.542532832811414
+      "start_equity": 112.43670523187303,
+      "end_equity": 126.92172029230233,
+      "weekly_return_pct": 12.882817075222452
     },
     {
       "week_start": "2026-06-29",
-      "start_equity": 125.3357146917134,
-      "end_equity": 134.5386146801283,
-      "weekly_return_pct": 7.342599841594355
+      "start_equity": 126.92172029230233,
+      "end_equity": 138.11175749006028,
+      "weekly_return_pct": 8.81648717964676
     },
     {
       "week_start": "2026-07-06",
-      "start_equity": 134.5386146801283,
-      "end_equity": 140.03803853727115,
-      "weekly_return_pct": 4.087617425092405
+      "start_equity": 138.11175749006028,
+      "end_equity": 143.68870400791744,
+      "weekly_return_pct": 4.0379954749750535
     },
     {
       "week_start": "2026-07-13",
-      "start_equity": 140.03803853727115,
-      "end_equity": 149.09566003816468,
-      "weekly_return_pct": 6.467972270607625
+      "start_equity": 143.68870400791744,
+      "end_equity": 152.93989305881104,
+      "weekly_return_pct": 6.438355133597584
     },
     {
       "week_start": "2026-07-20",
-      "start_equity": 149.09566003816468,
-      "end_equity": 170.80067225870297,
-      "weekly_return_pct": 14.557776004333276
+      "start_equity": 152.93989305881104,
+      "end_equity": 175.600537730385,
+      "weekly_return_pct": 14.816699697089586
     },
     {
       "week_start": "2026-07-27",
-      "start_equity": 170.80067225870297,
-      "end_equity": 191.06542094525665,
-      "weekly_return_pct": 11.864560261132764
+      "start_equity": 175.600537730385,
+      "end_equity": 194.49612969774253,
+      "weekly_return_pct": 10.760554729262603
     },
     {
       "week_start": "2026-08-03",
-      "start_equity": 191.06542094525665,
-      "end_equity": 219.44956309275608,
-      "weekly_return_pct": 14.855719055323968
+      "start_equity": 194.49612969774253,
+      "end_equity": 223.7114750738135,
+      "weekly_return_pct": 15.021042023547304
     },
     {
       "week_start": "2026-08-10",
-      "start_equity": 219.44956309275608,
-      "end_equity": 228.6647147248994,
-      "weekly_return_pct": 4.199211655868407
+      "start_equity": 223.7114750738135,
+      "end_equity": 254.4465598357797,
+      "weekly_return_pct": 13.738716242349746
     }
   ]
 }

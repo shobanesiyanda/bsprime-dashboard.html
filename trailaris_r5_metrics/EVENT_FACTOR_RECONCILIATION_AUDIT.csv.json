@@ -1,0 +1,10 @@
+{
+  "routes_required": 34,
+  "routes_audited": 34,
+  "synthetic_event_non_native": 5,
+  "routes_with_released_event_evidence": 29,
+  "factor_rows": 342,
+  "evidence_class": "RELEASED_OFFICIAL_CALENDAR_CAUSAL_POST_EVENT",
+  "causality": "decision timestamp = release + 15m; score uses only data through decision timestamp",
+  "promotion_limit": "research factor evidence only; does not certify target-broker execution"
+}
