@@ -1,0 +1,11 @@
+{
+  "event_rows": 342,
+  "funding_rows": 1265,
+  "orderflow_rows": 23149,
+  "combined_rows": 24756,
+  "evidence_states": [
+    "RELEASED_OFFICIAL_CALENDAR_CAUSAL_POST_EVENT",
+    "VERIFIED_BINANCE_PUBLIC_ARCHIVE_FUNDING_BASIS_CAUSAL",
+    "VERIFIED_BINANCE_USDM_TAKER_FLOW_15M_CAUSAL"
+  ]
+}

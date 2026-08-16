@@ -1,0 +1,41 @@
+{
+  "metrics": {
+    "end_equity": 203.81706693980294,
+    "mean_week_pct": 6.821660749142757,
+    "median_week_pct": 4.219731249999481,
+    "weeks_ge5": 5,
+    "weeks_ge10": 5,
+    "max_weekly_dd_pct": -7.257541952866187,
+    "fresh_return_pct": 7.5629974071424355,
+    "fresh_max_dd_pct": -0.9192594976873747,
+    "assets_with_selected": 33,
+    "losses": 342,
+    "nonflat_win_rate": 0.583941605839416,
+    "profit_factor": 1.6793712610594853
+  },
+  "wins": 480,
+  "flat": 423,
+  "strict_gate": {
+    "checks": {
+      "end_equity": false,
+      "mean_week_pct": false,
+      "median_week_pct": false,
+      "weeks_ge5": false,
+      "weeks_ge10": false,
+      "max_weekly_dd": false,
+      "fresh_return": false,
+      "fresh_dd": true,
+      "asset_participation": true
+    },
+    "improvements": {
+      "fewer_losses": true,
+      "higher_nonflat_win_rate": false,
+      "higher_profit_factor": false,
+      "higher_end_equity": false,
+      "better_max_weekly_dd": false
+    },
+    "behavioral_non_regression_pass": false,
+    "material_improvement_present": true,
+    "promotion_allowed": false
+  }
+}

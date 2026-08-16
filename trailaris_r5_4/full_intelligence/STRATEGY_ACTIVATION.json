@@ -1,0 +1,9 @@
+{
+  "strategy_cells": 510,
+  "strategy_families": 15,
+  "event_triggered_cells": 29,
+  "funding_triggered_cells": 5,
+  "orderflow_triggered_cells": 5,
+  "carry_triggered_cells": 0,
+  "scope_pass": true
+}
