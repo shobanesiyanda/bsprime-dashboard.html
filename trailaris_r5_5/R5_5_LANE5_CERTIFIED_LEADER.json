@@ -1,0 +1,43 @@
+{
+  "state": "R5_5_LANE5_CLOSED_CERTIFIED_HISTORICAL_LEADER",
+  "evidence_class": "FULL_MATRIX_RANKING_PLUS_CORRECTED_IMMUTABLE_SCOPE_REPLAY",
+  "matrix": {
+    "run_id": 31962431090,
+    "variants_expected": 11,
+    "variants_completed": 11,
+    "all_jobs_success": true
+  },
+  "leader": {
+    "canonical_stack": ["B3", "B5", "B8"],
+    "equivalent_stack": ["B3", "B4", "B8"],
+    "equivalence": "EXACT_PORTFOLIO_RESULT_EQUIVALENCE",
+    "end_equity": 345.3896887826546,
+    "compounded_return_pct": 245.38968878265464,
+    "fresh_return_pct": 7.261646557142409,
+    "fresh_max_dd_pct": -0.5196525640746019,
+    "max_weekly_dd_pct": -4.637645574907678,
+    "executed_trades": 1119,
+    "wins": 470,
+    "losses": 228,
+    "flat": 421,
+    "nonflat_win_rate": 0.673352435530086,
+    "assets_with_selected": 33,
+    "managed_executions": 16
+  },
+  "corrected_scope_certification": {
+    "run_id": 31964215446,
+    "b3_b4_b8_job_id": 95206761810,
+    "b3_b5_b8_job_id": 95206761804,
+    "routes_with_data": 34,
+    "approved_routes": 34,
+    "approved_strategy_families": 15,
+    "approved_route_strategy_cells": 510,
+    "r5_4_control_end_equity_reproduced": 337.4231242104393,
+    "r5_4_control_executions_reproduced": 1102,
+    "actual_full_universe_34x15x510": true
+  },
+  "only_unresolved_frontier_gate": "FRESH_RETURN_STRICTLY_ABOVE_7.261646557142409",
+  "candidate_freeze": false,
+  "next_lane": "WINNER_MONETIZATION_AND_FRESH_STATE_REPAIR",
+  "governance": "Lane 5 broad stacking is closed. B3+B5+B8 is the simpler canonical baseline because B3+B4+B8 reproduced the exact same portfolio result. Do not spend further broad optimization budget on Lane 5 unless later ablation demonstrates non-redundant causal value. The certified historical leader is the baseline for Lane 7 winner-management fusion, but cannot be frozen while fresh return is unchanged."
+}
