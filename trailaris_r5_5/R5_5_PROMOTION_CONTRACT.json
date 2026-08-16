@@ -1,0 +1,50 @@
+{
+  "state": "R5_5_PROMOTION_CONTRACT_ACTIVE",
+  "immutable_control": {
+    "version": "R5.4",
+    "end_equity": 337.4231242104393,
+    "compounded_return_pct": 237.42312421043928,
+    "executions": 1102,
+    "wins": 446,
+    "losses": 231,
+    "flats": 425,
+    "max_weekly_dd_pct": -4.637645574907678,
+    "approved_routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510
+  },
+  "research_partition": {
+    "discovery": "first 8 R5.4 evaluation weeks",
+    "validation": "later decisions strictly before 2026-08-13T00:00:00Z",
+    "aug13_14_state": "QUARANTINED_FROM_RULE_SELECTION_BUT_ALREADY_INSPECTED_DURING_R5_5_DEVELOPMENT",
+    "aug13_14_allowed_use": "post-freeze engineering verification only; never a final R5.5 promotion holdout",
+    "final_holdout": "NEW_UNSEEN_FORWARD_MARKET_PATHS_ACQUIRED_AFTER_CANDIDATE_FREEZE"
+  },
+  "pre_forward_candidate_gates": [
+    "R5.4 exact control reproduces before comparison",
+    "full approved 34-route / 15-family / 510-cell universe remains researched",
+    "end equity does not regress below R5.4",
+    "maximum weekly drawdown does not worsen",
+    "target repair objective is achieved without hiding new losses through scope reduction",
+    "non-flat win rate does not worsen materially",
+    "selected-asset coverage does not regress unless a route is causally evaluated and rejected",
+    "Aug13-14 already-inspected verification does not regress",
+    "all candidate changes are causal at decision time and full portfolio replay recomputes compounding, risk, margin, recycling and later opportunity selection"
+  ],
+  "promotion_gates": [
+    "pre_forward_candidate_gates all pass",
+    "candidate logic and parameters are frozen before forward sample is opened for evaluation",
+    "new unseen forward holdout passes without retuning",
+    "target-server route/account execution evidence is certified",
+    "full candidate survives route-specific spread, commission, slippage, financing, lot-step, margin, fill, reject and latency degradation",
+    "broker routing remains execution-quality-first; IB remuneration cannot promote inferior execution",
+    "R5.4 historical files, metrics and logic remain immutable"
+  ],
+  "fail_closed_rules": {
+    "no_new_forward_holdout": "NOT_PROMOTABLE",
+    "no_target_server_broker_evidence": "NOT_PRODUCTION_CERTIFIED",
+    "scope_below_34x510": "REJECT",
+    "return_regression": "REJECT",
+    "hidden_holdout_reuse_for_tuning": "REJECT_AND_RESTART_FORWARD_HOLDOUT"
+  }
+}
