@@ -1,0 +1,62 @@
+{
+  "state": "APPROVED_AND_HARD_LOCKED_ENTERPRISE_SYSTEMS_ARCHITECTURE_METHOD",
+  "date": "2026-08-17",
+  "governing_doctrine": [
+    "UNDERSTAND_THE_WHOLE",
+    "DEFINE_AUTHORITY",
+    "ESTABLISH_TRUTH",
+    "MODEL_STATE",
+    "GOVERN_CHANGE",
+    "EXECUTE_DELIBERATELY",
+    "PROVE_THE_OUTCOME",
+    "LEARN_FROM_REALITY"
+  ],
+  "sequential_design_order": [
+    "1_BUSINESS_REALITY_AND_INTENT",
+    "2_CAPABILITIES_AND_BOUNDED_DOMAINS",
+    "3_AUTHORITATIVE_ENTITIES_AND_SYSTEMS_OF_RECORD",
+    "4_DECISION_AUTHORITY_AND_OWNERSHIP",
+    "5_LIFECYCLE_STATES_AND_LEGAL_TRANSITIONS",
+    "6_EVIDENCE_AND_INFORMATION_REQUIREMENTS",
+    "7_FAILURE_RECOVERY_AND_FAIL_CLOSED_BEHAVIOUR",
+    "8_INTEGRATION_CONTRACTS_AND_BOUNDARIES",
+    "9_INVARIANTS_SECURITY_AND_CONTROL_RULES",
+    "10_AUDITABILITY_OBSERVABILITY_AND_ACCEPTANCE_CRITERIA",
+    "11_APPLICATION_INFORMATION_ARCHITECTURE",
+    "12_INTERFACE_AND_VISUAL_DESIGN",
+    "13_IMPLEMENTATION"
+  ],
+  "current_scope": [
+    "Trailaris MT5 full-screen execution/dashboard client",
+    "Trailaris downloadable Desktop terminal",
+    "Trailaris Admin/Operations control panel",
+    "Licensing and one-account entitlement control",
+    "Secure execution distribution and device/account binding",
+    "Telemetry, system health, alerts and incidents",
+    "Verified result sharing",
+    "Customer-safe explainability layer"
+  ],
+  "build_cycle_after_architecture_freeze": [
+    "DEFINE",
+    "DESIGN",
+    "BUILD",
+    "INTEGRATE",
+    "TEST",
+    "FIX",
+    "RE_TEST",
+    "ZERO_FINDINGS",
+    "CLOSURE_CERTIFICATE",
+    "FREEZE",
+    "FOUNDER_APPROVAL",
+    "NEXT_COMPONENT"
+  ],
+  "sequencing_rules": [
+    "Do not jump to implementation while architecture, boundaries, authority, state, failure handling, security, auditability and acceptance criteria are unresolved.",
+    "Do not start a later component merely because an earlier component is partially designed or partially built.",
+    "Each component must reach zero material findings, closure, freeze and explicit Founder approval before the next component is treated as complete implementation work.",
+    "Interface design must express the authoritative system model; interface components must not invent business logic, execution logic, licensing logic or state independently.",
+    "Previously hard-locked R5.5 Market Execution Engine logic and security/distribution boundaries remain immutable unless separately versioned and explicitly authorized."
+  ],
+  "immediate_next_phase": "PHASE_1_BUSINESS_REALITY_AND_INTENT_FOR_TRAILARIS_PRODUCT_ESTATE",
+  "implementation_status": "NOT_STARTED_BY_THIS_METHOD"
+}
