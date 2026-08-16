@@ -1,4 +1,4 @@
-name: Trailaris R5.5 — Frozen Cache Bridge Integrated Replay V2
+name: Trailaris R5.5 — Liquidity Runway V3 Full 26W Replay
 
 on:
   push:
@@ -10,15 +10,15 @@ permissions:
   actions: read
 
 concurrency:
-  group: trailaris-r5-5-integrated-cache-bridge-once
+  group: trailaris-r5-5-single-authorized-v3-replay
   cancel-in-progress: false
 
 jobs:
-  integrated-replay-from-preserved-evidence:
+  liquidity-runway-v3-from-locked-v2:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     steps:
-      - name: Checkout current R5.5 research branch
+      - name: Checkout active R5.5 research branch
         uses: actions/checkout@v4
         with:
           ref: trailaris-ephemeral-research-20260815
@@ -61,7 +61,7 @@ jobs:
           repository: shobanesiyanda/bsprime-dashboard.html
           run-id: 31969697656
 
-      - name: Verify preserved evidence estate
+      - name: Verify locked V2 baseline and full evidence estate
         shell: bash
         run: |
           set -euo pipefail
@@ -70,11 +70,12 @@ jobs:
           python - <<'PY'
           import json, pandas as pd
           from pathlib import Path
-          c=json.loads(Path('trailaris_r5_5/R5_4_26W_CANONICAL_CONTROL.json').read_text())
-          s=json.loads(Path('trailaris_r5_5/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_SPEC.json').read_text())
-          assert c['control_id']=='R5_4_FROZEN_26W_20260816'
-          assert c['executed_trades']==2152 and c['wins']==856 and c['losses']==505 and c['flats']==791
-          assert s['state']=='AUTHORIZED_INTEGRATED_R5_5_REFINEMENT_V2'
+          b=json.loads(Path('trailaris_r5_5/R5_5_V2_26W_CANONICAL_BASELINE.json').read_text())
+          s=json.loads(Path('trailaris_r5_5/R5_5_LIQUIDITY_RUNWAY_V3_SPEC.json').read_text())
+          assert b['state']=='LOCKED_CANONICAL_BASELINE'
+          assert abs(b['performance']['end_equity']-1366.8938578865148)<1e-9
+          assert b['performance']['losses']==478 and b['performance']['flats']==437
+          assert s['state']=='AUTHORIZED_FULL_REPLAY_FROM_LOCKED_V2_BASELINE'
           assert s['scope']=={'weeks':26,'routes':34,'strategy_families':15,'route_strategy_cells':510}
           a=pd.read_csv('trailaris_longcycle/results/R4_FACTORY_AUDIT.csv')
           assert len(a)==510 and a.strategy_family.nunique()==15
@@ -82,41 +83,41 @@ jobs:
           assert len(p)==3417 and p.asset.nunique()==34 and pd.to_datetime(p.eval_week,utc=True).nunique()==26
           files=list(Path('trailaris_longcycle/raw_m1').glob('*_M1_normalized.csv'))
           assert len(files)==34, f'raw route files={len(files)}'
-          print('PASS: exact 34 paths + 510 cells + 3417 memory112 promotions + V2 contract.')
+          print('PASS: locked V2 + exact 34 paths + 510 cells + 3417 promotions / 26 weeks.')
           PY
 
       - name: Rebuild research sizing specs only
         run: python trailaris_r4/build_research_specs.py
 
-      - name: Execute one authentic integrated downstream 26-week R5.5 V2 replay
+      - name: Execute one full liquidity-runway V3 26-week replay
         env:
           PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
         run: |
-          rm -rf trailaris_r5_5/integrated_negative_results
-          mkdir -p trailaris_r5_5/integrated_negative_results
-          python trailaris_r5_5/run_integrated_from_memory112_promoted.py \
+          rm -rf trailaris_r5_5/liquidity_runway_v3_results
+          mkdir -p trailaris_r5_5/liquidity_runway_v3_results
+          python trailaris_r5_5/run_liquidity_runway_v3_from_memory112_promoted.py \
             --rawdir trailaris_longcycle/raw_m1 \
             --specs trailaris_r4/research_proxy_specs.csv \
             --promoted trailaris_r5_5/memory112_evidence/R5_5_MEMORY112_PROMOTED.csv \
             --factory-audit trailaris_longcycle/results/R4_FACTORY_AUDIT.csv \
-            --outdir trailaris_r5_5/integrated_negative_results
+            --outdir trailaris_r5_5/liquidity_runway_v3_results
 
-      - name: Upload full V2 evidence
+      - name: Upload full V3 evidence
         uses: actions/upload-artifact@v4
         with:
-          name: trailaris-r5-5-integrated-negative-refinement-v2-26w
-          path: trailaris_r5_5/integrated_negative_results/
+          name: trailaris-r5-5-liquidity-runway-v3-26w
+          path: trailaris_r5_5/liquidity_runway_v3_results/
           retention-days: 30
 
-      - name: Commit compact V2 evidence to active R5.5 branch
+      - name: Commit compact V3 evidence to active R5.5 branch
         if: success()
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -f \
-            trailaris_r5_5/integrated_negative_results/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_STATUS.json \
-            trailaris_r5_5/integrated_negative_results/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_WEEKLY.csv \
-            trailaris_r5_5/integrated_negative_results/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_ROLLING_11W.csv
-          git commit -m 'test: authentic integrated R5.5 V2 26-week evidence [skip ci]' || true
+            trailaris_r5_5/liquidity_runway_v3_results/R5_5_LIQUIDITY_RUNWAY_V3_STATUS.json \
+            trailaris_r5_5/liquidity_runway_v3_results/R5_5_LIQUIDITY_RUNWAY_V3_WEEKLY.csv \
+            trailaris_r5_5/liquidity_runway_v3_results/R5_5_LIQUIDITY_RUNWAY_V3_ROLLING_11W.csv
+          git commit -m 'test: full R5.5 liquidity-runway V3 26-week replay [skip ci]' || true
           git pull --rebase origin trailaris-ephemeral-research-20260815 || true
           git push origin HEAD:trailaris-ephemeral-research-20260815
