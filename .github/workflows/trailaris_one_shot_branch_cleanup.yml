@@ -1,0 +1,57 @@
+name: Trailaris One-Shot Branch Cleanup
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_one_shot_branch_cleanup.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Delete obsolete and temporary branch refs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          KEEP_ACTIVE='trailaris-ephemeral-research-20260815'
+          KEEP_FROZEN='trailaris-r5-5-lane1b2-frozen'
+          for ref in \
+            trailaris-r5-5-candidate-20260816 \
+            trailaris-data-runtime-20260813 \
+            archive/README-DO-NOT-USE \
+            archive/do-not-use \
+            archive/placeholder \
+            archive/unused; do
+            test "$ref" != "$KEEP_ACTIVE"
+            test "$ref" != "$KEEP_FROZEN"
+            echo "Deleting refs/heads/$ref"
+            curl --fail-with-body -sS -X DELETE \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs/heads/${ref//\//%2F}" || {
+                echo "Ref $ref already absent or could not be deleted" >&2
+              }
+          done
+      - name: Assert canonical branch set
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import json, os, urllib.request
+          req=urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/branches?per_page=100",
+              headers={"Authorization":f"Bearer {os.environ['GH_TOKEN']}","Accept":"application/vnd.github+json"})
+          rows=json.load(urllib.request.urlopen(req))
+          names=sorted(x['name'] for x in rows)
+          print(names)
+          required={'main','trailaris-ephemeral-research-20260815','trailaris-r5-5-lane1b2-frozen','archive/trailaris-r5-5-candidate-20260816','archive/trailaris-data-runtime-20260813'}
+          assert required.issubset(set(names)), (required-set(names), names)
+          forbidden={'trailaris-r5-5-candidate-20260816','trailaris-data-runtime-20260813','archive/README-DO-NOT-USE','archive/do-not-use','archive/placeholder','archive/unused'}
+          assert not (forbidden & set(names)), forbidden & set(names)
+          PY
