@@ -1,0 +1,43 @@
+{
+  "state": "R5_5_LANE6_WINNER_MONETIZATION_MATRIX_PARTIAL",
+  "variants_expected": 12,
+  "variants_completed": 11,
+  "frontier_passes": 0,
+  "best_variant": {
+    "mode": "6C",
+    "source": "r55-winner-c1",
+    "end_equity": 343.5447309255116,
+    "fresh_return_pct": 7.261646557142409,
+    "max_weekly_dd_pct": -4.637645574907678,
+    "fresh_max_dd_pct": -0.5196525640746019,
+    "wins": 467,
+    "losses": 233,
+    "flat": 426,
+    "nonflat_win_rate": 0.6671428571428571,
+    "assets_with_selected": 33,
+    "frontier_pass": false,
+    "end_gt_lane5": false,
+    "fresh_gt_lane5": false,
+    "dd_ok": true,
+    "fresh_dd_ok": true,
+    "losses_ok": false,
+    "flats_ok": false,
+    "wr_ok": false,
+    "coverage_ok": true,
+    "scope_34x15x510": true
+  },
+  "certified_lane5_frontier": {
+    "end_equity": 345.3896887826546,
+    "fresh_return_pct": 7.261646557142409,
+    "max_weekly_dd_pct": -4.637645574907678,
+    "fresh_max_dd_pct": -0.5196525640746019,
+    "losses_max": 228,
+    "flat_max": 421,
+    "nonflat_win_rate_min": 0.673352435530086
+  },
+  "scope": {
+    "routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510
+  }
+}
