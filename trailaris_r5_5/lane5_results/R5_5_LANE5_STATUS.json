@@ -1,0 +1,42 @@
+{
+  "state": "R5_5_LANE5_PARETO_MANAGEMENT_STACK_COMPLETE",
+  "evidence_class": "END_TO_END_CAUSAL_FULL_REPLAY_MATRIX",
+  "variants_expected": 11,
+  "variants_completed": 11,
+  "frontier_passes": 0,
+  "best_variant": {
+    "variant_index": 4,
+    "config_id": "B3_B4_B8",
+    "stack": "B3>B4>B8",
+    "end_equity": 345.3896887826546,
+    "delta_vs_r54": 7.9665645722153045,
+    "delta_vs_lane1b2": 1.8449578571430152,
+    "fresh_return_pct": 7.261646557142409,
+    "fresh_max_dd_pct": -0.5196525640746019,
+    "max_weekly_dd_pct": -4.637645574907678,
+    "executed_trades": 1119,
+    "wins": 470,
+    "losses": 228,
+    "flat": 421,
+    "nonflat_win_rate": 0.673352435530086,
+    "assets_with_selected": 33,
+    "managed_executions": 16,
+    "beats_lane1b2_end_equity": true,
+    "fresh_return_beats_incumbent": false,
+    "max_weekly_dd_not_worse_than_r54": true,
+    "fresh_dd_not_worse_than_r54": true,
+    "losses_below_r54": true,
+    "flats_below_r54": true,
+    "nonflat_win_rate_at_least_lane1b2": true,
+    "selected_asset_coverage_not_worse_than_r54": true,
+    "actual_full_universe_34x15x510": false,
+    "frontier_pass": false
+  },
+  "r5_4_control_end_equity": 337.4231242104393,
+  "lane1b2_incumbent_end_equity": 343.5447309255116,
+  "scope": {
+    "routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510
+  }
+}
