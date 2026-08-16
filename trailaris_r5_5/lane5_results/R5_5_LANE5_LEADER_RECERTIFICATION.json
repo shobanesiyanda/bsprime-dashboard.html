@@ -1,0 +1,61 @@
+{
+  "state": "R5_5_LANE5_LEADER_FULL_UNIVERSE_RECERTIFIED",
+  "evidence_class": "TWO_INDEPENDENT_END_TO_END_CAUSAL_FULL_REPLAYS",
+  "source_run_id": 31964215446,
+  "control_reproduction": {
+    "end_equity": 337.4231242104393,
+    "executed_trades": 1102,
+    "wins": 446,
+    "losses": 231,
+    "flat": 425,
+    "fresh_return_pct": 7.261646557142409,
+    "max_weekly_dd_pct": -4.637645574907678
+  },
+  "approved_scope": {
+    "routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510
+  },
+  "scope_rule": "Candidate-emitting family count is historical sample activity and cannot redefine the immutable approved 15-family research universe.",
+  "leaders": [
+    {
+      "variant_index": 4,
+      "config_id": "B3_B4_B8",
+      "stack": ["B3","B4","B8"],
+      "end_equity": 345.3896887826546,
+      "compounded_return_pct": 245.38968878265464,
+      "executed_trades": 1119,
+      "wins": 470,
+      "losses": 228,
+      "flat": 421,
+      "nonflat_win_rate": 0.673352435530086,
+      "fresh_return_pct": 7.261646557142409,
+      "fresh_max_dd_pct": -0.5196525640746019,
+      "max_weekly_dd_pct": -4.637645574907678,
+      "assets_with_selected": 33,
+      "managed_executions": 16,
+      "full_universe_34x15x510": true
+    },
+    {
+      "variant_index": 5,
+      "config_id": "B3_B5_B8",
+      "stack": ["B3","B5","B8"],
+      "end_equity": 345.3896887826546,
+      "compounded_return_pct": 245.38968878265464,
+      "executed_trades": 1119,
+      "wins": 470,
+      "losses": 228,
+      "flat": 421,
+      "nonflat_win_rate": 0.673352435530086,
+      "fresh_return_pct": 7.261646557142409,
+      "fresh_max_dd_pct": -0.5196525640746019,
+      "max_weekly_dd_pct": -4.637645574907678,
+      "assets_with_selected": 33,
+      "managed_executions": 16,
+      "full_universe_34x15x510": true
+    }
+  ],
+  "decision": "CERTIFY_AS_R5_5_HISTORICAL_FRONTIER_NOT_CANDIDATE_FREEZE",
+  "unresolved_gate": "STRICT_FRESH_RETURN_IMPROVEMENT_ABOVE_7_261646557142409_PERCENT",
+  "governance": "The two management stacks are historically equivalent at portfolio level under the certified replay. Neither is promoted or frozen while fresh return remains unchanged. Winner monetization or causal fresh-state repair must add strict fresh value without weakening the certified return/risk/quality frontier."
+}
