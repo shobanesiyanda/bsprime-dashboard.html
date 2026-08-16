@@ -1,13 +1,14 @@
 {
-  "state": "R5_5_LANE5_LEADER_RECERTIFIED_MATRIX_TAIL_IN_PROGRESS",
-  "evidence_class": "END_TO_END_CAUSAL_FULL_REPLAY_LEADER_RECERTIFICATION",
-  "authoritative_run_id": 31964215446,
-  "superseded_cancelled_run_id": 31964659049,
-  "integrity_note": "The cancelled duplicate run executed an always() aggregate with zero completed artifacts and temporarily overwrote this summary with 0/11. That summary was invalid. Canonical leader evidence is preserved in R5_5_LANE5_LEADER_RECERTIFICATION.json and R5_5_FRONTIER_LOCK.json.",
-  "variants_expected": 11,
-  "variants_known_completed_on_authoritative_run_at_repair": 7,
-  "certified_best_variant": {
-    "equivalent_config_ids": ["B3_B4_B8", "B3_B5_B8"],
+  "state": "R5_5_LANE5_COMPLETE_CLOSED",
+  "evidence_class": "END_TO_END_CAUSAL_FULL_REPLAY_MATRIX_PLUS_FULL_UNIVERSE_LEADER_RECERTIFICATION",
+  "matrix_run_id": 31962431090,
+  "matrix_variants_expected": 11,
+  "matrix_variants_completed": 11,
+  "matrix_aggregate_conclusion": "success",
+  "scope_checker_note": "The original 11/11 matrix contained an obsolete candidate-emission scope predicate. That predicate affected only the scope boolean, not replay performance arithmetic. The two performance leaders were subsequently recertified against the immutable R5.4 scope and reproduced exact 34 routes, 15 approved strategy families and 510 route-strategy cells.",
+  "certified_historical_leader": {
+    "preferred_config_id": "B3_B5_B8",
+    "equivalent_config_id": "B3_B4_B8",
     "end_equity": 345.3896887826546,
     "compounded_return_pct": 245.38968878265464,
     "fresh_return_pct": 7.261646557142409,
@@ -20,18 +21,18 @@
     "nonflat_win_rate": 0.673352435530086,
     "assets_with_selected": 33,
     "managed_executions": 16,
-    "full_universe_34x15x510": true
+    "routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510,
+    "full_universe_certified": true
   },
   "r5_4_control_reproduced": {
     "end_equity": 337.4231242104393,
     "executed_trades": 1102
   },
-  "scope": {"routes":34,"strategy_families":15,"route_strategy_cells":510},
-  "historical_frontier_certified": true,
+  "lane_decision": "CLOSED_AS_HISTORICAL_MANAGEMENT_LEADER",
   "candidate_freeze": false,
-  "unresolved_gate": "fresh_return_pct must be strictly above 7.261646557142409 while preserving the certified Lane 5 frontier",
-  "canonical_evidence_files": [
-    "trailaris_r5_5/lane5_results/R5_5_LANE5_LEADER_RECERTIFICATION.json",
-    "trailaris_r5_5/R5_5_FRONTIER_LOCK.json"
-  ]
+  "only_unresolved_alpha_gate": "fresh_return_pct must be strictly above 7.261646557142409 while preserving or improving the certified Lane 5 frontier",
+  "next_active_path": "Winner monetization lanes 6B/6C/6D and Aug13-14 state-difference forensic; the best surviving winner mechanism is fused onto B3_B5_B8 in Lane 7.",
+  "governance": "No additional broad Lane 5 tuning is authorized. R5.4 remains immutable control. Lane 5 is complete and closed; its certified leader is the historical management baseline for R5.5 challenger work."
 }
