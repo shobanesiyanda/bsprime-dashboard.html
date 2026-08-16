@@ -1,0 +1,50 @@
+{
+  "state": "R5_5_LANE4C_MARKET_STATE_AUTHENTIC_SHORTLIST_COMPLETE",
+  "evidence_class": "END_TO_END_CAUSAL_FULL_REPLAY",
+  "rules_expected": 9,
+  "rules_completed": 9,
+  "pre_forward_candidates": 0,
+  "best_rule": {
+    "rank_index": 4,
+    "target": "barely_developed_loss",
+    "scope_type": "STRATEGY_FAMILY",
+    "scope_value": "MEAN_REVERSION",
+    "rule_type": "2D",
+    "feature1": "ema20_distance_stop_r",
+    "dir1": "ge",
+    "threshold1": -0.992822902443148,
+    "feature2": "signed_mom6_atr",
+    "dir2": "ge",
+    "threshold2": -0.7380988593158307,
+    "excluded_promotions": 25,
+    "end_equity": 348.169801334797,
+    "delta_end_equity": 10.746677124357689,
+    "executed_trades": 1105,
+    "wins": 447,
+    "losses": 228,
+    "flat": 430,
+    "nonflat_win_rate": 0.6622222222222223,
+    "max_weekly_dd_pct": -4.637645574907678,
+    "fresh_return_pct": 7.261646557142409,
+    "aug13_14_verification_delta_pct": 0.0,
+    "end_equity_not_regressed": true,
+    "aug13_14_verification_not_regressed": true,
+    "drawdown_not_worse": true,
+    "loss_flat_repair": false,
+    "nonflat_win_rate_not_worse": true,
+    "selected_asset_coverage_not_worse": true,
+    "full_universe_34x510": true,
+    "pre_forward_candidate": false
+  },
+  "r5_4_control_end_equity": 337.4231242104393,
+  "approved_scope": {
+    "routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510
+  },
+  "promotion_candidate": false,
+  "promotion_blockers": [
+    "NEW_UNSEEN_FORWARD_HOLDOUT_REQUIRED",
+    "TARGET_SERVER_BROKER_EXECUTION_CERTIFICATION_REQUIRED"
+  ]
+}
