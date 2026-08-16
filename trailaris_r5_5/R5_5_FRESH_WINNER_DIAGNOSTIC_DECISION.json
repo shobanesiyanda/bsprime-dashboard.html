@@ -1,0 +1,34 @@
+{
+  "state": "R5_5_FRESH_WINNER_BOTTLENECK_DIAGNOSTIC_LOCKED",
+  "evidence_class": "AUG13_14_QUARANTINED_DIAGNOSTIC_NOT_SELECTION_EVIDENCE",
+  "source": "trailaris_r5_5/lane6e_fast_results/R5_5_LANE6E_FAST_STATUS.json",
+  "scope": {"routes":34,"strategy_families":15,"route_strategy_cells":510},
+  "observed_fresh_candidate_state": {
+    "all_candidates": 7552,
+    "parent_candidates": 6974,
+    "winner_like_parent_candidates": 4,
+    "winner_like_parent_simulated_wins": 4,
+    "winner_like_parent_simulated_losses": 0,
+    "winner_like_parent_simulated_flats": 0,
+    "winner_like_parent_3R_targets": 0,
+    "winner_only_addon_candidates": 578,
+    "winner_only_addons_with_winner_like_parent": 1,
+    "winner_like_assets": ["AUDJPY","US100","USDCHF","USDJPY"],
+    "winner_like_family": "MEAN_REVERSION"
+  },
+  "meaning": {
+    "market_recognition": "NOT_THE_PRIMARY_FRESH_BOTTLENECK. The frozen pre-Aug13 winner signature was present and all four matching fresh parent candidates became profitable in the historical path.",
+    "post_3R_payoff_extension": "NOT_A_DIRECT_FIX_FOR_THIS_BROAD_FRESH_COHORT. None of the four reached the original 3R target, so a runner that activates only after 3R cannot monetize them.",
+    "winner_amplification": "POSSIBLE_BUT_NARROW_FOR_THIS_BROAD_COHORT. Only one continuation add-on candidate existed for the four winner-like parents.",
+    "winner_priority_capture": "PRIMARY_DIAGNOSTIC_PATH. The next question is whether the four known-good winner-like opportunities survived weekly promotion and, if so, whether portfolio capital/factor competition prevented execution.",
+    "path_specific_payoff_extension": "REMAINS_ACTIVE_FOR_OTHER_CAUSAL_ARCHETYPES. The broad Mean Reversion rule does not invalidate a separately discovered right-tail cohort."
+  },
+  "next_sequence": [
+    "Trace all four winner-like fresh parents through base weekly promotion, reliability-filtered promotion and rank position.",
+    "Use full Lane 6E to determine portfolio-level selection/capital/factor/management bottleneck after promotion.",
+    "Complete discovery-frozen path-specific attribution for amplification and payoff extension plus discovery-frozen strict priority attribution.",
+    "Replay one predeclared canonical mechanism per path; do not tune thresholds or parameters against Aug13-14.",
+    "Fuse only a causally valid winner mechanism with the certified $345.3896888 Lane 5 frontier and require the complete 34x15x510 frontier to pass."
+  ],
+  "governance": "This lock changes diagnostic priority only. Aug13-14 outcomes may not select thresholds, parameters or a production candidate. The new unseen forward holdout remains sealed until candidate freeze."
+}
