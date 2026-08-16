@@ -1,0 +1,50 @@
+name: Trailaris R5.5 Lane 6E Fresh Winner-State Forensic Relaunch
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths:
+      - '.github/workflows/trailaris_r5_5_lane6e_fresh_forensic_relaunch.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-ephemeral-research-20260815, fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --quiet pandas numpy
+      - name: Reconstruct immutable engine
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+      - uses: actions/cache@v4
+        with:
+          path: trailaris_r5/raw_m1
+          key: trailaris-r5-m1-34-20260504-20260814-v1
+          fail-on-cache-miss: true
+      - name: Rebuild causal inputs and diagnose Aug13-14
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          python trailaris_r5_3/build_released_event_factor_feed.py --rawdir trailaris_r5/raw_m1 --out trailaris_r5/raw_m1/Trailaris_R3_FactorFeed.csv --audit EVENT_AUDIT_6E_RELAUNCH.csv
+          python trailaris_r4/build_research_specs.py
+          rm -rf lane6e_out && mkdir -p lane6e_out
+          python trailaris_r5_5/lane6e_aug13_14_winner_state_forensic.py --rawdir trailaris_r5/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --rules trailaris_r5_5/lane6a_results/R5_5_LANE6A_WINNER_RULES.csv --outdir lane6e_out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r55-lane6e-fresh-forensic
+          path: lane6e_out/*
+          retention-days: 2
+      - name: Publish diagnostic evidence
+        run: |
+          mkdir -p trailaris_r5_5/lane6e_results
+          cp -f lane6e_out/* trailaris_r5_5/lane6e_results/
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_r5_5/lane6e_results
+          git commit -m 'diagnostic: publish Aug13-14 winner-state forensic [skip ci]' || true
+          git push origin HEAD:trailaris-ephemeral-research-20260815
