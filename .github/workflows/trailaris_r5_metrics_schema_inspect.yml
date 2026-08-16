@@ -1,0 +1,37 @@
+name: Trailaris R5 Metrics Schema Inspect
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_metrics_schema_inspect.yml']
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-ephemeral-research-20260815
+      - name: Reconstruct R5
+        run: |
+          cat trailaris_r5/r5.part00 trailaris_r5/r5.part01 trailaris_r5/r5.part02 trailaris_r5/r5.part03 | base64 -d | gzip -d > trailaris_r5_3/R5_RECONSTRUCTED_INSPECT.py
+      - name: Extract trade metric schema
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('trailaris_r5_3/R5_RECONSTRUCTED_INSPECT.py')
+          lines=p.read_text().splitlines()
+          keys=('lot','pip','point','campaign','position','trade','volume','entry','exit','pnl','profit','risk_cash','notional')
+          out=[]
+          for i,l in enumerate(lines,1):
+            if any(k in l.lower() for k in keys):
+              out.append(f'{i}: {l}')
+          Path('trailaris_r5_3/R5_METRICS_SCHEMA_INSPECT.txt').write_text('\n'.join(out))
+          PY
+      - name: Commit inspection
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_r5_3/R5_METRICS_SCHEMA_INSPECT.txt
+          git commit -m 'audit: R5 trade metric schema inspection [skip ci]' || true
+          git push origin HEAD:trailaris-ephemeral-research-20260815
