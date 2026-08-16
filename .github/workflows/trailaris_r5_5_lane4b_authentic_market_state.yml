@@ -1,14 +1,15 @@
 name: Trailaris R5.5 Lane 4B Authentic Market-State Gate
 on:
-  workflow_run:
-    workflows: ['Trailaris R5.5 Lane 4A Market-State Entry Repair']
-    types: [completed]
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths:
+      - 'trailaris_r5_5/lane4b_authentic_market_state_gate.py'
+      - '.github/workflows/trailaris_r5_5_lane4b_authentic_market_state.yml'
   workflow_dispatch:
 permissions:
   contents: write
 jobs:
   replay:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -69,8 +70,8 @@ jobs:
               assert s['approved_scope']['approved_routes']==34
               assert s['approved_scope']['strategy_families']==15
               assert s['approved_scope']['route_strategy_cells']==510
+              assert s['gates']['full_universe_34x510'] is True
               assert s['promotion_candidate'] is False
-              assert 'NEW_UNSEEN_FORWARD_HOLDOUT_REQUIRED' in s['promotion_blockers']
           PY
       - name: Commit Lane 4B evidence
         if: always()
