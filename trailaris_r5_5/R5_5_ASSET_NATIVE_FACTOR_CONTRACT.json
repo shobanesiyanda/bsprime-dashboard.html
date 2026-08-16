@@ -1,0 +1,43 @@
+{
+  "state": "R5_5_ASSET_NATIVE_FACTOR_CONTRACT_ACTIVE",
+  "purpose": "Expand institutional research depth without allowing unproven factors to contaminate the R5.5 market execution engine.",
+  "admission_unit": "asset x strategy x regime x horizon x factor",
+  "default_state": "RESEARCH_ONLY_FAIL_CLOSED",
+  "required_evidence": [
+    "factor value is timestamped no later than the trade decision timestamp",
+    "release/publication latency is represented explicitly",
+    "factor provenance and source class are persisted",
+    "discovery and validation are chronological",
+    "Aug13-14 historical paths are not reused as a tuning holdout for R5.5",
+    "factor improves incremental expectancy or decision quality relative to the unchanged R5.4 reliability baseline",
+    "improvement survives a later untouched validation segment before any pre-forward candidate",
+    "factor effect is tested conditionally by asset, strategy, regime and horizon rather than pooled globally",
+    "negative or statistically weak factor evidence cannot veto an otherwise qualified trade",
+    "no factor can be promoted solely because it is economically plausible or institutionally popular"
+  ],
+  "gold_XAUUSD": {
+    "required_research_stack": [
+      {"factor":"real_yield_regime","source_class":"OFFICIAL_MACRO_OR_GOVERNMENT_MARKET_DATA","status":"ACQUISITION_AND_CAUSALITY_TEST_REQUIRED"},
+      {"factor":"usd_regime","source_class":"OFFICIAL_OR_INSTITUTIONAL_FX_INDEX_DATA","status":"ACQUISITION_AND_CAUSALITY_TEST_REQUIRED"},
+      {"factor":"federal_reserve_path_and_released_event_surprise","source_class":"OFFICIAL_CENTRAL_BANK_RELEASES","status":"PARTIAL_EVENT_FOUNDATION_EXISTS_FACTOR_SPEC_REQUIRED"},
+      {"factor":"inflation_expectations","source_class":"OFFICIAL_MACRO_OR_GOVERNMENT_MARKET_DATA","status":"ACQUISITION_AND_CAUSALITY_TEST_REQUIRED"},
+      {"factor":"central_bank_gold_purchase_flow","source_class":"OFFICIAL_OR_AUDITABLE_RESERVE_DATA","status":"LOW_FREQUENCY_CAUSALITY_TEST_REQUIRED"},
+      {"factor":"gold_etf_flow","source_class":"AUDITABLE_FUND_FLOW_DATA","status":"ACQUISITION_AND_CAUSALITY_TEST_REQUIRED"},
+      {"factor":"futures_positioning","source_class":"OFFICIAL_REGULATORY_POSITIONING_DATA","status":"ACQUISITION_AND_CAUSALITY_TEST_REQUIRED"},
+      {"factor":"physical_market_flow","source_class":"AUDITABLE_PHYSICAL_MARKET_DATA","status":"ACQUISITION_AND_CAUSALITY_TEST_REQUIRED"},
+      {"factor":"options_skew_and_implied_volatility","source_class":"EXCHANGE_OR_LICENSED_OPTIONS_DATA","status":"ACQUISITION_AND_CAUSALITY_TEST_REQUIRED"},
+      {"factor":"geopolitical_safe_haven_regime","source_class":"RELEASED_EVENT_AND_CROSS_ASSET_EVIDENCE","status":"CAUSAL_PROXY_SPEC_REQUIRED"},
+      {"factor":"london_new_york_liquidity_state","source_class":"MARKET_MICROSTRUCTURE_AND_SESSION_DATA","status":"CAUSAL_PROXY_SPEC_REQUIRED"},
+      {"factor":"cross_asset_confirmation","source_class":"FULL_TRAILARIS_MARKET_STATE","status":"CAUSAL_RELIABILITY_TEST_REQUIRED"}
+    ],
+    "execution_rule": "XAUUSD remains continuously evaluated in the 34-route/510-cell estate. No gold factor forces a trade. Gold may execute only when the normal strategy thesis and admitted asset-native factors jointly improve chronological out-of-sample decision quality."
+  },
+  "asset_class_research": {
+    "FX":"rates and central-bank differentials, released macro surprise, USD/risk regime, session liquidity, positioning and cross-pair confirmation",
+    "INDICES":"rates/discount regime, earnings-growth proxy, volatility/options state, breadth/leadership, futures liquidity and cross-index confirmation",
+    "ENERGY":"inventory/released supply data, curve structure, volatility, USD/risk regime, session liquidity and geopolitical supply state",
+    "CRYPTO":"funding, basis, open-interest/positioning, order-flow/liquidity, volatility, cross-venue confirmation and macro risk regime",
+    "SYNTHETICS":"native price-state, volatility-transition, liquidity/execution-state and strategy-specific path statistics only; non-native macro factors are gated out unless causally demonstrated"
+  },
+  "promotion_rule": "Admitted factors may become R5.5 candidate inputs only after chronological discovery/validation and full-universe replay. Final R5.5 promotion still requires a new unseen forward holdout and target-server broker execution certification."
+}
