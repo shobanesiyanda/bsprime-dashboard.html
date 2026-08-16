@@ -23,11 +23,12 @@ jobs:
       - name: Evidence firewall
         run: |
           python - <<'PY'
-          import json,pandas as pd
+          import json,os,pandas as pd
           a=json.load(open('trailaris_r5_4/crypto_orderflow/CRYPTO_ORDERFLOW_AUDIT.csv.json'));f=pd.read_csv('trailaris_r5_4/crypto_orderflow/CRYPTO_ORDERFLOW_FACTOR_FEED.csv')
           assert a['assets_pass']==5 and set(f.asset)=={'BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD'}
-          assert a['trigger_rows_abs_ge_070']>0
-          assert f.evidence_state.eq('VERIFIED_BINANCE_USDM_TAKER_FLOW_CAUSAL').all()
+          assert a['trigger_rows_abs_ge_070']>0 and (f.orderflow_score.abs()>=.70).all()
+          assert f.evidence_state.eq('VERIFIED_BINANCE_USDM_TAKER_FLOW_15M_CAUSAL').all()
+          assert os.path.getsize('trailaris_r5_4/crypto_orderflow/CRYPTO_ORDERFLOW_FACTOR_FEED.csv')<90_000_000
           print(json.dumps(a,indent=2))
           PY
       - name: Commit compact evidence safely
@@ -35,6 +36,6 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -f trailaris_r5_4/crypto_orderflow/CRYPTO_ORDERFLOW_AUDIT.csv trailaris_r5_4/crypto_orderflow/CRYPTO_ORDERFLOW_AUDIT.csv.json trailaris_r5_4/crypto_orderflow/CRYPTO_ORDERFLOW_FACTOR_FEED.csv
-          git commit -m 'evidence: R5.4 native crypto order-flow feed [skip ci]' || true
+          git commit -m 'evidence: R5.4 compact native crypto order-flow feed [skip ci]' || true
           git pull --rebase origin trailaris-ephemeral-research-20260815
           git push origin HEAD:trailaris-ephemeral-research-20260815
