@@ -1,0 +1,88 @@
+name: Trailaris R5.4 Full Intelligence Replay
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_4_full_intelligence_replay.yml']
+permissions:
+  contents: write
+jobs:
+  full_intelligence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-ephemeral-research-20260815}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --quiet pandas numpy
+      - name: Reconstruct exact R4/R5 engines
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          cat trailaris_r5/r5.part00 trailaris_r5/r5.part01 trailaris_r5/r5.part02 trailaris_r5/r5.part03 | base64 -d | gzip -d > trailaris_r5/trailaris_r5_capture_repair.py
+      - uses: actions/cache@v4
+        with:
+          path: trailaris_r5/raw_m1
+          key: trailaris-r5-m1-34-20260504-20260814-v1
+          fail-on-cache-miss: true
+      - name: Build event plus funding plus order-flow causal feed
+        run: |
+          mkdir -p trailaris_r5_4/full_intelligence
+          python trailaris_r5_3/build_released_event_factor_feed.py --rawdir trailaris_r5/raw_m1 --out trailaris_r5_4/full_intelligence/EVENT.csv --audit trailaris_r5_4/full_intelligence/EVENT_AUDIT.csv
+          cp trailaris_r5_4/crypto_funding/CRYPTO_FUNDING_BASIS_FACTOR_FEED.csv trailaris_r5_4/full_intelligence/FUNDING.csv
+          cp trailaris_r5_4/crypto_orderflow/CRYPTO_ORDERFLOW_FACTOR_FEED.csv trailaris_r5_4/full_intelligence/ORDERFLOW.csv
+          python - <<'PY'
+          import pandas as pd,json
+          from pathlib import Path
+          files=['EVENT','FUNDING','ORDERFLOW'];parts=[];counts={}
+          cols=['timestamp','asset','orderflow_score','carry_score','funding_score','event_score','evidence_state']
+          for name in files:
+            d=pd.read_csv(f'trailaris_r5_4/full_intelligence/{name}.csv');counts[name.lower()+'_rows']=len(d)
+            for c in cols:
+              if c not in d:d[c]=pd.NA
+            parts.append(d[cols])
+          z=pd.concat(parts,ignore_index=True);z['timestamp']=pd.to_datetime(z.timestamp,utc=True,format='mixed',errors='raise');z=z.sort_values(['timestamp','asset','evidence_state']).drop_duplicates(['timestamp','asset','evidence_state'])
+          z.to_csv('trailaris_r5/raw_m1/Trailaris_R3_FactorFeed.csv',index=False)
+          s={**counts,'combined_rows':len(z),'evidence_states':sorted(z.evidence_state.dropna().unique().tolist())};Path('trailaris_r5_4/full_intelligence/FEED_STATUS.json').write_text(json.dumps(s,indent=2));print(json.dumps(s,indent=2));assert counts['event_rows']==342 and counts['funding_rows']==1265 and counts['orderflow_rows']==23149
+          PY
+          python trailaris_r4/build_research_specs.py
+      - name: Run full 34-route 510-cell R4 factory
+        env: {PYTHONPATH: trailaris_r4}
+        run: |
+          rm -rf trailaris_r5_4/full_intelligence/r4_results && mkdir -p trailaris_r5_4/full_intelligence/r4_results
+          python trailaris_r4/trailaris_r4_full_universe_loop.py research-proxy --rawdir trailaris_r5/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --outdir trailaris_r5_4/full_intelligence/r4_results
+      - name: Audit intelligence-family activation
+        run: |
+          python - <<'PY'
+          import pandas as pd,json
+          from pathlib import Path
+          a=pd.read_csv('trailaris_r5_4/full_intelligence/r4_results/04b_strategy_factory_510_audit.csv')
+          def trig(f):return int(((a.strategy_family==f)&(a.state=='EXECUTED_TRIGGERED')).sum())
+          s={'strategy_cells':len(a),'strategy_families':int(a.strategy_family.nunique()),'event_triggered_cells':trig('EVENT_RESPONSE'),'funding_triggered_cells':trig('CRYPTO_FUNDING_BASIS'),'orderflow_triggered_cells':trig('ORDER_FLOW_MICROSTRUCTURE'),'carry_triggered_cells':trig('CARRY_VALUE'),'scope_pass':len(a)==510 and a.strategy_family.nunique()==15};Path('trailaris_r5_4/full_intelligence/STRATEGY_ACTIVATION.json').write_text(json.dumps(s,indent=2));print(json.dumps(s,indent=2));assert s['scope_pass'] and s['event_triggered_cells']>0 and s['funding_triggered_cells']>0 and s['orderflow_triggered_cells']>0
+          PY
+      - name: Run full-universe causal R5
+        env: {PYTHONPATH: trailaris_r4}
+        run: |
+          rm -rf trailaris_r5_4/full_intelligence/r5_results && mkdir -p trailaris_r5_4/full_intelligence/r5_results
+          python trailaris_r5/trailaris_r5_capture_repair.py --rawdir trailaris_r5/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --outdir trailaris_r5_4/full_intelligence/r5_results --start 100
+      - name: Apply strict R5.3 non-regression comparison
+        run: |
+          python - <<'PY'
+          import json,pandas as pd,sys
+          from pathlib import Path
+          sys.path.insert(0,'trailaris_r5_4');from non_regression_gate import evaluate,BASE
+          st=json.load(open('trailaris_r5_4/full_intelligence/r5_results/R5_STATUS.json'));ev=pd.read_csv('trailaris_r5_4/full_intelligence/r5_results/R5_events.csv');w=pd.read_csv('trailaris_r5_4/full_intelligence/r5_results/R5_walkforward_weekly.csv')
+          win=int((ev.net_pnl>0).sum());loss=int((ev.net_pnl<0).sum());flat=int((ev.net_pnl==0).sum());grosswin=float(ev.loc[ev.net_pnl>0,'net_pnl'].sum());grossloss=float(-ev.loc[ev.net_pnl<0,'net_pnl'].sum())
+          m={'end_equity':float(st['end_equity']),'mean_week_pct':float(st['mean_week_pct']),'median_week_pct':float(st['median_week_pct']),'weeks_ge5':int(st['weeks_ge5']),'weeks_ge10':int(st['weeks_ge10']),'max_weekly_dd_pct':float(st['max_weekly_dd_pct']),'fresh_return_pct':float(st['fresh_return_pct']),'fresh_max_dd_pct':float(st['fresh_max_dd_pct']),'assets_with_selected':int(st['assets_with_selected']),'losses':loss,'nonflat_win_rate':win/(win+loss) if win+loss else 0,'profit_factor':grosswin/grossloss if grossloss else 999.}
+          q=evaluate(m);out={'metrics':m,'wins':win,'flat':flat,'strict_gate':q};Path('trailaris_r5_4/full_intelligence/R5_4_FULL_INTELLIGENCE_COMPARISON.json').write_text(json.dumps(out,indent=2));print(json.dumps(out,indent=2))
+          PY
+      - name: Commit compact results safely
+        if: always()
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_r5_4/full_intelligence/FEED_STATUS.json trailaris_r5_4/full_intelligence/STRATEGY_ACTIVATION.json trailaris_r5_4/full_intelligence/R5_4_FULL_INTELLIGENCE_COMPARISON.json 2>/dev/null || true
+          git add -f trailaris_r5_4/full_intelligence/r5_results/R5_STATUS.json trailaris_r5_4/full_intelligence/r5_results/R5_walkforward_weekly.csv trailaris_r5_4/full_intelligence/r5_results/R5_34_asset_state.csv 2>/dev/null || true
+          git commit -m 'test: R5.4 full intelligence 34-route replay [skip ci]' || true
+          git pull --rebase origin trailaris-ephemeral-research-20260815 || true
+          git push origin HEAD:trailaris-ephemeral-research-20260815 || true
