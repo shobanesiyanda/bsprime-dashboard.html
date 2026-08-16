@@ -1,0 +1,142 @@
+name: Trailaris R5.5 Lane 3 Strategy Rebuild V3
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths:
+      - 'trailaris_r5_5/lane3_build_candidates_v3.py'
+      - '.github/workflows/trailaris_r5_5_lane3_strategy_rebuild_v3.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build_candidates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-ephemeral-research-20260815}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --quiet pandas numpy
+      - name: Reconstruct immutable R4 dependencies
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+      - uses: actions/cache@v4
+        with:
+          path: trailaris_r5/raw_m1
+          key: trailaris-r5-m1-34-20260504-20260814-v1
+          fail-on-cache-miss: true
+      - name: Rebuild exact causal factor feed
+        run: |
+          python trailaris_r5_3/build_released_event_factor_feed.py --rawdir trailaris_r5/raw_m1 --out trailaris_r5/raw_m1/Trailaris_R3_FactorFeed.csv --audit EVENT_AUDIT_BUILD.csv
+          python -m py_compile trailaris_r5_5/lane3_build_candidates_v2.py trailaris_r5_5/lane3_build_candidates_v3.py
+      - name: Build payoff-gated rebuilt candidates once
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_5
+        run: |
+          mkdir -p lane3_candidates
+          python trailaris_r5_5/lane3_build_candidates_v3.py --rawdir trailaris_r5/raw_m1 --outdir lane3_candidates
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r5-lane3-candidates-v3
+          path: lane3_candidates/*
+          retention-days: 2
+  replay:
+    needs: build_candidates
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [0,1,2,3,4,5]
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-ephemeral-research-20260815}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --quiet pandas numpy
+      - name: Reconstruct immutable R4 dependencies
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+      - uses: actions/cache@v4
+        with:
+          path: trailaris_r5/raw_m1
+          key: trailaris-r5-m1-34-20260504-20260814-v1
+          fail-on-cache-miss: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: r5-lane3-candidates-v3
+          path: lane3_candidates
+      - name: Rebuild exact evidence and specs
+        run: |
+          python trailaris_r5_3/build_released_event_factor_feed.py --rawdir trailaris_r5/raw_m1 --out trailaris_r5/raw_m1/Trailaris_R3_FactorFeed.csv --audit EVENT_AUDIT_${{ matrix.variant }}.csv
+          python trailaris_r4/build_research_specs.py
+          python -m py_compile trailaris_r5_5/lane3_replay_v2.py
+      - name: Run full replay over immutable rebuilt candidates
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          mkdir -p lane3_rule
+          python trailaris_r5_5/lane3_replay_v2.py \
+            --rawdir trailaris_r5/raw_m1 \
+            --specs trailaris_r4/research_proxy_specs.csv \
+            --candidate-dir lane3_candidates \
+            --variant-index ${{ matrix.variant }} \
+            --outdir lane3_rule
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r5-lane3-v3-${{ matrix.variant }}
+          path: lane3_rule/*
+          retention-days: 2
+  aggregate:
+    if: always()
+    needs: replay
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-ephemeral-research-20260815}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: r5-lane3-v3-*
+          path: collected
+          merge-multiple: true
+      - name: Aggregate V3 strategy rebuild evidence
+        run: |
+          mkdir -p trailaris_r5_5/lane3_v3_results
+          python - <<'PY'
+          import csv,glob,json
+          from pathlib import Path
+          rows=[]
+          for f in sorted(glob.glob('collected/variant_*.json')):
+              x=json.load(open(f));c=x['candidate'];g=x['gates']
+              rows.append({'variant_index':x['variant_index'],'config_id':x['config']['id'],'rebuilt_candidates':x['rebuilt_candidates'],'end_equity':c['end_equity'],'delta_end_equity':x['delta_end_equity'],'fresh_return_pct':c['fresh_return_pct'],'fresh_delta_pct':x['fresh_delta_pct'],'max_weekly_dd_pct':c['max_weekly_dd_pct'],'executed_trades':c['executed_trades'],'wins':c['wins'],'losses':c['losses'],'flat':c['flat'],'nonflat_win_rate':c['nonflat_win_rate'],'assets_with_selected':c['assets_with_selected'],**g,'candidate_pass':x['candidate_pass']})
+          rows.sort(key=lambda z:(z['candidate_pass'],z['end_equity'],z['fresh_delta_pct'],-z['losses'],-z['flat']),reverse=True)
+          out=Path('trailaris_r5_5/lane3_v3_results')
+          if rows:
+              with open(out/'R5_5_LANE3_V3_RESULTS.csv','w',newline='') as h:
+                  w=csv.DictWriter(h,fieldnames=list(rows[0]));w.writeheader();w.writerows(rows)
+          best=rows[0] if rows else {}
+          s={'state':'R5_5_LANE3_STRATEGY_REBUILD_V3_COMPLETE','evidence_class':'END_TO_END_CAUSAL_REBUILT_STRATEGY_REPLAY','variants_expected':6,'variants_completed':len(rows),'passing_variants':sum(bool(r['candidate_pass']) for r in rows),'best_variant':best,'r5_4_control_end_equity':337.4231242104393,'approved_scope':{'routes':34,'strategy_families':15,'route_strategy_cells':510}}
+          (out/'R5_5_LANE3_V3_STATUS.json').write_text(json.dumps(s,indent=2,default=str));print(json.dumps(s,indent=2,default=str))
+          PY
+      - name: Assert complete scope
+        run: |
+          python - <<'PY'
+          import json
+          s=json.load(open('trailaris_r5_5/lane3_v3_results/R5_5_LANE3_V3_STATUS.json'))
+          assert s['variants_completed']==6
+          assert s['approved_scope']=={'routes':34,'strategy_families':15,'route_strategy_cells':510}
+          PY
+      - name: Commit V3 evidence
+        if: always()
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_r5_5/lane3_v3_results/R5_5_LANE3_V3_RESULTS.csv trailaris_r5_5/lane3_v3_results/R5_5_LANE3_V3_STATUS.json 2>/dev/null || true
+          git commit -m 'test: R5.5 Lane 3 V3 rebuilt-strategy evidence [skip ci]' || true
+          git pull --rebase origin trailaris-ephemeral-research-20260815 || true
+          git push origin HEAD:trailaris-ephemeral-research-20260815 || true
