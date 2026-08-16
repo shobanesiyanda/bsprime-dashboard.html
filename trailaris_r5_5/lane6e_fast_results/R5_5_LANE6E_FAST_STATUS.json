@@ -1,0 +1,70 @@
+{
+  "state": "R5_5_LANE6E_FAST_FRESH_CENSUS_COMPLETE",
+  "evidence_class": "QUARANTINED_FRESH_DIAGNOSTIC_NOT_SELECTION_EVIDENCE",
+  "causal_reliability_snapshot": "2026-08-10T00:00:00Z",
+  "scope": {
+    "routes": 34,
+    "approved_routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510
+  },
+  "best_pre_aug13_winner_rule": {
+    "scope_type": "STRATEGY_FAMILY",
+    "scope_value": "MEAN_REVERSION",
+    "rule_type": "2D",
+    "feature1": "reliability_asset_strategy_mean_r",
+    "dir1": "le",
+    "threshold1": 0.2735179291978221,
+    "q1": 0.4,
+    "feature2": "reliability_score",
+    "dir2": "ge",
+    "threshold2": 0.1491441678623905,
+    "q2": 0.1,
+    "disc_n": 30,
+    "disc_share": 0.0355871886120996,
+    "disc_wins": 21,
+    "disc_losses": 9,
+    "disc_flats": 0,
+    "disc_win_rate_all": 0.7,
+    "disc_baseline_win_rate_all": 0.4080664294187426,
+    "disc_win_lift": 1.715406976744186,
+    "disc_mean_net_pnl": 0.0758141822380894,
+    "disc_total_net_pnl": 2.274425467142683,
+    "disc_profit_factor": 1.9127073233551537,
+    "valid_n": 17,
+    "valid_share": 0.0711297071129707,
+    "valid_wins": 16,
+    "valid_losses": 1,
+    "valid_flats": 0,
+    "valid_win_rate_all": 0.9411764705882352,
+    "valid_baseline_win_rate_all": 0.4393305439330544,
+    "valid_win_lift": 2.142296918767507,
+    "valid_mean_net_pnl": 0.494848230504186,
+    "valid_total_net_pnl": 8.412419918571162,
+    "valid_profit_factor": 27.54537806477475,
+    "clean_pass": true,
+    "score": 41.58762205563017
+  },
+  "fresh_candidate_counts": {
+    "all_candidates": 7552,
+    "parent_candidates": 6974,
+    "winner_like_parent_candidates": 4,
+    "winner_like_parent_simulated_wins": 4,
+    "winner_like_parent_simulated_losses": 0,
+    "winner_like_parent_simulated_flats": 0,
+    "winner_like_parent_3R_targets": 0,
+    "winner_only_addon_candidates": 578,
+    "winner_only_addons_with_winner_like_parent": 1
+  },
+  "winner_like_by_family": {
+    "MEAN_REVERSION": 4
+  },
+  "winner_like_by_asset": {
+    "AUDJPY": 1,
+    "US100": 1,
+    "USDCHF": 1,
+    "USDJPY": 1
+  },
+  "diagnostic_interpretation": "WINNER_SIGNATURE_AND_CONTINUATION_CANDIDATES_PRESENT; FULL_6E_MUST_RESOLVE_SELECTION_OR_MONETIZATION_BOTTLENECK",
+  "governance": "Complete 34-route universe is built. Aug13-14 candidates are evaluated against the single Aug10 causal reliability snapshot using only exits before Aug10. Realized Aug13-14 candidate outcomes are diagnostic only and cannot select or promote a rule."
+}
