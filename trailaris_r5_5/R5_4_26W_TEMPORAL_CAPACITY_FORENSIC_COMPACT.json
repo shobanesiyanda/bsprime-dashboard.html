@@ -1,0 +1,39 @@
+{
+  "state": "R5_4_26W_TEMPORAL_CAPACITY_FORENSIC_COMPLETE",
+  "source": "certified frozen R5.4 26-week promoted/decision/event ledgers",
+  "open_risk_budget_rejections_total": 689,
+  "rejections_with_at_least_one_selected_position_still_open": 336,
+  "rejections_whose_causal_utility_exceeded_an_open_incumbent_by_existing_0_05_recycle_hurdle": 125,
+  "all_125_ex_post": {
+    "wins": 88,
+    "losses": 32,
+    "flats": 5,
+    "mean_net_r": 0.44731985628258,
+    "mean_reliability_score": 0.3183429388962445,
+    "mean_rank_score": 0.5537483766153686,
+    "mean_quality": 0.6048236247200137
+  },
+  "five_sub5_weeks": {
+    "rejections_with_open_incumbent": 78,
+    "higher_utility_than_open_incumbent_by_0_05": 28,
+    "wins": 19,
+    "losses": 6,
+    "flats": 3,
+    "mean_net_r": 0.32520194507842665,
+    "mean_reliability_score": 0.3274323369858085,
+    "mean_rank_score": 0.5537605694836182
+  },
+  "strong_ge10_weeks": {
+    "rejections_with_open_incumbent": 185,
+    "higher_utility_than_open_incumbent_by_0_05": 64,
+    "wins": 48,
+    "losses": 15,
+    "flats": 1,
+    "mean_net_r": 0.5642872907534098,
+    "mean_reliability_score": 0.3260867430021492,
+    "mean_rank_score": 0.5549799852228305
+  },
+  "causal_definition": "Candidate utility, incumbent entry utility, decision timestamps, incumbent scheduled exit timestamps and the +0.05 utility hurdle were available or structurally defined at the historical decision timestamp. The comparison asks whether a later candidate was causally stronger than an incumbent still occupying capacity.",
+  "hindsight_only": "The candidate's eventual net_r and win/loss/flat outcome are used after the historical decision solely to measure regret and are not used to reconstruct ranking or eligibility.",
+  "interpretation": "The existing protected-only recycle layer leaves measurable temporal allocation regret. This is a repair surface, not permission for blanket risk expansion or hindsight selection. Any displacement rule must remain causal, risk-neutral, factor-bounded and full-universe replayed before promotion."
+}
