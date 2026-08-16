@@ -19,27 +19,25 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --quiet pandas numpy
-      - name: Await committed Lane 2A evidence
+      - name: Require committed clean Lane 2A V3 evidence
         run: |
-          for attempt in $(seq 1 80); do
-            git fetch origin trailaris-ephemeral-research-20260815
-            git reset --hard origin/trailaris-ephemeral-research-20260815
-            if [ -s trailaris_r5_5/lane2a_results/R5_5_LANE2A_STATUS.json ]; then
-              python - <<'PY'
+          git fetch origin trailaris-ephemeral-research-20260815
+          git reset --hard origin/trailaris-ephemeral-research-20260815
+          test -s trailaris_r5_5/lane2a_results/R5_5_LANE2A_STATUS.json
+          python - <<'PY'
           import json
-          p='trailaris_r5_5/lane2a_results/R5_5_LANE2A_STATUS.json'
-          s=json.load(open(p))
+          s=json.load(open('trailaris_r5_5/lane2a_results/R5_5_LANE2A_STATUS.json'))
           assert s['state']=='R5_5_LANE2A_ENTRY_THESIS_DISCOVERY_COMPLETE'
+          assert s['revision']=='FORENSIC_COHORT_RECONCILED_FRESH_QUARANTINE_V3'
           assert s['scope']=={'approved_routes':34,'strategy_families':15,'route_strategy_cells':510}
           assert abs(float(s['r5_4_control']['end_equity'])-337.4231242104393)<=1e-9
           assert int(s['r5_4_control']['executed_trades'])==1102
+          f=s['forensic_definitions']
+          assert f['barely_developed_loss']['reproduced_count']==107
+          assert f['severe_mae_loss']['reproduced_count']==68
+          assert f['severe_mae_loss']['threshold_exact_match'] is True
+          assert s['segment']['fresh_quarantine']['outcomes_not_used_for_selection'] is True
           PY
-              exit 0
-            fi
-            sleep 15
-          done
-          echo 'Lane 2A evidence was not committed inside the governed handoff window.' >&2
-          exit 1
       - name: Reconstruct immutable R4 dependencies
         run: |
           cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
@@ -67,7 +65,7 @@ jobs:
       - name: Assert governance and immutable control
         run: |
           python - <<'PY'
-          import json,os
+          import json
           s=json.load(open('trailaris_r5_5/lane2b_results/R5_5_LANE2B_STATUS.json'))
           if s['state']=='R5_5_LANE2B_NOT_RUN_NO_PASSING_ENTRY_GATE':
               assert int(s['passing_rules'])==0
