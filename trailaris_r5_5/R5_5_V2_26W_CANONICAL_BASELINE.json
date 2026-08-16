@@ -1,0 +1,52 @@
+{
+  "baseline_id": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
+  "state": "LOCKED_CANONICAL_BASELINE",
+  "locked_at_date": "2026-08-16",
+  "active_branch": "trailaris-ephemeral-research-20260815",
+  "lineage": {
+    "immutable_historical_control": "R5_4_FROZEN_26W_20260816",
+    "immediate_predecessor": "R5_5_BOUNDED_MEMORY_112D",
+    "source_promotion_estate": "EXACT_R5_5_MEMORY112_PROMOTED_3417",
+    "feature_cache_source": "EXACT_R4_BUILD_ASSET_COMPONENTS_FROM_PRESERVED_34_ROUTE_M1_CACHE"
+  },
+  "scope": {
+    "weeks": 26,
+    "routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510
+  },
+  "performance": {
+    "start_equity": 100.0,
+    "end_equity": 1366.8938578865148,
+    "compounded_return_pct": 1266.8938578865148,
+    "positive_weeks": 26,
+    "negative_weeks": 0,
+    "mean_week_pct": 10.624017604148746,
+    "median_week_pct": 11.515416074317496,
+    "weeks_ge5": 22,
+    "weeks_ge10": 21,
+    "executed_trades": 2136,
+    "wins": 1221,
+    "losses": 478,
+    "flats": 437,
+    "loss_rate": 0.22378277153558052,
+    "flat_rate": 0.2045880149812734,
+    "nonflat_win_rate": 0.7186580341377281,
+    "profit_factor": 2.9195127192871873,
+    "max_weekly_drawdown_pct": -3.7440606836682933,
+    "max_event_equity_drawdown_pct": -2.7023988320913572,
+    "assets_with_selected": 32,
+    "rolling_11w_min_return_pct": 175.6827305105836,
+    "rolling_11w_median_return_pct": 198.27176646902836,
+    "rolling_11w_mean_return_pct": 200.3837728607354,
+    "rolling_11w_max_return_pct": 223.82144949395718
+  },
+  "integrated_repairs": {
+    "entry_gate_rejected": 228,
+    "promoted_after_gate": 3189,
+    "management_repaired_selected_trades": 582,
+    "partial_realization_at_0_75r_count": 577
+  },
+  "baseline_rule": "All subsequent refinement starts from this V2 architecture and must be compared against this exact locked result. R5.4 remains preserved as immutable historical control but is no longer the active refinement baseline. Do not silently narrow scope, revert to predecessor architecture, or replace this baseline without explicit user authorization.",
+  "evidence_class": "FULL_26_WEEK_CAUSAL_WALK_FORWARD_RESEARCH_PROXY; BROKER_PRODUCTION_CERTIFICATION_SEPARATE"
+}
