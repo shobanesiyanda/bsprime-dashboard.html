@@ -1,0 +1,212 @@
+{
+  "start": "2026-01-19 00:00:00+00:00",
+  "end": "2026-08-14 23:59:59+00:00",
+  "combined_rows": 50078,
+  "event_rows": 704,
+  "orderflow_rows": 46621,
+  "funding_rows": 2755,
+  "crypto_assets": [
+    {
+      "asset": "BTCUSD",
+      "orderflow_rows": 9446,
+      "funding_rows": 568
+    },
+    {
+      "asset": "ETHUSD",
+      "orderflow_rows": 9388,
+      "funding_rows": 568
+    },
+    {
+      "asset": "SOLUSD",
+      "orderflow_rows": 9351,
+      "funding_rows": 568
+    },
+    {
+      "asset": "BNBUSD",
+      "orderflow_rows": 9163,
+      "funding_rows": 483
+    },
+    {
+      "asset": "XRPUSD",
+      "orderflow_rows": 9273,
+      "funding_rows": 568
+    }
+  ],
+  "event_routes": [
+    {
+      "asset": "EURUSD",
+      "event_rows": 25,
+      "state": "PASS"
+    },
+    {
+      "asset": "GBPUSD",
+      "event_rows": 25,
+      "state": "PASS"
+    },
+    {
+      "asset": "USDJPY",
+      "event_rows": 25,
+      "state": "PASS"
+    },
+    {
+      "asset": "AUDUSD",
+      "event_rows": 23,
+      "state": "PASS"
+    },
+    {
+      "asset": "USDCAD",
+      "event_rows": 24,
+      "state": "PASS"
+    },
+    {
+      "asset": "USDCHF",
+      "event_rows": 25,
+      "state": "PASS"
+    },
+    {
+      "asset": "NZDUSD",
+      "event_rows": 24,
+      "state": "PASS"
+    },
+    {
+      "asset": "EURJPY",
+      "event_rows": 24,
+      "state": "PASS"
+    },
+    {
+      "asset": "GBPJPY",
+      "event_rows": 25,
+      "state": "PASS"
+    },
+    {
+      "asset": "EURGBP",
+      "event_rows": 25,
+      "state": "PASS"
+    },
+    {
+      "asset": "AUDJPY",
+      "event_rows": 25,
+      "state": "PASS"
+    },
+    {
+      "asset": "CADJPY",
+      "event_rows": 25,
+      "state": "PASS"
+    },
+    {
+      "asset": "GBPCHF",
+      "event_rows": 25,
+      "state": "PASS"
+    },
+    {
+      "asset": "XAUUSD",
+      "event_rows": 24,
+      "state": "PASS"
+    },
+    {
+      "asset": "XAGUSD",
+      "event_rows": 24,
+      "state": "PASS"
+    },
+    {
+      "asset": "BTCUSD",
+      "event_rows": 25,
+      "state": "PASS"
+    },
+    {
+      "asset": "ETHUSD",
+      "event_rows": 25,
+      "state": "PASS"
+    },
+    {
+      "asset": "SOLUSD",
+      "event_rows": 25,
+      "state": "PASS"
+    },
+    {
+      "asset": "BNBUSD",
+      "event_rows": 25,
+      "state": "PASS"
+    },
+    {
+      "asset": "XRPUSD",
+      "event_rows": 25,
+      "state": "PASS"
+    },
+    {
+      "asset": "US100",
+      "event_rows": 24,
+      "state": "PASS"
+    },
+    {
+      "asset": "US500",
+      "event_rows": 24,
+      "state": "PASS"
+    },
+    {
+      "asset": "US30",
+      "event_rows": 24,
+      "state": "PASS"
+    },
+    {
+      "asset": "GER40",
+      "event_rows": 24,
+      "state": "PASS"
+    },
+    {
+      "asset": "UK100",
+      "event_rows": 23,
+      "state": "PASS"
+    },
+    {
+      "asset": "JP225",
+      "event_rows": 23,
+      "state": "PASS"
+    },
+    {
+      "asset": "WTI",
+      "event_rows": 22,
+      "state": "PASS"
+    },
+    {
+      "asset": "BRENT",
+      "event_rows": 24,
+      "state": "PASS"
+    },
+    {
+      "asset": "NATGAS",
+      "event_rows": 23,
+      "state": "PASS"
+    },
+    {
+      "asset": "V75",
+      "event_rows": 0,
+      "state": "NON_NATIVE_EVENT_FAMILY_GATED"
+    },
+    {
+      "asset": "V50",
+      "event_rows": 0,
+      "state": "NON_NATIVE_EVENT_FAMILY_GATED"
+    },
+    {
+      "asset": "V100",
+      "event_rows": 0,
+      "state": "NON_NATIVE_EVENT_FAMILY_GATED"
+    },
+    {
+      "asset": "V25",
+      "event_rows": 0,
+      "state": "NON_NATIVE_EVENT_FAMILY_GATED"
+    },
+    {
+      "asset": "V10",
+      "event_rows": 0,
+      "state": "NON_NATIVE_EVENT_FAMILY_GATED"
+    }
+  ],
+  "evidence_states": [
+    "RELEASED_OFFICIAL_CALENDAR_CAUSAL_POST_EVENT",
+    "VERIFIED_BINANCE_PUBLIC_ARCHIVE_FUNDING_BASIS_CAUSAL",
+    "VERIFIED_BINANCE_USDM_TAKER_FLOW_15M_CAUSAL"
+  ]
+}
