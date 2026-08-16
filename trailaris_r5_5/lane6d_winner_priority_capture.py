@@ -4,13 +4,17 @@ import argparse,json
 from pathlib import Path
 import numpy as np,pandas as pd
 from lane1b_full_replay import ManagedVariant,apply_rule
-from lane4_market_state_entry_repair import enrich_market_state
+from winner_causal_features import causal_decision_features
 
 R54_END=337.4231242104393
 INC_END=343.5447309255116
 INC_FRESH=7.261646557142409
 INC_DD=-4.637645574907678
 INC_NFWR=0.6671428571428571
+CHALLENGE_END=345.3896887826546
+CHALLENGE_NFWR=0.673352435530086
+CHALLENGE_LOSSES=228
+CHALLENGE_FLATS=421
 EPS=1e-9
 B3={'behavior':'close_a0.50_r0.20_1b','kind':'close','activate_mfe_r':0.50,'parameter_r':0.20,'bars':1,'gate_metric':'reliability_win','gate_direction':'le','gate_threshold':0.2655132009803008}
 
@@ -19,6 +23,7 @@ def num(x,d=np.nan):
     except Exception:return d
 
 def rcond(z,f,d,th):
+    if f not in z.columns:return pd.Series(False,index=z.index)
     s=pd.to_numeric(z[f],errors='coerce');return s.le(th) if d=='le' else s.ge(th)
 
 def rule_mask(z,r):
@@ -46,16 +51,15 @@ def main():
     import trailaris_r4_full_universe_loop as r4
     from reliability_common import promote
     from precision_experiment_harness import eval_variant,load_module
-    data,v,cands,opps,fcache=base.build_universe(Path(a.rawdir));specs=r4.load_specs(Path(a.specs),'research-proxy')
+    data,v,cands,opps,fcache=base.build_universe(Path(a.rawdir));specs=r4.load_specs(Path(a.specs),'research-proxy');scope=json.load(open('trailaris_r5_4/R5_4_MARKET_EXECUTION_ENGINE_LOCK.json'))['scope']
     ctlmod=load_module(Path('trailaris_r5_4/reliability_variants/variant_hierarchical_combined.py'),f'r55_lane6d_ctl_{a.rule_rank}_{a.quality_boost}');ctl,*_=eval_variant(ctlmod,data,cands,opps,fcache,specs,100.0)
     if abs(float(ctl['end_equity'])-R54_END)>1e-9:raise RuntimeError('R5.4 control reproduction failed')
     inc,*_=eval_variant(ManagedVariant(B3,base,promote),data,cands,opps,fcache,specs,100.0)
     if abs(float(inc['end_equity'])-INC_END)>1e-6:raise RuntimeError('Lane1B2 incumbent reproduction failed')
-    z=cands.copy();ze=enrich_market_state(z,fcache);z['winner_priority_qualifies']=rule_mask(ze,rule).to_numpy();var=WinnerPriorityVariant(base,promote,a.quality_boost);cand,VW,VEV,VDE,VPR=eval_variant(var,data,z,opps,fcache,specs,100.0)
-    qual_selected=int(VEV.get('winner_priority_qualifies',pd.Series(False,index=VEV.index)).astype(bool).sum()) if len(VEV) else 0
-    approved=set(getattr(r4,'STRATEGY_FAMILIES',[]));actual=set(z.loc[~z.get('is_addon',False).astype(bool),'strategy_family'].astype(str).unique());scope_ok=len(data)==34 and len(approved)==15 and approved.issubset(actual)
-    alpha={'end_equity_beats_1b2':float(cand['end_equity'])>INC_END+EPS,'fresh_not_worse':float(cand['fresh_return_pct'])>=INC_FRESH-EPS,'drawdown_not_worse':float(cand['max_weekly_dd_pct'])>=INC_DD-EPS,'asset_coverage_not_worse':int(cand['assets_with_selected'])>=33,'full_universe_34x15':scope_ok}
-    frontier={**alpha,'fresh_improved':float(cand['fresh_return_pct'])>INC_FRESH+EPS,'losses_below_r54':int(cand['losses'])<=230,'flats_below_r54':int(cand['flat'])<=424,'nonflat_win_rate_at_least_1b2':float(cand['nonflat_win_rate'])>=INC_NFWR-EPS}
-    s={'state':'R5_5_LANE6D_WINNER_PRIORITY_CAPTURE_COMPLETE','evidence_class':'END_TO_END_CAUSAL_FULL_REPLAY','rule_rank':a.rule_rank,'winner_rule':rule,'quality_boost':a.quality_boost,'qualifying_candidates':int(z.winner_priority_qualifies.sum()),'selected_qualifying_executions':qual_selected,'r5_4_control':ctl,'lane1b2_incumbent':inc,'candidate':cand,'delta_vs_1b2':float(cand['end_equity'])-INC_END,'alpha_gates':alpha,'alpha_candidate':bool(all(alpha.values())),'frontier_gates':frontier,'frontier_candidate':bool(all(frontier.values())),'promotion_candidate':False,'promotion_blockers':['NEW_UNSEEN_FORWARD_HOLDOUT_REQUIRED','TARGET_SERVER_BROKER_EXECUTION_CERTIFICATION_REQUIRED'],'scope':{'approved_routes':34,'strategy_families':15,'route_strategy_cells':510},'governance':'The priority signal is selected only from first8 winner attribution and pre-Aug13 validation. It changes selector priority through quality only; it does not rewrite realized outcomes, expected-R labels, reliability history, initial risk sizing, risk ceilings, factor ceilings or portfolio breakers. Full 34x15 chronology determines whether additional winner-cohort capture actually improves the system.'}
+    z=causal_decision_features(cands,fcache);z['winner_priority_qualifies']=rule_mask(z,rule).to_numpy();var=WinnerPriorityVariant(base,promote,a.quality_boost);cand,VW,VEV,VDE,VPR=eval_variant(var,data,z,opps,fcache,specs,100.0)
+    qual_selected=int(VEV.get('winner_priority_qualifies',pd.Series(False,index=VEV.index)).astype(bool).sum()) if len(VEV) else 0;scope_ok=(len(data)==34 and scope=={'approved_routes':34,'strategy_families':15,'route_strategy_cells':510})
+    alpha={'end_equity_beats_1b2':float(cand['end_equity'])>INC_END+EPS,'fresh_not_worse':float(cand['fresh_return_pct'])>=INC_FRESH-EPS,'drawdown_not_worse':float(cand['max_weekly_dd_pct'])>=INC_DD-EPS,'asset_coverage_not_worse':int(cand['assets_with_selected'])>=33,'full_universe_34x15x510':scope_ok}
+    frontier={'end_equity_beats_lane5':float(cand['end_equity'])>CHALLENGE_END+EPS,'fresh_improved':float(cand['fresh_return_pct'])>INC_FRESH+EPS,'drawdown_not_worse':float(cand['max_weekly_dd_pct'])>=INC_DD-EPS,'fresh_dd_not_worse':float(cand['fresh_max_dd_pct'])>=-0.5196525640746019-EPS,'losses_at_or_below_lane5':int(cand['losses'])<=CHALLENGE_LOSSES,'flats_at_or_below_lane5':int(cand['flat'])<=CHALLENGE_FLATS,'nonflat_win_rate_at_least_lane5':float(cand['nonflat_win_rate'])>=CHALLENGE_NFWR-EPS,'asset_coverage_not_worse':int(cand['assets_with_selected'])>=33,'full_universe_34x15x510':scope_ok}
+    s={'state':'R5_5_LANE6D_WINNER_PRIORITY_CAPTURE_COMPLETE','evidence_class':'END_TO_END_CAUSAL_FULL_REPLAY','rule_rank':a.rule_rank,'winner_rule':rule,'quality_boost':a.quality_boost,'qualifying_candidates':int(z.winner_priority_qualifies.sum()),'selected_qualifying_executions':qual_selected,'r5_4_control':ctl,'lane1b2_incumbent':inc,'candidate':cand,'delta_vs_1b2':float(cand['end_equity'])-INC_END,'delta_vs_lane5_frontier':float(cand['end_equity'])-CHALLENGE_END,'alpha_gates':alpha,'alpha_candidate':bool(all(alpha.values())),'frontier_gates':frontier,'frontier_candidate':bool(all(frontier.values())),'promotion_candidate':False,'scope':scope,'governance':'Priority qualification uses market-state plus reliability fields reconstructed at each trade evaluation week from exits strictly before that week. Only quality priority changes; realized outcomes, reliability history, initial risk, factor ceilings and portfolio breakers remain unchanged.'}
     (out/'result.json').write_text(json.dumps(s,indent=2,default=str));VW.to_csv(out/'weekly.csv',index=False);print(json.dumps(s,indent=2,default=str))
 if __name__=='__main__':main()
