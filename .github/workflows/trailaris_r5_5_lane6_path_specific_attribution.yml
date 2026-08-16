@@ -10,7 +10,7 @@ permissions:
   contents: write
 concurrency:
   group: trailaris-r5-5-lane6-path-specific-attribution
-  cancel-in-progress: false
+  cancel-in-progress: true
 env:
   BRANCH: trailaris-ephemeral-research-20260815
   CACHE_KEY: trailaris-r5-m1-34-20260504-20260814-v1
