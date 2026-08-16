@@ -1,0 +1,30 @@
+{
+  "variants": 5,
+  "strict_promotion_candidates": 0,
+  "best": {
+    "end_equity": 337.4231242104393,
+    "compounded_return_pct": 237.42312421043928,
+    "weeks": 11,
+    "mean_week_pct": 11.742009304999732,
+    "median_week_pct": 12.49921336356319,
+    "weeks_ge5": 10,
+    "weeks_ge10": 9,
+    "max_weekly_dd_pct": -4.637645574907678,
+    "executed_trades": 1102,
+    "wins": 446,
+    "losses": 231,
+    "flat": 425,
+    "nonflat_win_rate": 0.6587887740029542,
+    "fresh_return_pct": 7.261646557142409,
+    "fresh_max_dd_pct": -0.5196525640746019,
+    "assets_with_selected": 33,
+    "beats_or_matches_return_baseline": true,
+    "fresh_not_regressed": false,
+    "losses_improved": true,
+    "drawdown_improved": true,
+    "promotion_eligible": false,
+    "variant": "variant_hierarchical_combined",
+    "behavioral_non_regression_pass": false,
+    "promotion_allowed": false
+  }
+}
