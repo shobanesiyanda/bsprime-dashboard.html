@@ -1,0 +1,62 @@
+name: Trailaris R5.4 Causal Precision Experiments
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_4_precision_experiments.yml']
+permissions:
+  contents: write
+jobs:
+  precision:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-ephemeral-research-20260815}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --quiet pandas numpy
+      - name: Reconstruct R4 dependencies
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+      - uses: actions/cache@v4
+        with:
+          path: trailaris_r5/raw_m1
+          key: trailaris-r5-m1-34-20260504-20260814-v1
+          fail-on-cache-miss: true
+      - name: Rebuild exact causal event evidence and specs
+        run: |
+          mkdir -p trailaris_r5_4/precision_variants trailaris_r5_4/precision_results
+          python trailaris_r5_3/build_released_event_factor_feed.py --rawdir trailaris_r5/raw_m1 --out trailaris_r5/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_r5_4/precision_results/EVENT_AUDIT.csv
+          python trailaris_r4/build_research_specs.py
+      - name: Generate pre-specified causal precision variants
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('trailaris_r5_4/R5_BASE_CAUSAL_ENGINE.py').read_text();d=Path('trailaris_r5_4/precision_variants')
+          def save(name,s):
+            p=d/f'variant_{name}.py';p.write_text(s)
+          save('baseline',src)
+          strict=src.replace("if mean<=.02 or med<=-.30 or win<.34:continue","if mean<=.03 or med<=-.20 or win<.38:continue").replace("if n>=2 and mean>0 and med>-.25 and win>=.40:","if n>=3 and mean>.01 and med>-.15 and win>=.45:")
+          save('strict_validation',strict)
+          downside=src.replace("lower=mean-.40*sd/max(np.sqrt(n),1);score=lower+.12*win-.05*cost+.02*np.log1p(n)","lower=mean-.55*sd/max(np.sqrt(n),1);score=lower+.18*win-.06*cost+.02*np.log1p(n)").replace(".42*promoted.quality+.28*np.tanh(promoted.expected_r)+.16*promoted.trailing_win_rate+.10*np.tanh(promoted.stability)-.22*promoted.cost_r-.04*np.minimum(promoted.trailing_giveback,3)",".34*promoted.quality+.30*np.tanh(promoted.expected_r)+.24*promoted.trailing_win_rate+.14*np.tanh(promoted.stability)-.24*promoted.cost_r-.08*np.minimum(promoted.trailing_giveback,3)")
+          save('downside_rank',downside)
+          tierb=src.replace("if st is None or int(st.n)<8:continue","if st is None or int(st.n)<12:continue").replace("if float(st.mean_r)>.10 and float(st.median_r)>-.15 and float(st.win)>=.45 and lower>-.05 and float(r.quality)>=.68 and float(r.cost_r)<=.35:","if float(st.mean_r)>.12 and float(st.median_r)>-.08 and float(st.win)>=.48 and lower>0 and float(r.quality)>=.70 and float(r.cost_r)<=.35:")
+          save('strict_tierb',tierb)
+          combined=strict.replace("lower=mean-.40*sd/max(np.sqrt(n),1);score=lower+.12*win-.05*cost+.02*np.log1p(n)","lower=mean-.55*sd/max(np.sqrt(n),1);score=lower+.18*win-.06*cost+.02*np.log1p(n)").replace("if st is None or int(st.n)<8:continue","if st is None or int(st.n)<12:continue").replace("if float(st.mean_r)>.10 and float(st.median_r)>-.15 and float(st.win)>=.45 and lower>-.05 and float(r.quality)>=.68 and float(r.cost_r)<=.35:","if float(st.mean_r)>.12 and float(st.median_r)>-.08 and float(st.win)>=.48 and lower>0 and float(r.quality)>=.70 and float(r.cost_r)<=.35:").replace(".42*promoted.quality+.28*np.tanh(promoted.expected_r)+.16*promoted.trailing_win_rate+.10*np.tanh(promoted.stability)-.22*promoted.cost_r-.04*np.minimum(promoted.trailing_giveback,3)",".34*promoted.quality+.30*np.tanh(promoted.expected_r)+.24*promoted.trailing_win_rate+.14*np.tanh(promoted.stability)-.24*promoted.cost_r-.08*np.minimum(promoted.trailing_giveback,3)")
+          save('combined_precision',combined)
+          for p in d.glob('variant_*.py'):compile(p.read_text(),str(p),'exec')
+          print('5 variants compiled')
+          PY
+      - name: Run shared-universe precision experiments
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4
+        run: |
+          python trailaris_r5_4/precision_experiment_harness.py --rawdir trailaris_r5/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --variant-dir trailaris_r5_4/precision_variants --outdir trailaris_r5_4/precision_results
+      - name: Commit experiment results
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_r5_4/precision_results/R5_4_PRECISION_EXPERIMENTS.csv trailaris_r5_4/precision_results/R5_4_PRECISION_EXPERIMENT_STATUS.json trailaris_r5_4/precision_results/variant_*_weekly.csv
+          git commit -m 'test: R5.4 causal precision experiments [skip ci]' || true
+          git push origin HEAD:trailaris-ephemeral-research-20260815
