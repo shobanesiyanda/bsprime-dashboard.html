@@ -1,0 +1,103 @@
+name: Trailaris R5.5 Lane 5 Pareto Management Stack
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths:
+      - 'trailaris_r5_5/lane5_pareto_management_stack.py'
+      - 'trailaris_r5_5/R5_5_FRONTIER_LOCK.json'
+      - '.github/workflows/trailaris_r5_5_lane5_pareto_stack.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  replay:
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [0,1,2,3,4,5,6,7,8,9,10]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-ephemeral-research-20260815}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --quiet pandas numpy
+      - name: Reconstruct immutable R4 dependencies
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+      - uses: actions/cache@v4
+        with:
+          path: trailaris_r5/raw_m1
+          key: trailaris-r5-m1-34-20260504-20260814-v1
+          fail-on-cache-miss: true
+      - name: Rebuild exact causal evidence and specs
+        run: |
+          python trailaris_r5_3/build_released_event_factor_feed.py --rawdir trailaris_r5/raw_m1 --out trailaris_r5/raw_m1/Trailaris_R3_FactorFeed.csv --audit EVENT_AUDIT_${{ matrix.variant }}.csv
+          python trailaris_r4/build_research_specs.py
+          python -m py_compile trailaris_r5_5/lane1b_full_replay.py trailaris_r5_5/lane5_pareto_management_stack.py
+      - name: Run full-universe Pareto challenger
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          mkdir -p lane5_rule
+          python trailaris_r5_5/lane5_pareto_management_stack.py \
+            --rawdir trailaris_r5/raw_m1 \
+            --specs trailaris_r4/research_proxy_specs.csv \
+            --variant-index ${{ matrix.variant }} \
+            --outdir lane5_rule
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r5-lane5-${{ matrix.variant }}
+          path: lane5_rule/*
+          retention-days: 2
+  aggregate:
+    if: always()
+    needs: replay
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-ephemeral-research-20260815, fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: r5-lane5-*
+          path: collected
+          merge-multiple: true
+      - name: Aggregate frontier evidence
+        run: |
+          mkdir -p trailaris_r5_5/lane5_results
+          python - <<'PY'
+          import csv,glob,json
+          from pathlib import Path
+          rows=[]
+          for f in sorted(glob.glob('collected/variant_*.json')):
+              x=json.load(open(f));c=x['candidate'];g=x['gates']
+              rows.append({'variant_index':x['variant_index'],'config_id':x['config_id'],'stack':'>'.join(x['stack']),'end_equity':c['end_equity'],'delta_vs_r54':x['delta_vs_r54_end_equity'],'delta_vs_lane1b2':x['delta_vs_lane1b2_end_equity'],'fresh_return_pct':c['fresh_return_pct'],'fresh_max_dd_pct':c['fresh_max_dd_pct'],'max_weekly_dd_pct':c['max_weekly_dd_pct'],'executed_trades':c['executed_trades'],'wins':c['wins'],'losses':c['losses'],'flat':c['flat'],'nonflat_win_rate':c['nonflat_win_rate'],'assets_with_selected':c['assets_with_selected'],'managed_executions':x['managed_executions'],**g,'frontier_pass':x['frontier_pass']})
+          rows.sort(key=lambda z:(z['frontier_pass'],z['end_equity'],z['fresh_return_pct'],-z['losses'],-z['flat']),reverse=True)
+          out=Path('trailaris_r5_5/lane5_results')
+          if rows:
+              with open(out/'R5_5_LANE5_RESULTS.csv','w',newline='') as h:
+                  w=csv.DictWriter(h,fieldnames=list(rows[0]));w.writeheader();w.writerows(rows)
+          s={'state':'R5_5_LANE5_PARETO_MANAGEMENT_STACK_COMPLETE','evidence_class':'END_TO_END_CAUSAL_FULL_REPLAY_MATRIX','variants_expected':11,'variants_completed':len(rows),'frontier_passes':sum(bool(r['frontier_pass']) for r in rows),'best_variant':rows[0] if rows else {},'r5_4_control_end_equity':337.4231242104393,'lane1b2_incumbent_end_equity':343.5447309255116,'scope':{'routes':34,'strategy_families':15,'route_strategy_cells':510}}
+          (out/'R5_5_LANE5_STATUS.json').write_text(json.dumps(s,indent=2,default=str));print(json.dumps(s,indent=2,default=str))
+          if len(rows)!=11:raise SystemExit(f'incomplete matrix {len(rows)}/11')
+          PY
+      - name: Atomically publish Lane 5 evidence
+        if: always()
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/lane5_publish
+          cp -f trailaris_r5_5/lane5_results/R5_5_LANE5_RESULTS.csv /tmp/lane5_publish/ 2>/dev/null || true
+          cp -f trailaris_r5_5/lane5_results/R5_5_LANE5_STATUS.json /tmp/lane5_publish/ 2>/dev/null || true
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git fetch origin trailaris-ephemeral-research-20260815
+          git reset --hard origin/trailaris-ephemeral-research-20260815
+          mkdir -p trailaris_r5_5/lane5_results
+          cp -f /tmp/lane5_publish/* trailaris_r5_5/lane5_results/ 2>/dev/null || true
+          git add -f trailaris_r5_5/lane5_results/R5_5_LANE5_RESULTS.csv trailaris_r5_5/lane5_results/R5_5_LANE5_STATUS.json 2>/dev/null || true
+          git commit -m 'test: R5.5 Lane 5 Pareto management replay evidence [skip ci]' || true
+          git push origin HEAD:trailaris-ephemeral-research-20260815
