@@ -31,20 +31,36 @@
     "Aug13-14 already-inspected verification does not regress",
     "all candidate changes are causal at decision time and full portfolio replay recomputes compounding, risk, margin, recycling and later opportunity selection"
   ],
+  "research_completeness_gates_before_candidate_freeze": [
+    "DAILY_OPPORTUNITY_CAPTURE_NON_REGRESSION: candidate measures full-universe executable opportunity, gross/net capture, missed opportunity, capture ratio, entry efficiency, exit efficiency, MAE, MFE, time-to-positive, MFE give-back, stop inefficiency, add-on contribution, transaction costs and miss reasons; material capture regression must be explained and rejected unless compensated by superior risk-adjusted portfolio economics",
+    "CONCENTRATION_COUNTERFACTUAL_PASS: top-1/top-3/top-5/top-10 asset, strategy, campaign, week and factor contributors are removed counterfactually and the compounded portfolio is recomputed; candidate may not depend on an unacceptably narrow historical contributor set",
+    "COMPONENT_ABLATION_ATTRIBUTION_COMPLETE: research/thesis, opportunity ranking, adaptive strategy selection, regime filtering, add-ons, partials, protection, runners, capital recycling, sizing, compounding, cross-asset ranking and campaign management are ablated where technically applicable and classified",
+    "COMPOUNDING_DECOMPOSITION_COMPLETE: normal compounding is compared with constant starting-equity sizing, constant nominal risk and constant valid exposure so underlying expectancy is separated from equity-base expansion",
+    "TEMPORAL_FALSIFICATION_PASS: candidate survives dedicated look-ahead, same-bar contamination, future-release, signal/execution timestamp, cross-asset synchronization and session-boundary tests",
+    "PARAMETER_ROBUSTNESS_BASIN_PASS: promoted parameter values sit inside a reasonably broad profitable/non-regressive neighborhood and are rejected if small perturbations create catastrophic or structurally unstable performance"
+  ],
   "promotion_gates": [
     "pre_forward_candidate_gates all pass",
+    "research_completeness_gates_before_candidate_freeze all pass",
     "candidate logic and parameters are frozen before forward sample is opened for evaluation",
     "new unseen forward holdout passes without retuning",
     "target-server route/account execution evidence is certified",
     "full candidate survives route-specific spread, commission, slippage, financing, lot-step, margin, fill, reject and latency degradation",
     "broker routing remains execution-quality-first; IB remuneration cannot promote inferior execution",
+    "production safety contract is implemented and certified before live production eligibility",
     "R5.4 historical files, metrics and logic remain immutable"
   ],
+  "production_safety_dependency": "trailaris_r5_5/R5_5_PRODUCTION_SAFETY_CONTRACT.json",
+  "handover_gap_dependency": "trailaris_r5_5/R5_5_HANDOVER_GAP_REGISTER.json",
   "fail_closed_rules": {
     "no_new_forward_holdout": "NOT_PROMOTABLE",
     "no_target_server_broker_evidence": "NOT_PRODUCTION_CERTIFIED",
     "scope_below_34x510": "REJECT",
     "return_regression": "REJECT",
-    "hidden_holdout_reuse_for_tuning": "REJECT_AND_RESTART_FORWARD_HOLDOUT"
+    "hidden_holdout_reuse_for_tuning": "REJECT_AND_RESTART_FORWARD_HOLDOUT",
+    "research_completeness_gate_missing": "NOT_READY_TO_FREEZE",
+    "parameter_knife_edge": "REJECT_OR_RESEARCH_FURTHER",
+    "temporal_falsification_failure": "REJECT_AND_REPAIR_CAUSALITY",
+    "production_safety_not_certified": "NOT_PRODUCTION_ELIGIBLE"
   }
 }
