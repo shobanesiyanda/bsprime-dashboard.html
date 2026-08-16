@@ -1,0 +1,2 @@
+variant_index,config_id,rebuilt_raw_candidates,end_equity,delta_end_equity,fresh_return_pct,fresh_delta_pct,max_weekly_dd_pct,executed_trades,wins,losses,flat,nonflat_win_rate,assets_with_selected,end_equity_not_regressed,fresh_holdout_not_regressed,drawdown_not_worse,losses_not_worse,flats_not_worse,full_universe_34x510,candidate_pass
+5,MR_STRICT_ONLY,841,310.25083686543786,-27.17228734500145,7.261646557142409,0.0,-4.343832243362245,1052,418,225,409,0.6500777604976672,32,False,True,True,True,True,True,False
