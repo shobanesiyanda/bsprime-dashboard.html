@@ -2,7 +2,7 @@ name: Trailaris R5.4 Broker Route Certification Matrix
 on:
   push:
     branches: [trailaris-ephemeral-research-20260815]
-    paths: ['.github/workflows/trailaris_r5_4_broker_route_matrix.yml']
+    paths: ['.github/workflows/trailaris_r5_4_broker_route_matrix.yml','trailaris_r5_4/build_broker_route_matrix.py']
 permissions:
   contents: write
 jobs:
