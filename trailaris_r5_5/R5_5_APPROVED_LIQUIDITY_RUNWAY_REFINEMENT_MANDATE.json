@@ -1,0 +1,40 @@
+{
+  "state": "APPROVED_REFINEMENT_MANDATE",
+  "approved_date": "2026-08-16",
+  "baseline": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
+  "scope": {
+    "weeks": 26,
+    "routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510
+  },
+  "approved_architecture": {
+    "separate_entry_quality_from_continuation_quality": true,
+    "executable_runway_liquidity_sufficiency_layer": true,
+    "conditional_profit_banking_not_universal_take_profit": true,
+    "developed_position_state_from_0_75r_to_1_50r": true,
+    "partial_monetization_plus_unrestricted_runner": true,
+    "losses_and_flats_remain_separate_causal_problems": true,
+    "expected_executable_excursion_replaces_static_profit_target_thinking": true,
+    "no_global_3r_ceiling": true,
+    "preserve_right_tail_winners": true
+  },
+  "flat_causal_classes_to_test": [
+    "ENTRY_VALID_CONTINUATION_INVALID",
+    "INSUFFICIENT_RUNWAY_AT_ENTRY",
+    "RUNWAY_DETERIORATED_AFTER_ENTRY",
+    "TIME_EXPIRED_OPPORTUNITY"
+  ],
+  "runway_model_outputs": [
+    "p_reach_0_75r_before_stop",
+    "p_reach_1_50r_after_0_75r_before_protected_exit",
+    "expected_executable_excursion_r",
+    "runway_confidence",
+    "liquidity_sufficiency_state",
+    "continuation_decay_state",
+    "recommended_bank_fraction",
+    "runner_fraction"
+  ],
+  "direct_liquidity_evidence_gap": "Current V2 evidence is sufficient for price-path and causal decision-state attribution but does not directly observe complete venue-level bid/ask depth, queue imbalance, signed order flow, cancellations, provider dispersion, realized slippage/fill quality, or consolidated OTC FX liquidity. These fields must be introduced where source coverage permits; robust proxies must be used where the market is fragmented or direct depth is unavailable.",
+  "replay_policy": "Do not launch the next replay until the approved liquidity/runway architecture has been specified against available evidence and causal inputs. Next replay must start from the locked V2 baseline and preserve full 34x15x510 scope."
+}
