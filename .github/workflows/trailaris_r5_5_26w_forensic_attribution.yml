@@ -1,46 +1,105 @@
-name: Trailaris R5.5 — 26W Forensic Attribution
+name: Trailaris R5.5 — Integrated 26W Negative Refinement
 
 on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_5_26w_forensic_attribution.yml']
   workflow_dispatch:
     inputs:
       confirmation:
-        description: "Type FORENSIC_ONLY. This lane must not replay, acquire data, optimize, or modify the frozen control."
+        description: "Type INTEGRATED_REFINEMENT to authorize the full 26-week integrated R5.5 refinement replay."
         required: true
         type: string
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: trailaris-r5-5-single-active-lane
   cancel-in-progress: false
 
 jobs:
-  forensic-only-guard:
+  integrated-negative-refinement:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
         with:
           ref: trailaris-ephemeral-research-20260815
-      - name: Enforce forensic-only contract
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Enforce explicit integrated-refinement scope
         shell: bash
         run: |
           set -euo pipefail
-          if [ "${{ inputs.confirmation }}" != "FORENSIC_ONLY" ]; then
-            echo "Refusing execution: explicit FORENSIC_ONLY confirmation required."
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.confirmation }}" != "INTEGRATED_REFINEMENT" ]; then
+            echo "Refusing execution: INTEGRATED_REFINEMENT confirmation required."
             exit 1
           fi
           python - <<'PY'
           import json
           from pathlib import Path
-          p=Path('trailaris_r5_5/R5_4_26W_CANONICAL_CONTROL.json')
-          d=json.loads(p.read_text())
-          assert d['control_id']=='R5_4_FROZEN_26W_20260816'
-          assert d['executed_trades']==2152
-          assert d['wins']==856 and d['losses']==505 and d['flats']==791
-          assert abs(d['end_equity']-1136.4556497760627)<1e-9
-          print('Frozen 26-week control verified.')
-          print('This is the only active Trailaris lane launcher.')
-          print('No replay, acquisition, optimization, or candidate execution is authorized by this workflow.')
+          c=json.loads(Path('trailaris_r5_5/R5_4_26W_CANONICAL_CONTROL.json').read_text())
+          s=json.loads(Path('trailaris_r5_5/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_SPEC.json').read_text())
+          assert c['control_id']=='R5_4_FROZEN_26W_20260816'
+          assert c['executed_trades']==2152 and c['wins']==856 and c['losses']==505 and c['flats']==791
+          assert abs(c['end_equity']-1136.4556497760627)<1e-9
+          assert s['scope']=={'weeks':26,'routes':34,'strategy_families':15,'route_strategy_cells':510}
+          print('Integrated R5.5 scope verified; frozen R5.4 remains immutable.')
           PY
+
+      - name: Install dependencies
+        run: python -m pip install --quiet pandas numpy
+
+      - name: Reconstruct exact frozen R4 dependencies
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+
+      - name: Restore exact 34-route extended M1 cache
+        uses: actions/cache/restore@v4
+        with:
+          path: trailaris_longcycle/raw_m1
+          key: trailaris-r5-4-m1-34-20260119-20260814-v1
+          fail-on-cache-miss: true
+
+      - name: Rebuild identical factor evidence and research specs
+        run: |
+          python trailaris_longcycle/build_longcycle_factors.py --rawdir trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_longcycle/R5_5_INTEGRATED_FACTOR_EVIDENCE.json
+          python trailaris_r4/build_research_specs.py
+
+      - name: Execute one full 34x15x510 integrated 26-week replay
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          rm -rf trailaris_r5_5/integrated_negative_results
+          mkdir -p trailaris_r5_5/integrated_negative_results
+          python trailaris_r5_5/run_longcycle_variant_accelerated.py \
+            --rawdir trailaris_longcycle/raw_m1 \
+            --specs trailaris_r4/research_proxy_specs.csv \
+            --variant trailaris_r5_5/longcycle_integrated_negative_refinement.py \
+            --name R5_5_INTEGRATED_NEGATIVE_REFINEMENT \
+            --outdir trailaris_r5_5/integrated_negative_results
+
+      - name: Upload full integrated evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-r5-5-integrated-negative-refinement-26w
+          path: trailaris_r5_5/integrated_negative_results/
+          retention-days: 30
+
+      - name: Commit compact integrated evidence
+        if: success()
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f \
+            trailaris_r5_5/integrated_negative_results/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_STATUS.json \
+            trailaris_r5_5/integrated_negative_results/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_WEEKLY.csv \
+            trailaris_r5_5/integrated_negative_results/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_ROLLING_11W.csv
+          git commit -m 'test: integrated R5.5 negative-side 26-week evidence [skip ci]' || true
+          git pull --rebase origin trailaris-ephemeral-research-20260815 || true
+          git push origin HEAD:trailaris-ephemeral-research-20260815 || true
