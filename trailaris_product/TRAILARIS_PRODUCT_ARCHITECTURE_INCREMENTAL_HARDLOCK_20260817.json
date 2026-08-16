@@ -1,0 +1,51 @@
+{
+  "state": "HARD_LOCKED_INCREMENTAL_PRODUCT_ARCHITECTURE",
+  "date": "2026-08-17",
+  "scope_rule": "Incremental only. Preserve previously approved Trailaris product, broker, customer-dashboard, trade-dossier, commercial-operator and central alerting architecture. Do not duplicate or reinterpret existing locks.",
+  "existing_architecture_preserved": [
+    "Approved-broker-only live execution",
+    "Customer application and MT5 dashboard surfaces",
+    "Complete trade dossiers and trade drill-down",
+    "Trailaris (Pty) Ltd commercial/operator role",
+    "Central operations, telemetry and live-alert visibility",
+    "Sealed plug-and-play Market Execution Engine with no user strategy/model settings"
+  ],
+  "new_hard_locked_additions": {
+    "verified_result_sharing": {
+      "required_surfaces": [
+        "Trailaris downloadable customer application",
+        "Trailaris MT5 full-chart dashboard"
+      ],
+      "requirement": "Users must be able to push/share their Trailaris results directly from either customer surface without manually reconstructing performance outside Trailaris.",
+      "integrity_rule": "Shareable results must be generated from canonical Trailaris execution/performance records so displayed results cannot be manually edited into a different performance claim.",
+      "supported_result_objects": [
+        "Individual closed trade result",
+        "Current/closed campaign result",
+        "Selected period performance summary",
+        "Account-level Trailaris performance summary"
+      ],
+      "presentation_rule": "Shared output may use a Trailaris-branded result card and/or verifiable result link while preserving appropriate account privacy and excluding sensitive broker/account credentials."
+    },
+    "license_control_plane": {
+      "owner_surface": "Trailaris Admin Dashboard / internal control panel",
+      "purchase_event": "A completed valid license purchase must create a unique Trailaris license record and unique license number.",
+      "license_number_rule": "Each issued license number must be unique, immutable as the license identity, and traceable to its purchaser/customer record and commercial transaction.",
+      "minimum_admin_management": [
+        "Issue/generated license visibility",
+        "Customer/license association",
+        "License status",
+        "Activation state",
+        "Purchase/issue timestamp",
+        "Renewal or expiry state where applicable",
+        "Suspend license",
+        "Reactivate license",
+        "Revoke/terminate license",
+        "Audit history of administrative license actions"
+      ],
+      "engine_boundary": "License administration controls entitlement and activation only. It must not expose or modify Trailaris strategy, model, risk, entry, exit or execution-engine settings.",
+      "control_rule": "The Admin Dashboard is the authoritative internal license-management surface. Customer-facing applications may display their own license identity/status but may not administer or alter license entitlements."
+    }
+  },
+  "integration_rule": "License state, customer application access, MT5 activation and central operations records must resolve to the same canonical customer/license identity rather than maintaining independent local license identities.",
+  "future_changes": "Any extension beyond this hard lock must be explicitly approved and versioned; no silent expansion of customer-configurable Market Execution Engine controls is permitted."
+}
