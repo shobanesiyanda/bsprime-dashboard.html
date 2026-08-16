@@ -8,6 +8,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+concurrency:
+  group: trailaris-r5-5-lane2a-v3
+  cancel-in-progress: true
 jobs:
   discover:
     runs-on: ubuntu-latest
@@ -41,21 +44,42 @@ jobs:
             --rawdir trailaris_r5/raw_m1 \
             --specs trailaris_r4/research_proxy_specs.csv \
             --outdir trailaris_r5_5/lane2a_results
-      - name: Assert immutable R5.4 and full universe
+      - name: Assert V3 forensic reconciliation, quarantine and full universe
         run: |
           python - <<'PY'
           import json
           s=json.load(open('trailaris_r5_5/lane2a_results/R5_5_LANE2A_STATUS.json'))
+          assert s['state']=='R5_5_LANE2A_ENTRY_THESIS_DISCOVERY_COMPLETE'
+          assert s['revision']=='FORENSIC_COHORT_RECONCILED_FRESH_QUARANTINE_V3'
           assert abs(float(s['r5_4_control']['end_equity'])-337.4231242104393)<=1e-9
           assert s['scope']=={'approved_routes':34,'strategy_families':15,'route_strategy_cells':510}
-          assert s['r5_4_control']['executed_trades']==1102
+          assert int(s['r5_4_control']['executed_trades'])==1102
+          f=s['forensic_definitions']
+          assert int(f['barely_developed_loss']['reproduced_count'])==107
+          assert int(f['severe_mae_loss']['reproduced_count'])==68
+          assert f['severe_mae_loss']['threshold_exact_match'] is True
+          q=s['segment']['fresh_quarantine']
+          assert q['outcomes_not_used_for_selection'] is True
+          assert int(q['events'])>0
           PY
-      - name: Commit Lane 2A evidence
-        if: always()
+      - name: Atomically publish Lane 2A V3 evidence over latest branch head
         run: |
+          set -euo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -f trailaris_r5_5/lane2a_results/R5_5_LANE2A_ENTRY_GATES.csv trailaris_r5_5/lane2a_results/R5_5_LANE2A_STATUS.json 2>/dev/null || true
-          git commit -m 'test: R5.5 Lane 2A entry-thesis evidence [skip ci]' || true
-          git pull --rebase origin trailaris-ephemeral-research-20260815 || true
-          git push origin HEAD:trailaris-ephemeral-research-20260815 || true
+          cp trailaris_r5_5/lane2a_results/R5_5_LANE2A_ENTRY_GATES.csv /tmp/R5_5_LANE2A_ENTRY_GATES.csv
+          cp trailaris_r5_5/lane2a_results/R5_5_LANE2A_STATUS.json /tmp/R5_5_LANE2A_STATUS.json
+          for attempt in 1 2 3 4; do
+            git fetch origin trailaris-ephemeral-research-20260815
+            git reset --hard origin/trailaris-ephemeral-research-20260815
+            mkdir -p trailaris_r5_5/lane2a_results
+            cp /tmp/R5_5_LANE2A_ENTRY_GATES.csv trailaris_r5_5/lane2a_results/R5_5_LANE2A_ENTRY_GATES.csv
+            cp /tmp/R5_5_LANE2A_STATUS.json trailaris_r5_5/lane2a_results/R5_5_LANE2A_STATUS.json
+            git add -f trailaris_r5_5/lane2a_results/R5_5_LANE2A_ENTRY_GATES.csv trailaris_r5_5/lane2a_results/R5_5_LANE2A_STATUS.json
+            git commit -m 'test: R5.5 Lane 2A V3 quarantined entry-thesis evidence [skip ci]' || true
+            if git push origin HEAD:trailaris-ephemeral-research-20260815; then
+              exit 0
+            fi
+          done
+          echo 'Failed to atomically publish Lane 2A V3 evidence after 4 attempts' >&2
+          exit 1
