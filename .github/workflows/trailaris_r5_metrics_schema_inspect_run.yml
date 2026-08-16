@@ -1,4 +1,4 @@
-name: Trailaris R5 Metrics Schema Inspect Run
+name: Trailaris R5 Exact Baseline Metrics
 on:
   push:
     branches: [trailaris-ephemeral-research-20260815]
@@ -6,30 +6,104 @@ on:
 permissions:
   contents: write
 jobs:
-  inspect:
+  metrics:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
           ref: trailaris-ephemeral-research-20260815
-      - name: Reconstruct R5
-        run: cat trailaris_r5/r5.part00 trailaris_r5/r5.part01 trailaris_r5/r5.part02 trailaris_r5/r5.part03 | base64 -d | gzip -d > trailaris_r5_3/R5_RECONSTRUCTED_INSPECT.py
-      - name: Extract trade metric schema
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install --quiet pandas numpy
+      - name: Reconstruct exact R4 and R5 engines
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          cat trailaris_r5/r5.part00 trailaris_r5/r5.part01 trailaris_r5/r5.part02 trailaris_r5/r5.part03 | base64 -d | gzip -d > trailaris_r5/trailaris_r5_capture_repair.py
+      - name: Restore exact 34-route R5 market cache
+        uses: actions/cache@v4
+        with:
+          path: trailaris_r5/raw_m1
+          key: trailaris-r5-m1-34-20260504-20260814-v1
+          fail-on-cache-miss: true
+      - name: Build research sizing specs
+        run: python trailaris_r4/build_research_specs.py
+      - name: Replay exact R5 baseline and preserve full ledger
+        env:
+          PYTHONPATH: trailaris_r4
+        run: |
+          rm -rf trailaris_r5_metrics && mkdir -p trailaris_r5_metrics/results
+          python trailaris_r5/trailaris_r5_capture_repair.py --rawdir trailaris_r5/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --outdir trailaris_r5_metrics/results --start 100
+      - name: Aggregate exact trades lots pips points and IB scenarios
         run: |
           python - <<'PY'
+          import json
           from pathlib import Path
-          p=Path('trailaris_r5_3/R5_RECONSTRUCTED_INSPECT.py')
-          lines=p.read_text().splitlines()
-          keys=('lot','pip','point','campaign','position','trade','volume','entry','exit','pnl','profit','risk_cash','notional')
-          out=[]
-          for i,l in enumerate(lines,1):
-            if any(k in l.lower() for k in keys): out.append(f'{i}: {l}')
-          Path('trailaris_r5_3/R5_METRICS_SCHEMA_INSPECT.txt').write_text('\n'.join(out))
+          import numpy as np, pandas as pd
+          p=Path('trailaris_r5_metrics/results')
+          ev=pd.read_csv(p/'R5_events.csv')
+          de=pd.read_csv(p/'R5_decisions.csv')
+          w=pd.read_csv(p/'R5_walkforward_weekly.csv')
+          st=json.load(open(p/'R5_STATUS.json'))
+          for c in ['entry_price','exit_price','lot','direction','net_pnl','risk_cash']:
+              if c in ev: ev[c]=pd.to_numeric(ev[c],errors='coerce')
+          fx={'EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF'}
+          pip={a:(0.01 if a.endswith('JPY') else 0.0001) for a in fx}
+          rows=[]
+          for a,g in ev.groupby('asset',sort=False):
+              delta=(g.exit_price-g.entry_price)*g.direction
+              gross=(g.exit_price-g.entry_price).abs()
+              if a in fx:
+                  unit='pips'; signed=float((delta/pip[a]).sum()); grossu=float((gross/pip[a]).sum())
+              else:
+                  unit='raw_price_points'; signed=float(delta.sum()); grossu=float(gross.sum())
+              rows.append({
+                'asset':a,'trades':int(len(g)),'lots_opened':float(g.lot.sum()),'round_turn_lot_sides':float(2*g.lot.sum()),
+                'movement_unit':unit,'signed_captured_movement':signed,'gross_traded_movement':grossu,
+                'net_pnl':float(g.net_pnl.sum()),'wins':int((g.net_pnl>0).sum()),'losses':int((g.net_pnl<0).sum()),'flat':int((g.net_pnl==0).sum())
+              })
+          by=pd.DataFrame(rows).sort_values('asset')
+          by.to_csv('trailaris_r5_metrics/R5_BASELINE_BY_ASSET_TRADING_METRICS.csv',index=False)
+          total_lots=float(ev.lot.sum())
+          fxev=ev[ev.asset.isin(fx)].copy(); fx_signed=0.;fx_gross=0.
+          for a,g in fxev.groupby('asset'):
+              d=(g.exit_price-g.entry_price)*g.direction; gr=(g.exit_price-g.entry_price).abs();fx_signed+=float((d/pip[a]).sum());fx_gross+=float((gr/pip[a]).sum())
+          ib_round={str(x):total_lots*x for x in [1,2,3,5,7,10]}
+          ib_side={str(x):(2*total_lots)*x for x in [0.5,1,2,3]}
+          summary={
+            'baseline_id':'TRAILARIS_R5_3_PORTFOLIO_BASELINE_2026-08-16',
+            'evidence_class':st['evidence_class'],
+            'assets_in_universe':34,
+            'assets_with_executed_trades':int(ev.asset.nunique()),
+            'executed_trades':int(len(ev)),
+            'selected_decisions':int(pd.to_numeric(de.selected,errors='coerce').fillna(0).astype(bool).sum()) if 'selected' in de else None,
+            'total_lots_opened':total_lots,
+            'total_round_turn_lot_sides':2*total_lots,
+            'total_net_pnl_dollars':float(ev.net_pnl.sum()),
+            'winning_trades':int((ev.net_pnl>0).sum()),
+            'losing_trades':int((ev.net_pnl<0).sum()),
+            'flat_trades':int((ev.net_pnl==0).sum()),
+            'fx_trades':int(len(fxev)),
+            'fx_signed_captured_pips':fx_signed,
+            'fx_gross_traded_pips':fx_gross,
+            'nonfx_note':'Non-FX movement is reported per asset in raw price points; raw points are not summed across unlike instruments because one BTCUSD point, one index point, one energy point and one synthetic point are not economically equivalent.',
+            'ib_scenario_usd_per_round_turn_lot':ib_round,
+            'ib_scenario_usd_per_side_lot':ib_side,
+            'ib_truth_constraint':'Potential only. Exact IB earnings require the selected execution broker, account type, instrument-specific rebate schedule, eligibility rules and whether remuneration is per round-turn lot, per side, spread share or commission share.',
+            'start_equity':float(st['start_equity']),'end_equity':float(st['end_equity']),'compounded_return_pct':100*(float(st['end_equity'])/float(st['start_equity'])-1),
+            'weekly_compounding_verified':bool(np.allclose(w.start_equity.iloc[1:].to_numpy(float),w.end_equity.iloc[:-1].to_numpy(float),rtol=0,atol=1e-9)),
+            'weekly_path':w[['week_start','start_equity','end_equity','weekly_return_pct']].to_dict('records')
+          }
+          Path('trailaris_r5_metrics/R5_BASELINE_EXACT_TRADING_METRICS.json').write_text(json.dumps(summary,indent=2))
+          print(json.dumps(summary,indent=2))
           PY
-      - name: Commit inspection
+      - name: Commit exact baseline metrics
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -f trailaris_r5_3/R5_METRICS_SCHEMA_INSPECT.txt
-          git commit -m 'audit: commit R5 trade metric schema inspection [skip ci]' || true
+          git add -f trailaris_r5_metrics/R5_BASELINE_EXACT_TRADING_METRICS.json trailaris_r5_metrics/R5_BASELINE_BY_ASSET_TRADING_METRICS.csv
+          git commit -m 'audit: exact R5 baseline trade lot pip point metrics [skip ci]' || true
           git push origin HEAD:trailaris-ephemeral-research-20260815
