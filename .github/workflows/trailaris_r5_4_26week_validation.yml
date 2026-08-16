@@ -1,0 +1,110 @@
+name: Trailaris R5.4 Frozen 26-Week Full-Universe Validation
+on:
+  push:
+    branches: [trailaris-r5-4-26week-validation-20260816]
+    paths: ['.github/workflows/trailaris_r5_4_26week_validation.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  validate_26w:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-r5-4-26week-validation-20260816}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install dependencies
+        run: |
+          python -m pip install --quiet pandas numpy
+          npm install --no-save --silent dukascopy-node@1.50.0 ws
+      - name: Reconstruct exact frozen R4 dependency
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          python -m py_compile trailaris_r4/trailaris_r4_full_universe_loop.py trailaris_r4/trailaris_r4_asset_adapter.py trailaris_r5_4/R5_BASE_CAUSAL_ENGINE.py trailaris_r5_4/reliability_common.py trailaris_longcycle/run_r5_4_26week_validation.py
+      - name: Restore 30-week raw-history cache
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: trailaris_longcycle/raw_m1
+          key: trailaris-r5-4-m1-34-20260119-20260814-v1
+      - name: Acquire extended 34-route true-M1 history
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -e
+          rm -rf trailaris_longcycle/raw_m1 && mkdir -p trailaris_longcycle/raw_m1
+          node trailaris_longcycle/acquire_m1_26w.js > trailaris_longcycle/acquire_node.log 2>&1 & P1=$!
+          python trailaris_longcycle/acquire_binance_m1_26w.py > trailaris_longcycle/acquire_binance.log 2>&1 & P2=$!
+          wait $P1
+          wait $P2
+      - name: Validate 34/34 extended M1 gate
+        run: |
+          python - <<'PY'
+          import json,pandas as pd
+          from pathlib import Path
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          start=pd.Timestamp('2026-01-19T00:00:00Z');end=pd.Timestamp('2026-08-14T23:59:59Z');rows=[];passed=[]
+          for a in routes:
+            p=Path('trailaris_longcycle/raw_m1')/f'{a}_M1_normalized.csv'
+            if not p.exists():rows.append({'asset':a,'state':'MISSING','rows':0});continue
+            d=pd.read_csv(p,usecols=['timestamp','source']);ts=pd.to_datetime(d.timestamp,utc=True,errors='coerce').sort_values();med=ts.diff().dropna().dt.total_seconds().median();first=ts.min();last=ts.max();src=str(d.source.dropna().iloc[0]) if d.source.notna().any() else '';reason=[]
+            if ts.isna().any():reason.append('bad_timestamp')
+            if pd.notna(med) and med>75:reason.append(f'not_M1_median={med}')
+            if first>start+pd.Timedelta(days=1):reason.append('late_start')
+            if last<end-pd.Timedelta(days=2):reason.append('early_end')
+            if len(d)<1000:reason.append('too_few_rows')
+            state='PASS' if not reason else 'FAIL'
+            if state=='PASS':passed.append(a)
+            rows.append({'asset':a,'state':state,'rows':len(d),'first':str(first),'last':str(last),'median_sec':float(med) if pd.notna(med) else None,'source':src,'reason':';'.join(reason)})
+          o=pd.DataFrame(rows);o.to_csv('trailaris_longcycle/M1_34Route_26W_Coverage.csv',index=False);s={'routes_required':34,'routes_pass':len(passed),'failed':sorted(set(routes)-set(passed)),'gate_pass':len(passed)==34};Path('trailaris_longcycle/M1_34Route_26W_Coverage.json').write_text(json.dumps(s,indent=2));print(o.to_string(index=False));print(json.dumps(s,indent=2));assert s['gate_pass']
+          PY
+      - name: Save extended raw-history cache
+        if: success() && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: trailaris_longcycle/raw_m1
+          key: trailaris-r5-4-m1-34-20260119-20260814-v1
+      - name: Build extended causal intelligence evidence
+        run: |
+          python trailaris_longcycle/build_longcycle_factors.py --rawdir trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_longcycle/FACTOR_EVIDENCE_26W.json
+          python trailaris_r4/build_research_specs.py
+      - name: Run full 34-route x 15-family factory gate
+        env: {PYTHONPATH: trailaris_r4}
+        run: |
+          rm -rf trailaris_longcycle/r4_results trailaris_longcycle/results
+          mkdir -p trailaris_longcycle/r4_results trailaris_longcycle/results
+          python trailaris_r4/trailaris_r4_full_universe_loop.py research-proxy --rawdir trailaris_longcycle/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --outdir trailaris_longcycle/r4_results
+          cp trailaris_longcycle/r4_results/04b_strategy_factory_510_audit.csv trailaris_longcycle/results/R4_FACTORY_AUDIT.csv
+          python - <<'PY'
+          import pandas as pd
+          a=pd.read_csv('trailaris_longcycle/results/R4_FACTORY_AUDIT.csv');print('CELLS',len(a),'FAMILIES',a.strategy_family.nunique());assert len(a)==510 and a.strategy_family.nunique()==15
+          PY
+      - name: Execute exact frozen R5.4 over 26 evaluated weeks
+        env: {PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants}
+        run: |
+          python trailaris_longcycle/run_r5_4_26week_validation.py --rawdir trailaris_longcycle/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --outdir trailaris_longcycle/results
+      - name: Preserve complete evidence artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-r5-4-frozen-26week-validation
+          path: |
+            trailaris_longcycle/results/
+            trailaris_longcycle/M1_34Route_26W_Coverage.csv
+            trailaris_longcycle/M1_34Route_26W_Coverage.json
+            trailaris_longcycle/FACTOR_EVIDENCE_26W.json
+          retention-days: 30
+      - name: Commit compact validation evidence
+        if: always()
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_longcycle/M1_34Route_26W_Coverage.csv trailaris_longcycle/M1_34Route_26W_Coverage.json trailaris_longcycle/FACTOR_EVIDENCE_26W.json 2>/dev/null || true
+          git add -f trailaris_longcycle/results/R5_4_26W_SUMMARY.json trailaris_longcycle/results/R5_4_26W_WEEKLY.csv trailaris_longcycle/results/R5_4_ROLLING_11W.csv trailaris_longcycle/results/R4_FACTORY_AUDIT.csv 2>/dev/null || true
+          git commit -m 'test: frozen R5.4 26-week full-universe validation evidence [skip ci]' || true
+          git pull --rebase origin trailaris-r5-4-26week-validation-20260816 || true
+          git push origin HEAD:trailaris-r5-4-26week-validation-20260816 || true
