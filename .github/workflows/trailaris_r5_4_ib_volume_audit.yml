@@ -1,0 +1,66 @@
+name: Trailaris R5.4 IB Volume Audit
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_4_ib_volume_audit.yml']
+permissions:
+  contents: write
+jobs:
+  ib_volume:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-ephemeral-research-20260815}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --quiet pandas numpy
+      - name: Reconstruct dependencies and evidence
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+      - uses: actions/cache@v4
+        with:
+          path: trailaris_r5/raw_m1
+          key: trailaris-r5-m1-34-20260504-20260814-v1
+          fail-on-cache-miss: true
+      - name: Rebuild causal feed and specs
+        run: |
+          mkdir -p trailaris_r5_4/ib_volume_audit
+          python trailaris_r5_3/build_released_event_factor_feed.py --rawdir trailaris_r5/raw_m1 --out trailaris_r5/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_r5_4/ib_volume_audit/EVENT_AUDIT.csv
+          python trailaris_r4/build_research_specs.py
+      - name: Reproduce locked R5.4 and calculate volume
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import pandas as pd
+          import R5_BASE_CAUSAL_ENGINE as base
+          import trailaris_r4_full_universe_loop as r4
+          from precision_experiment_harness import eval_variant,load_module
+          out=Path('trailaris_r5_4/ib_volume_audit')
+          data,v,cands,opps,fcache=base.build_universe(Path('trailaris_r5/raw_m1'))
+          specs=r4.load_specs(Path('trailaris_r4/research_proxy_specs.csv'),'research-proxy')
+          mod=load_module(Path('trailaris_r5_4/reliability_variants/variant_hierarchical_combined.py'),'r54_locked_ib')
+          res,W,EV,DE,PR=eval_variant(mod,data,cands,opps,fcache,specs,100.0)
+          assert abs(float(res['end_equity'])-337.4231242104393)<=1e-9
+          EV['lot']=pd.to_numeric(EV['lot'],errors='coerce').fillna(0)
+          DE['lot']=pd.to_numeric(DE['lot'],errors='coerce').fillna(0)
+          by=EV.groupby('asset',dropna=False).agg(trades=('lot','size'),opening_lots=('lot','sum'),net_pnl=('net_pnl','sum')).reset_index().sort_values('opening_lots',ascending=False)
+          by['round_turn_lot_sides']=2*by.opening_lots
+          by.to_csv(out/'R5_4_IB_VOLUME_BY_ASSET.csv',index=False)
+          opening=float(EV.lot.sum());round_turn_sides=2*opening
+          scenarios={str(rate):opening*rate for rate in [1.0,2.5,3.5,5.0,7.5,10.0]}
+          s={'state':'LOCKED_R5_4_IB_VOLUME_AUDIT_COMPLETE','end_equity':float(res['end_equity']),'executed_trades':len(EV),'opening_lots_total':opening,'round_turn_lot_sides_total':round_turn_sides,'assets_with_executed_trades':int(EV.asset.nunique()),'lot_based_ib_scenarios_usd_per_round_turn_lot':scenarios,'warning':'Scenario values are arithmetic only. Actual IB revenue requires the certified broker/account/instrument route and the partner agreement applicable to each trade; synthetics and non-standard contract profiles cannot be treated as generic standard FX lots.'}
+          (out/'R5_4_IB_VOLUME_STATUS.json').write_text(json.dumps(s,indent=2));print(json.dumps(s,indent=2))
+          PY
+      - name: Commit volume ledger
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_r5_4/ib_volume_audit/R5_4_IB_VOLUME_STATUS.json trailaris_r5_4/ib_volume_audit/R5_4_IB_VOLUME_BY_ASSET.csv
+          git commit -m 'audit: persist locked R5.4 IB volume economics [skip ci]' || true
+          git pull --rebase origin trailaris-ephemeral-research-20260815
+          git push origin HEAD:trailaris-ephemeral-research-20260815
