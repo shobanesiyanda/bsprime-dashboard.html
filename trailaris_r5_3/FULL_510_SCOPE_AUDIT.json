@@ -1,0 +1,13 @@
+{
+  "assets_required": 34,
+  "assets_present": 34,
+  "strategy_cells_required": 510,
+  "strategy_cells_present": 510,
+  "strategy_families_required": 15,
+  "strategy_families_present": 15,
+  "family_set_match": true,
+  "route_set_match": true,
+  "event_response_triggered_cells": 29,
+  "non_native_cells_retained": 49,
+  "scope_gate_pass": true
+}

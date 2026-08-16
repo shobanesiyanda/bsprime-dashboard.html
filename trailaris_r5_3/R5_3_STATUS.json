@@ -1,0 +1,14 @@
+{
+  "state": "R5_3_FULL_UNIVERSE_EVIDENCE_CONTINUATION_EXECUTED",
+  "routes": 34,
+  "asset_rows": 34,
+  "all_assets_active": true,
+  "strategy_cells_present": 510,
+  "strategy_families_present": 15,
+  "event_response_triggered_cells": 29,
+  "market_path_evidence_class": "HISTORICAL_MARKET_PROXY_NOT_BROKER_CERTIFIED",
+  "broker_certified": false,
+  "performance_claim_allowed": false,
+  "reason": "Global historical market paths and released-event evidence are research evidence; target execution venue contract, commission, slippage, financing and distributed executable bid/ask certification remain separate R5 promotion gates.",
+  "scope_pass": true
+}
