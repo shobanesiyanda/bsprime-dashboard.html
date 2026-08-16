@@ -1,0 +1,111 @@
+{
+  "state": "R5_5_LIQUIDITY_RUNWAY_V3_26W_REPLAY_COMPLETE",
+  "baseline": {
+    "baseline_id": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
+    "end_equity": 1366.8938578865148,
+    "compounded_return_pct": 1266.8938578865148,
+    "executed_trades": 2136,
+    "wins": 1221,
+    "losses": 478,
+    "flats": 437,
+    "nonflat_win_rate": 0.7186580341377281,
+    "profit_factor": 2.9195127192871873,
+    "max_weekly_drawdown_pct": -3.7440606836682933,
+    "max_event_equity_drawdown_pct": -2.7023988320913572,
+    "positive_weeks": 26,
+    "rolling_11w_min_return_pct": 175.6827305105836,
+    "rolling_11w_median_return_pct": 198.27176646902836,
+    "rolling_11w_mean_return_pct": 200.3837728607354,
+    "rolling_11w_max_return_pct": 223.82144949395718
+  },
+  "scope": {
+    "routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510,
+    "weeks": 26
+  },
+  "source_promotion_estate": "EXACT_R5_5_MEMORY112_PROMOTED_3417",
+  "feature_cache_source": "EXACT_R4_BUILD_ASSET_COMPONENTS_FROM_PRESERVED_34_ROUTE_M1_CACHE",
+  "candidate": {
+    "end_equity": 891.8805650248761,
+    "compounded_return_pct": 791.8805650248761,
+    "evaluated_weeks": 26,
+    "positive_weeks": 26,
+    "negative_weeks": 0,
+    "mean_week_pct": 8.809298843763957,
+    "median_week_pct": 9.65343786717272,
+    "weeks_ge5": 23,
+    "weeks_ge10": 10,
+    "executed_trades": 2098,
+    "wins": 1612,
+    "losses": 460,
+    "flats": 26,
+    "loss_rate": 0.219256434699714,
+    "flat_rate": 0.012392755004766444,
+    "nonflat_win_rate": 0.777992277992278,
+    "profit_factor": 2.7279656969756694,
+    "max_weekly_drawdown_pct": -2.421579675857699,
+    "max_event_equity_drawdown_pct": -3.6442412114453537,
+    "assets_with_selected": 32,
+    "rolling_11w_windows": 16,
+    "rolling_11w_min_return_pct": 131.92869663032306,
+    "rolling_11w_median_return_pct": 157.79986977805584,
+    "rolling_11w_mean_return_pct": 157.9395165303062,
+    "rolling_11w_max_return_pct": 171.60652624161622
+  },
+  "delta_candidate_minus_locked_v2": {
+    "end_equity": -475.01329286163866,
+    "compounded_return_pct": -475.01329286163866,
+    "executed_trades": -38.0,
+    "wins": 391.0,
+    "losses": -18.0,
+    "flats": -411.0,
+    "nonflat_win_rate": 0.059334243854549884,
+    "profit_factor": -0.19154702231151788,
+    "max_weekly_drawdown_pct": 1.3224810078105942,
+    "max_event_equity_drawdown_pct": -0.9418423793539965,
+    "positive_weeks": 0.0,
+    "rolling_11w_min_return_pct": -43.75403388026055,
+    "rolling_11w_median_return_pct": -40.47189669097253,
+    "rolling_11w_mean_return_pct": -42.4442563304292,
+    "rolling_11w_max_return_pct": -52.21492325234095
+  },
+  "architecture": {
+    "entry_continuation_separated": true,
+    "runway_model": "CAUSAL_112D_REGULARIZED_KNN_FROM_PRIOR_EXITED_PROMOTIONS_WITH_LOCKED_V2_FALLBACK_WHEN_HISTORY_INSUFFICIENT",
+    "direct_liquidity": "NOT_AVAILABLE_IN_HISTORICAL_ESTATE",
+    "liquidity_model": "CAUSAL_PRICE_VOLATILITY_IMPULSE_EFFICIENCY_RANGE_FRICTION_PROXY",
+    "developed_position_checkpoints_r": [
+      0.75,
+      1.0,
+      1.25
+    ],
+    "adaptive_banking": "0_TO_60_PERCENT_CUMULATIVE_BY_CONTINUATION_STATE",
+    "runner": "UNRESTRICTED_REMAINDER; NO_GLOBAL_3R_CEILING",
+    "capacity_credit_after_partial": false,
+    "v2_negative_edge_gate_preserved": true
+  },
+  "counters": {
+    "entry_assessments": 3189,
+    "promoted_after_all_gates": 3189,
+    "rejected_total": 228,
+    "runway_classes": {
+      "EXTRACTION": 2783,
+      "RUNNER": 300,
+      "V2_BASELINE_FALLBACK": 106
+    },
+    "liquidity_states": {
+      "ADEQUATE": 933,
+      "THIN": 793,
+      "DETERIORATING": 639,
+      "SUPPORTIVE": 550,
+      "ABUNDANT_SUPPORTIVE": 161,
+      "V2_BASELINE_FALLBACK": 106,
+      "HOSTILE": 7
+    },
+    "adaptively_banked_selected_trades": 1427
+  },
+  "causality": "Current entry features use strictly pre-decision bars. Weekly runway models train only on promotions exited before the evaluation week. Historical MFE is used only as a training label. Developed-position re-underwriting occurs only after the contemporaneous path first reaches each checkpoint; no future MFE/MAE enters current eligibility. Partial banking does not shorten the frozen exit time or create extra capacity credit.",
+  "automatic_baseline_promotion": false,
+  "evidence_class": "FULL_26_WEEK_CAUSAL_WALK_FORWARD_RESEARCH_PROXY; LIQUIDITY_IS_PROXY_NOT_DIRECT_BOOK; BROKER_PRODUCTION_CERTIFICATION_SEPARATE"
+}
