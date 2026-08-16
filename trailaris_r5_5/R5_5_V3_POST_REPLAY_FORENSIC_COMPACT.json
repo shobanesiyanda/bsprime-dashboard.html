@@ -1,0 +1,59 @@
+{
+  "state": "V3_POST_REPLAY_FORENSIC_COMPLETE",
+  "candidate": "R5_5_LIQUIDITY_RUNWAY_V3_26W_REPLAY_COMPLETE",
+  "baseline_preserved": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
+  "promotion_decision": "DO_NOT_PROMOTE_V3",
+  "reason": "V3 materially reduces flats, losses and weekly drawdown but sacrifices too much endpoint return, profit factor, rolling-window performance and event-equity drawdown versus locked V2.",
+  "candidate_vs_v2": {
+    "end_equity_v2": 1366.8938578865148,
+    "end_equity_v3": 891.8805650248761,
+    "return_pct_v2": 1266.8938578865148,
+    "return_pct_v3": 791.8805650248761,
+    "wins_v2": 1221,
+    "wins_v3": 1612,
+    "losses_v2": 478,
+    "losses_v3": 460,
+    "flats_v2": 437,
+    "flats_v3": 26,
+    "flat_reduction_count": 411,
+    "flat_reduction_pct": 94.05034324942791,
+    "loss_reduction_count": 18,
+    "nonflat_win_rate_v2": 0.7186580341377281,
+    "nonflat_win_rate_v3": 0.777992277992278,
+    "profit_factor_v2": 2.9195127192871873,
+    "profit_factor_v3": 2.7279656969756694,
+    "max_weekly_dd_v2_pct": -3.7440606836682933,
+    "max_weekly_dd_v3_pct": -2.421579675857699,
+    "max_event_dd_v2_pct": -2.7023988320913572,
+    "max_event_dd_v3_pct": -3.6442412114453537
+  },
+  "causal_component_forensics": {
+    "common_selected_campaigns": 1933,
+    "v2_only_selected": 203,
+    "v3_only_selected": 165,
+    "flat_monetization_gain_on_common_campaigns_r": 73.4625,
+    "winner_banking_cost_on_common_campaigns_r": -92.29028564501826,
+    "loss_delta_on_common_campaigns_r": 0.0,
+    "selection_churn_delta_r": 18.045672915400637,
+    "right_tail_ge_3r_v2_total_r": 259.3146172840285,
+    "right_tail_ge_3r_v3_total_r": 211.2975654606614,
+    "right_tail_ge_3r_delta_r": -48.017051823367126
+  },
+  "runway_findings": {
+    "entry_assessments": 3189,
+    "additional_runway_entry_rejections": 0,
+    "selected_extraction_campaigns": 1808,
+    "selected_runner_campaigns": 206,
+    "selected_v2_fallback_campaigns": 84,
+    "extraction_risk_multiplier": 0.7,
+    "remaining_flats": 26,
+    "remaining_flats_class": "V2_BASELINE_FALLBACK_ONLY"
+  },
+  "interpretation": [
+    "The runway/continuation concept is validated as a flat-monetization mechanism: modeled campaigns eliminated all flats; the 26 remaining flats are only insufficient-history V2 fallback trades.",
+    "The 30% extraction risk haircut is too broad because EXTRACTION contains a large amount of positive expectancy and dominates selected trades.",
+    "Adaptive banking is too aggressive on right-tail winners: it recovered +73.4625R from common flats but surrendered -92.2903R from common winners, including -48.0171R from common V2 trades that had realized at least 3R.",
+    "The next refinement should preserve the V2 baseline and retain runway intelligence while decoupling entry classification from blanket risk reduction and making banking more continuation-decay selective so right-tail runners remain effectively untaxed.",
+    "No global 3R ceiling should be restored."
+  ]
+}
