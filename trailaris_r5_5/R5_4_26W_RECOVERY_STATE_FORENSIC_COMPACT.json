@@ -1,0 +1,49 @@
+{
+  "state": "R5_4_26W_RECOVERY_STATE_ALLOCATION_FORENSIC_COMPLETE",
+  "source": "certified frozen R5.4 26-week decisions/promoted/events ledgers",
+  "frozen_engine_contract": {
+    "weekly_objective_armed_at_growth": 0.05,
+    "floor_state_armed_after_objective_when_growth_lte": 0.04,
+    "risk_scale_in_floor_state": 0.0,
+    "risk_budget_after_objective": "min(0.01, max(0, week_growth - 0.04))",
+    "interpretation": "After a week first reaches +5%, a giveback to <=+4% sets the floor state and zeroes new-trade risk scale. The reduced risk budget can remain binding during the recovery interval."
+  },
+  "five_sub5_weeks": [
+    {"week":"2026-02-16","return_pct":4.939546,"open_risk_rejections":6,"throttled_after_objective":0},
+    {"week":"2026-02-23","return_pct":4.159525,"open_risk_rejections":85,"throttled_after_objective":78},
+    {"week":"2026-04-06","return_pct":4.210876,"open_risk_rejections":69,"throttled_after_objective":59},
+    {"week":"2026-05-18","return_pct":4.148491,"open_risk_rejections":93,"throttled_after_objective":74},
+    {"week":"2026-06-01","return_pct":2.101509,"open_risk_rejections":41,"throttled_after_objective":0}
+  ],
+  "throttled_weak_week_opportunity_regret": {
+    "rejected_candidates": 211,
+    "ex_post_wins": 102,
+    "ex_post_losses": 48,
+    "ex_post_flats": 61,
+    "nonflat_win_rate": 0.68,
+    "mean_net_r": 0.3379009570039219,
+    "r_unit_profit_factor": 2.50520611530999,
+    "ex_post_net_r_sum": 71.29710192782753,
+    "hindsight_warning": "These realized outcomes are attribution only; they do not authorize replay selection or sizing."
+  },
+  "causal_existing_signal_slice": {
+    "definition": "Among those 211 rejected recovery-state candidates: reliability_score > 0 AND expected_r > frozen Tier-B 0.10 AND quality >= frozen Tier-B 0.68. All three fields existed at the historical decision timestamp.",
+    "n": 70,
+    "ex_post_wins": 38,
+    "ex_post_losses": 9,
+    "ex_post_flats": 23,
+    "nonflat_win_rate": 0.8085106382978723,
+    "mean_net_r": 0.6045253972308111,
+    "r_unit_profit_factor": 5.701864200684136,
+    "mean_winner_r": 1.3504415212146492,
+    "mean_loser_r": -0.9999999999999893,
+    "max_winner_r": 2.979626432272145,
+    "winners_ge_2r": 5,
+    "status": "CAUSAL_RULE_LEVEL_EVIDENCE_ONLY_NOT_PORTFOLIO_PERFORMANCE"
+  },
+  "what_this_does_not_explain": {
+    "2026-02-16": "The +4.94% week never entered the reduced post-objective budget state in these rejections.",
+    "2026-06-01": "The +2.10% week also had no post-objective throttled rejections; it requires separate opportunity-density/loss/capture analysis."
+  },
+  "engineering_interpretation": "R5.4 contains a recovery-state allocation defect distinct from blanket leverage. The gain-protection state can suppress new risk even when contemporaneous candidates still carry positive reliability/current-expectancy evidence. A valid R5.5 repair must preserve the weekly protection objective, permit only evidence-conditioned recovery deployment inside the existing portfolio risk envelope, and prove the result in the full 34x15x510 causal replay. No candidate is promoted from this forensic alone."
+}
