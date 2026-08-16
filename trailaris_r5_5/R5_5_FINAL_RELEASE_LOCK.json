@@ -1,0 +1,67 @@
+{
+  "state": "FINAL_LOCKED_RELEASE",
+  "release_id": "TRAILARIS_R5_5_FINAL_20260817",
+  "release_date": "2026-08-17",
+  "canonical_engine": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
+  "status": "CLOSED_FOR_REFINEMENT",
+  "scope": {
+    "weeks": 26,
+    "routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510
+  },
+  "performance": {
+    "start_equity": 100.0,
+    "end_equity": 1366.8938578865148,
+    "compounded_return_pct": 1266.8938578865148,
+    "positive_weeks": 26,
+    "negative_weeks": 0,
+    "mean_week_pct": 10.624017604148746,
+    "median_week_pct": 11.515416074317496,
+    "weeks_ge5": 22,
+    "weeks_ge10": 21,
+    "executed_trades": 2136,
+    "wins": 1221,
+    "losses": 478,
+    "flats": 437,
+    "nonflat_win_rate": 0.7186580341377281,
+    "profit_factor": 2.9195127192871873,
+    "max_weekly_drawdown_pct": -3.7440606836682933,
+    "max_event_equity_drawdown_pct": -2.7023988320913572,
+    "rolling_11w_min_return_pct": 175.6827305105836,
+    "rolling_11w_median_return_pct": 198.27176646902836,
+    "rolling_11w_mean_return_pct": 200.3837728607354,
+    "rolling_11w_max_return_pct": 223.82144949395718
+  },
+  "architecture_lock": {
+    "bounded_proposal_memory_days": 112,
+    "reliability_memory_days": 56,
+    "validation_days": 14,
+    "causal_negative_edge_entry_exclusions": true,
+    "weak_state_partial_realization": "25_PERCENT_AT_FIRST_PLUS_0_75R",
+    "remaining_runner_preserved": true,
+    "capacity_credit_after_partial": false,
+    "global_3r_ceiling": false,
+    "right_tail_runner": "OPEN_ENDED_PROTECTED_RUNNER"
+  },
+  "research_disposition": {
+    "r5_4": "IMMUTABLE_HISTORICAL_CONTROL",
+    "memory112": "PRESERVED_PREDECESSOR_EVIDENCE",
+    "liquidity_runway_v3": "REJECTED_AS_RELEASE_REPLACEMENT_BUT_PRESERVED_AS_RESEARCH_EVIDENCE",
+    "v3_key_finding": "Runway/continuation modeling materially reduced flats but over-banked winners and reduced endpoint return, profit factor, rolling performance and event drawdown quality versus V2."
+  },
+  "version_governance": {
+    "r5_5_mutation": "PROHIBITED",
+    "further_refinement": "MUST_USE_SEPARATELY_VERSIONED_SUCCESSOR_OR_UPDATE",
+    "future_feature_or_model_change": "MUST_NOT_BE_BACKPORTED_INTO_FINAL_R5_5",
+    "universe_narrowing": "PROHIBITED_FOR_ANY_CLAIMED_FULL_SYSTEM_SUCCESSOR_UNLESS_EXPLICITLY_AUTHORIZED",
+    "baseline_replacement": "NOT_APPLICABLE_R5_5_IS_CLOSED"
+  },
+  "evidence_class": "FINAL_LOCKED_RESEARCH_RELEASE; FULL_26_WEEK_CAUSAL_WALK_FORWARD_RESEARCH_PROXY; BROKER_PRODUCTION_CERTIFICATION_SEPARATE",
+  "canonical_files": [
+    "trailaris_r5_5/R5_5_V2_26W_CANONICAL_BASELINE.json",
+    "trailaris_r5_5/R5_5_FINAL_RELEASE_LOCK.json",
+    "trailaris_r5_5/R5_5_V3_POST_REPLAY_FORENSIC_COMPACT.json"
+  ],
+  "closure_rule": "R5.5 is final and closed. Any future upgrade, refinement, liquidity/runway enhancement, loss/flat repair, risk change, execution change, data enhancement or architecture change must be developed under a new explicitly versioned Trailaris release/update and must not mutate this final R5.5 release."
+}
