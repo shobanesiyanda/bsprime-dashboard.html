@@ -1,0 +1,38 @@
+{
+  "state": "R5_5_LANE1B2_PARALLEL_COMPLETE",
+  "evidence_class": "END_TO_END_CAUSAL_FULL_REPLAY",
+  "rules_expected": 12,
+  "rules_completed": 12,
+  "promotion_candidates": 0,
+  "best_authentic_rule": {
+    "rank_index": 3,
+    "behavior": "close_a0.50_r0.20_1b",
+    "gate_metric": "reliability_win",
+    "gate_direction": "le",
+    "gate_threshold": 0.2655132009803008,
+    "managed_executions": 11,
+    "end_equity": 343.5447309255116,
+    "delta_end_equity": 6.121606715072289,
+    "fresh_return_pct": 7.261646557142409,
+    "fresh_delta_pct": 0.0,
+    "max_weekly_dd_pct": -4.637645574907678,
+    "executed_trades": 1126,
+    "wins": 467,
+    "losses": 233,
+    "flat": 426,
+    "nonflat_win_rate": 0.6671428571428571,
+    "end_equity_not_regressed": true,
+    "fresh_holdout_improved": false,
+    "drawdown_not_worse": true,
+    "loss_flat_repair": false,
+    "full_universe_34x510": true,
+    "promotion_candidate": false
+  },
+  "r5_4_control_end_equity": 337.4231242104393,
+  "approved_scope": {
+    "routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510
+  },
+  "next_lane": "STRUCTURE_REGIME_ENTRY_THESIS_REPAIR"
+}
