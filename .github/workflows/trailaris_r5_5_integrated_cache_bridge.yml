@@ -1,4 +1,4 @@
-name: Trailaris R5.5 — Frozen Cache Bridge Integrated Replay
+name: Trailaris R5.5 — Frozen Cache Bridge Integrated Replay V2
 
 on:
   push:
@@ -74,6 +74,7 @@ jobs:
           s=json.loads(Path('trailaris_r5_5/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_SPEC.json').read_text())
           assert c['control_id']=='R5_4_FROZEN_26W_20260816'
           assert c['executed_trades']==2152 and c['wins']==856 and c['losses']==505 and c['flats']==791
+          assert s['state']=='AUTHORIZED_INTEGRATED_R5_5_REFINEMENT_V2'
           assert s['scope']=={'weeks':26,'routes':34,'strategy_families':15,'route_strategy_cells':510}
           a=pd.read_csv('trailaris_longcycle/results/R4_FACTORY_AUDIT.csv')
           assert len(a)==510 and a.strategy_family.nunique()==15
@@ -81,13 +82,13 @@ jobs:
           assert len(p)==3417 and p.asset.nunique()==34 and pd.to_datetime(p.eval_week,utc=True).nunique()==26
           files=list(Path('trailaris_longcycle/raw_m1').glob('*_M1_normalized.csv'))
           assert len(files)==34, f'raw route files={len(files)}'
-          print('PASS: 34 raw paths + 510 factory cells + exact 3417 memory112 promotions / 26 weeks.')
+          print('PASS: exact 34 paths + 510 cells + 3417 memory112 promotions + V2 contract.')
           PY
 
       - name: Rebuild research sizing specs only
         run: python trailaris_r4/build_research_specs.py
 
-      - name: Execute one integrated downstream 26-week R5.5 replay
+      - name: Execute one authentic integrated downstream 26-week R5.5 V2 replay
         env:
           PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
         run: |
@@ -100,14 +101,14 @@ jobs:
             --factory-audit trailaris_longcycle/results/R4_FACTORY_AUDIT.csv \
             --outdir trailaris_r5_5/integrated_negative_results
 
-      - name: Upload full integrated evidence
+      - name: Upload full V2 evidence
         uses: actions/upload-artifact@v4
         with:
-          name: trailaris-r5-5-integrated-negative-refinement-26w
+          name: trailaris-r5-5-integrated-negative-refinement-v2-26w
           path: trailaris_r5_5/integrated_negative_results/
           retention-days: 30
 
-      - name: Commit compact evidence to active R5.5 branch
+      - name: Commit compact V2 evidence to active R5.5 branch
         if: success()
         run: |
           git config user.name github-actions[bot]
@@ -116,6 +117,6 @@ jobs:
             trailaris_r5_5/integrated_negative_results/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_STATUS.json \
             trailaris_r5_5/integrated_negative_results/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_WEEKLY.csv \
             trailaris_r5_5/integrated_negative_results/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_ROLLING_11W.csv
-          git commit -m 'test: integrated R5.5 negative-side 26-week evidence [skip ci]' || true
+          git commit -m 'test: authentic integrated R5.5 V2 26-week evidence [skip ci]' || true
           git pull --rebase origin trailaris-ephemeral-research-20260815 || true
           git push origin HEAD:trailaris-ephemeral-research-20260815
