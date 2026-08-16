@@ -2,12 +2,14 @@ name: Trailaris R5.5 Lane 6 Targeted Causal Smoke
 on:
   push:
     branches: [trailaris-ephemeral-research-20260815]
-    paths: ['.github/workflows/trailaris_r5_5_lane6_targeted_smoke.yml']
+    paths:
+      - 'trailaris_r5_5/lane6_targeted_causal_winner_replay.py'
+      - '.github/workflows/trailaris_r5_5_lane6_targeted_smoke.yml'
 permissions:
   contents: write
 concurrency:
   group: trailaris-r5-5-lane6-targeted-smoke
-  cancel-in-progress: false
+  cancel-in-progress: true
 env:
   BRANCH: trailaris-ephemeral-research-20260815
   CACHE_KEY: trailaris-r5-m1-34-20260504-20260814-v1
