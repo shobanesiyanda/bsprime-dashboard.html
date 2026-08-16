@@ -1,0 +1,43 @@
+name: Trailaris R5.5 Lane 6E Fast Candidate Presence
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_5_lane6e_fast_candidate_presence.yml']
+permissions:
+  contents: write
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-ephemeral-research-20260815, fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --quiet pandas numpy
+      - name: Reconstruct immutable engine
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+      - uses: actions/cache@v4
+        with:
+          path: trailaris_r5/raw_m1
+          key: trailaris-r5-m1-34-20260504-20260814-v1
+          fail-on-cache-miss: true
+      - name: Build candidates and inspect fresh winner presence
+        run: |
+          python trailaris_r5_3/build_released_event_factor_feed.py --rawdir trailaris_r5/raw_m1 --out trailaris_r5/raw_m1/Trailaris_R3_FactorFeed.csv --audit EVENT_AUDIT_6E_FAST.csv
+          rm -rf /tmp/l6ef && mkdir -p /tmp/l6ef
+          PYTHONPATH=trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5 python trailaris_r5_5/lane6e_fast_candidate_presence.py --rawdir trailaris_r5/raw_m1 --rules trailaris_r5_5/lane6a_results/R5_5_LANE6A_WINNER_RULES.csv --outdir /tmp/l6ef
+      - name: Publish diagnostic
+        run: |
+          cp -a /tmp/l6ef /tmp/l6ef_publish
+          git fetch origin trailaris-ephemeral-research-20260815
+          git reset --hard origin/trailaris-ephemeral-research-20260815
+          rm -rf trailaris_r5_5/lane6e_fast_results
+          cp -a /tmp/l6ef_publish trailaris_r5_5/lane6e_fast_results
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_r5_5/lane6e_fast_results
+          git commit -m 'diagnostic: R5.5 fast fresh winner-presence evidence [skip ci]' || exit 0
+          git push origin HEAD:trailaris-ephemeral-research-20260815
