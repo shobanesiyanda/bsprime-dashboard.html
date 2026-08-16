@@ -4,13 +4,12 @@ import argparse,json
 from pathlib import Path
 import numpy as np,pandas as pd
 from lane1b_full_replay import ManagedVariant,apply_rule
-from winner_causal_features import causal_decision_features,combined_promote_clean_history
+from winner_causal_features import causal_decision_features
 
 R54_END=337.4231242104393
 INCUMBENT_END=343.5447309255116
 INCUMBENT_FRESH=7.261646557142409
 INCUMBENT_DD=-4.637645574907678
-INCUMBENT_NFWR=0.6671428571428571
 CHALLENGE_END=345.3896887826546
 CHALLENGE_NFWR=0.673352435530086
 CHALLENGE_LOSSES=228
@@ -19,8 +18,7 @@ EPS=1e-9
 B3={'behavior':'close_a0.50_r0.20_1b','kind':'close','activate_mfe_r':0.50,'parameter_r':0.20,'bars':1,'gate_metric':'reliability_win','gate_direction':'le','gate_threshold':0.2655132009803008}
 
 def num(x,d=np.nan):
-    try:
-        v=float(x);return v if np.isfinite(v) else d
+    try:v=float(x);return v if np.isfinite(v) else d
     except Exception:return d
 
 def rcond(z,f,d,th):
@@ -37,14 +35,25 @@ def rule_mask(z,r):
     return m.fillna(False)
 
 class WinnerAmplifyVariant:
-    def __init__(self,base,copies,boost,history):self.base=base;self.copies=int(copies);self.boost=float(boost);self.history=history
+    def __init__(self,base,promote,copies,boost,history):self.base=base;self.promote=promote;self.copies=int(copies);self.boost=float(boost);self.history=history
     def promote_for_week(self,cands,week_start):
-        z=cands.copy();parts=[z]
-        elig=z[(z.get('amp_parent_qualifies',False)==True)&z.strategy.astype(str).eq('WINNER_ONLY_ADDON')].copy()
-        if len(elig):
-            for k in range(self.copies):
-                q=elig.copy();q['strategy']=q['amp_parent_strategy'];q['strategy_family']=q['amp_parent_family'];q['quality']=np.minimum(.995,pd.to_numeric(q['quality'],errors='coerce').fillna(0)+self.boost);q['campaign_id']=q['campaign_id'].astype(str)+f'|WINAMP{k+1}';parts.append(q)
-        return combined_promote_clean_history(pd.concat(parts,ignore_index=True,sort=False),self.history,week_start)
+        # The immutable selector learns only from the original economic history.
+        # Extra units are created only after an original WINNER_ONLY_ADDON has already survived
+        # the causal weekly selector, so copies cannot manufacture their own config/trailing evidence.
+        p,conf,stats=self.promote(self.history,week_start,'combined')
+        if p.empty:return p,conf,stats
+        elig=p[p.get('amp_parent_qualifies',pd.Series(False,index=p.index)).astype(bool)&p.strategy.astype(str).eq('WINNER_ONLY_ADDON')].copy()
+        if not len(elig) or self.copies<=0:return p,conf,stats
+        parts=[p]
+        for k in range(self.copies):
+            q=elig.copy();q['quality']=np.minimum(.995,pd.to_numeric(q.quality,errors='coerce').fillna(0)+self.boost)
+            # Base rank_score carries all causal selector evidence. Quality contributes .42 in the
+            # immutable rank formula, so reflect only the configured priority delta here.
+            q['rank_score']=pd.to_numeric(q.rank_score,errors='coerce').fillna(0)+.42*self.boost
+            q['campaign_id']=q.campaign_id.astype(str)+f'|WINAMP{k+1}'
+            q['amplification_copy']=k+1
+            parts.append(q)
+        return pd.concat(parts,ignore_index=True,sort=False),conf,stats
     def replay_r5(self,cands,specs,start=100.,feature_cache=None):return self.base.replay_r5(apply_rule(cands,feature_cache,B3),specs,start,feature_cache)
 
 def main():
@@ -57,22 +66,17 @@ def main():
     import trailaris_r4_full_universe_loop as r4
     from reliability_common import promote
     from precision_experiment_harness import eval_variant,load_module
-    data,v,cands,opps,fcache=base.build_universe(Path(a.rawdir));specs=r4.load_specs(Path(a.specs),'research-proxy')
-    lock=json.load(open('trailaris_r5_4/R5_4_MARKET_EXECUTION_ENGINE_LOCK.json'));scope=lock['scope']
+    data,v,cands,opps,fcache=base.build_universe(Path(a.rawdir));specs=r4.load_specs(Path(a.specs),'research-proxy');scope=json.load(open('trailaris_r5_4/R5_4_MARKET_EXECUTION_ENGINE_LOCK.json'))['scope']
     ctlmod=load_module(Path('trailaris_r5_4/reliability_variants/variant_hierarchical_combined.py'),f'r55_lane6b_ctl_{a.rule_rank}_{a.copies}');ctl,*_=eval_variant(ctlmod,data,cands,opps,fcache,specs,100.0)
     if abs(float(ctl['end_equity'])-R54_END)>1e-9:raise RuntimeError('R5.4 control reproduction failed')
     inc,*_=eval_variant(ManagedVariant(B3,base,promote),data,cands,opps,fcache,specs,100.0)
     if abs(float(inc['end_equity'])-INCUMBENT_END)>1e-6:raise RuntimeError('Lane1B2 incumbent reproduction failed')
-    z=causal_decision_features(cands,fcache);parents=z[~z.get('is_addon',False).astype(bool)].copy();pm=rule_mask(parents,rule)
-    qual=dict(zip(parents.campaign_id.astype(str),pm.astype(bool)));ps=dict(zip(parents.campaign_id.astype(str),parents.strategy.astype(str)));pf=dict(zip(parents.campaign_id.astype(str),parents.strategy_family.astype(str)))
+    z=causal_decision_features(cands,fcache);parents=z[~z.get('is_addon',False).astype(bool)].copy();pm=rule_mask(parents,rule);qual=dict(zip(parents.campaign_id.astype(str),pm.astype(bool)))
     z['amp_parent_qualifies']=z.parent_id.astype(str).map(qual).fillna(False) if 'parent_id' in z else False
-    z['amp_parent_strategy']=z.parent_id.astype(str).map(ps).fillna(z.strategy.astype(str)) if 'parent_id' in z else z.strategy.astype(str)
-    z['amp_parent_family']=z.parent_id.astype(str).map(pf).fillna(z.strategy_family.astype(str)) if 'parent_id' in z else z.strategy_family.astype(str)
-    cand,VW,VEV,VDE,VPR=eval_variant(WinnerAmplifyVariant(base,a.copies,a.quality_boost,z),data,z,opps,fcache,specs,100.0)
-    amp_selected=int(VEV.campaign_id.astype(str).str.contains('WINAMP',regex=False).sum()) if len(VEV) and 'campaign_id' in VEV else 0
-    scope_ok=(len(data)==34 and scope=={'approved_routes':34,'strategy_families':15,'route_strategy_cells':510})
+    var=WinnerAmplifyVariant(base,promote,a.copies,a.quality_boost,z);cand,VW,VEV,VDE,VPR=eval_variant(var,data,z,opps,fcache,specs,100.0)
+    amp_selected=int(VEV.campaign_id.astype(str).str.contains('WINAMP',regex=False).sum()) if len(VEV) and 'campaign_id' in VEV else 0;scope_ok=(len(data)==34 and scope=={'approved_routes':34,'strategy_families':15,'route_strategy_cells':510})
     alpha={'end_equity_beats_1b2':float(cand['end_equity'])>INCUMBENT_END+EPS,'fresh_not_worse':float(cand['fresh_return_pct'])>=INCUMBENT_FRESH-EPS,'drawdown_not_worse':float(cand['max_weekly_dd_pct'])>=INCUMBENT_DD-EPS,'asset_coverage_not_worse':int(cand['assets_with_selected'])>=33,'full_universe_34x15x510':scope_ok}
     frontier={'end_equity_beats_lane5':float(cand['end_equity'])>CHALLENGE_END+EPS,'fresh_improved':float(cand['fresh_return_pct'])>INCUMBENT_FRESH+EPS,'drawdown_not_worse':float(cand['max_weekly_dd_pct'])>=INCUMBENT_DD-EPS,'fresh_dd_not_worse':float(cand['fresh_max_dd_pct'])>=-0.5196525640746019-EPS,'losses_at_or_below_lane5':int(cand['losses'])<=CHALLENGE_LOSSES,'flats_at_or_below_lane5':int(cand['flat'])<=CHALLENGE_FLATS,'nonflat_win_rate_at_least_lane5':float(cand['nonflat_win_rate'])>=CHALLENGE_NFWR-EPS,'asset_coverage_not_worse':int(cand['assets_with_selected'])>=33,'full_universe_34x15x510':scope_ok}
-    s={'state':'R5_5_LANE6B_WINNER_AMPLIFICATION_REPLAY_COMPLETE','evidence_class':'END_TO_END_CAUSAL_FULL_REPLAY','rule_rank':a.rule_rank,'winner_rule':rule,'copies':a.copies,'quality_boost':a.quality_boost,'qualifying_parent_candidates':int(pm.sum()),'amplified_addons_selected':amp_selected,'r5_4_control':ctl,'lane1b2_incumbent':inc,'candidate':cand,'delta_vs_1b2':float(cand['end_equity'])-INCUMBENT_END,'delta_vs_lane5_frontier':float(cand['end_equity'])-CHALLENGE_END,'alpha_gates':alpha,'alpha_candidate':bool(all(alpha.values())),'frontier_gates':frontier,'frontier_candidate':bool(all(frontier.values())),'promotion_candidate':False,'promotion_blockers':['FUSION_WITH_CERTIFIED_LANE5_MANAGEMENT_REQUIRED_IF_STANDALONE_WINNER_PATH_ADDS_VALUE','FORENSIC_COMPLETENESS_GATES_REQUIRED','NEW_UNSEEN_FORWARD_HOLDOUT_REQUIRED','TARGET_SERVER_BROKER_EXECUTION_CERTIFICATION_REQUIRED'],'scope':scope,'governance':'Winner qualification uses market-state plus reliability fields reconstructed at each trade evaluation week from exits strictly before that week. Amplification copies compete in the current selector but cannot contaminate their own reliability history. Added tranches remain is_addon=True, so unchanged risk, margin, factor and breaker controls remain authoritative.'}
+    s={'state':'R5_5_LANE6B_WINNER_AMPLIFICATION_REPLAY_COMPLETE','evidence_class':'END_TO_END_CAUSAL_FULL_REPLAY','rule_rank':a.rule_rank,'winner_rule':rule,'copies':a.copies,'quality_boost':a.quality_boost,'qualifying_parent_candidates':int(pm.sum()),'amplified_addons_selected':amp_selected,'r5_4_control':ctl,'lane1b2_incumbent':inc,'candidate':cand,'delta_vs_1b2':float(cand['end_equity'])-INCUMBENT_END,'delta_vs_lane5_frontier':float(cand['end_equity'])-CHALLENGE_END,'alpha_gates':alpha,'alpha_candidate':bool(all(alpha.values())),'frontier_gates':frontier,'frontier_candidate':bool(all(frontier.values())),'promotion_candidate':False,'scope':scope,'governance':'Winner qualification uses weekly-causal decision features. The immutable selector learns only from the original candidate history. Extra 0.25%-risk add-on copies are created only after the original continuation add-on has already passed weekly promotion, then compete only under unchanged portfolio risk, margin, factor and breaker controls.'}
     (out/'result.json').write_text(json.dumps(s,indent=2,default=str));VW.to_csv(out/'weekly.csv',index=False);print(json.dumps(s,indent=2,default=str))
 if __name__=='__main__':main()
