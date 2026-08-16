@@ -1,0 +1,61 @@
+name: Trailaris R5.4 Parallel 26-Week Frozen Replay
+on:
+  push:
+    branches: [trailaris-r5-4-26week-validation-20260816]
+    paths: ['.github/workflows/trailaris_r5_4_26week_parallel_replay.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  parallel_replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-r5-4-26week-validation-20260816}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install dependencies
+        run: python -m pip install --quiet pandas numpy
+      - name: Reconstruct exact frozen R4 dependency
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+      - name: Restore exact 34-route extended M1 cache
+        uses: actions/cache/restore@v4
+        with:
+          path: trailaris_longcycle/raw_m1
+          key: trailaris-r5-4-m1-34-20260119-20260814-v1
+          fail-on-cache-miss: true
+      - name: Verify 34-route cache
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          got=[a for a in routes if (Path('trailaris_longcycle/raw_m1')/f'{a}_M1_normalized.csv').exists()]
+          print('ROUTES',len(got));assert len(got)==34
+          PY
+      - name: Rebuild extended causal factor evidence
+        run: |
+          python trailaris_longcycle/build_longcycle_factors.py --rawdir trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_longcycle/PARALLEL_FACTOR_EVIDENCE.json
+          python trailaris_r4/build_research_specs.py
+      - name: Execute exact frozen R5.4 directly over 26 evaluated weeks
+        env: {PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants}
+        run: |
+          rm -rf trailaris_longcycle/parallel_results && mkdir -p trailaris_longcycle/parallel_results
+          python trailaris_longcycle/run_r5_4_26week_validation.py --rawdir trailaris_longcycle/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --outdir trailaris_longcycle/parallel_results
+      - name: Upload provisional replay evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-r5-4-26week-parallel-replay
+          path: trailaris_longcycle/parallel_results/
+          retention-days: 30
+      - name: Commit compact provisional replay evidence
+        if: success()
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_longcycle/parallel_results/R5_4_26W_SUMMARY.json trailaris_longcycle/parallel_results/R5_4_26W_WEEKLY.csv trailaris_longcycle/parallel_results/R5_4_ROLLING_11W.csv
+          git commit -m 'test: provisional frozen R5.4 26-week parallel replay [skip ci]' || true
+          git pull --rebase origin trailaris-r5-4-26week-validation-20260816 || true
+          git push origin HEAD:trailaris-r5-4-26week-validation-20260816 || true
