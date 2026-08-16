@@ -1,0 +1,26 @@
+{
+  "lock_id": "TRAILARIS_R5_4_MARKET_EXECUTION_ENGINE_2026-08-16",
+  "state": "LOCKED",
+  "role": "TRAILARIS_MARKET_EXECUTION_ENGINE",
+  "canonical_candidate": "CAUSAL_HIERARCHICAL_RELIABILITY_GATE",
+  "canonical_metrics_file": "trailaris_r5_4/R5_4_SHADOW_LEADER.json",
+  "scope": {
+    "approved_routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510,
+    "full_universe_required": true
+  },
+  "locked_performance": {
+    "start_equity": 100.0,
+    "end_equity": 337.4231242104393,
+    "compounded_return_pct": 237.42312421043928,
+    "executed_trades": 1102,
+    "wins": 446,
+    "losses": 231,
+    "flat": 425,
+    "nonflat_win_rate": 0.6587887740029542,
+    "profit_factor": 3.0121644422095257,
+    "max_weekly_drawdown_pct": -4.637645574907678
+  },
+  "preservation_rule": "Do not rewrite R5.4 historical results, logic, universe or strategy scope. All subsequent research, loss reduction, broker certification, gold refinement and intelligence expansion must be evaluated as post-lock refinements or successor versions against this immutable R5.4 record."
+}
