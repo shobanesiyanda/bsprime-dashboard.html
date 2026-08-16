@@ -1,0 +1,17 @@
+{
+  "state": "LOCKED_R5_4_IB_VOLUME_AUDIT_COMPLETE",
+  "end_equity": 337.4231242104393,
+  "executed_trades": 1102,
+  "opening_lots_total": 361.448,
+  "round_turn_lot_sides_total": 722.896,
+  "assets_with_executed_trades": 33,
+  "lot_based_ib_scenarios_usd_per_round_turn_lot": {
+    "1.0": 361.448,
+    "2.5": 903.6199999999999,
+    "3.5": 1265.068,
+    "5.0": 1807.2399999999998,
+    "7.5": 2710.8599999999997,
+    "10.0": 3614.4799999999996
+  },
+  "warning": "Scenario values are arithmetic only. Actual IB revenue requires the certified broker/account/instrument route and the partner agreement applicable to each trade; synthetics and non-standard contract profiles cannot be treated as generic standard FX lots."
+}
