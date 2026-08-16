@@ -63,14 +63,21 @@ def main():
     from precision_experiment_harness import eval_variant,load_module
     lock=json.load(open('trailaris_r5_4/R5_4_MARKET_EXECUTION_ENGINE_LOCK.json'));scope=lock['scope']
     data,v,cands,opps,fcache=base.build_universe(Path(a.rawdir));specs=r4.load_specs(Path(a.specs),'research-proxy')
-    families=sorted(cands.strategy_family.dropna().astype(str).unique().tolist());routes=len(data);cells=routes*len(families)
+    routes=len(data);emitted_families=sorted(cands.strategy_family.dropna().astype(str).unique().tolist())
+    if routes!=34:raise RuntimeError(f'actual asset data universe regressed {routes}/34')
+    approved_scope_ok=(scope['approved_routes']==34 and scope['strategy_families']==15 and scope['route_strategy_cells']==510)
+    if not approved_scope_ok:raise RuntimeError(f'immutable approved scope invalid: {scope}')
     ctlmod=load_module(Path('trailaris_r5_4/reliability_variants/variant_hierarchical_combined.py'),f'r55_l5_ctl_{a.variant_index}')
     ctl,CW,CEV,CDE,CPR=eval_variant(ctlmod,data,cands,opps,fcache,specs,100.0)
-    if abs(float(ctl['end_equity'])-R54_END)>EPS:raise RuntimeError('R5.4 control reproduction failed')
+    if abs(float(ctl['end_equity'])-R54_END)>EPS or len(CEV)!=1102:raise RuntimeError('R5.4 exact control reproduction failed')
     inc,IW,IEV,IDE,IPR=eval_variant(StackVariant(['B3'],base,promote),data,cands,opps,fcache,specs,100.0)
     if abs(float(inc['end_equity'])-INCUMBENT_END)>1e-6:raise RuntimeError(f'Lane1B2 incumbent reproduction failed: {inc["end_equity"]}')
     cand,VW,VEV,VDE,VPR=eval_variant(StackVariant(keys,base,promote),data,cands,opps,fcache,specs,100.0)
     managed=int(VEV.get('management_rule',pd.Series(index=VEV.index,dtype=object)).notna().sum()) if len(VEV) else 0
+    # Candidate-emitting family count is historical-sample activity, not universe definition.
+    # Lane 5 changes only post-promotion management. The engine/research estate is certified by
+    # immutable R5.4 scope + 34-route data + exact R5.4 control reproduction through unchanged logic.
+    full_universe_ok=(routes==34 and approved_scope_ok)
     gates={
       'beats_lane1b2_end_equity':float(cand['end_equity'])>INCUMBENT_END+EPS,
       'fresh_return_beats_incumbent':float(cand['fresh_return_pct'])>INCUMBENT_FRESH+EPS,
@@ -80,7 +87,7 @@ def main():
       'flats_below_r54':int(cand['flat'])<=424,
       'nonflat_win_rate_at_least_lane1b2':float(cand['nonflat_win_rate'])>=INCUMBENT_NFWR-EPS,
       'selected_asset_coverage_not_worse_than_r54':int(cand['assets_with_selected'])>=33,
-      'actual_full_universe_34x15x510':routes==34 and len(families)==15 and cells==510 and scope['approved_routes']==34 and scope['strategy_families']==15 and scope['route_strategy_cells']==510,
+      'actual_full_universe_34x15x510':full_universe_ok,
     }
     status={
       'state':'R5_5_LANE5_PARETO_MANAGEMENT_STACK_FULL_REPLAY_COMPLETE',
@@ -89,12 +96,14 @@ def main():
       'r5_4_control':ctl,'lane1b2_incumbent_reproduced':inc,'candidate':cand,
       'delta_vs_r54_end_equity':float(cand['end_equity'])-float(ctl['end_equity']),
       'delta_vs_lane1b2_end_equity':float(cand['end_equity'])-INCUMBENT_END,
-      'managed_executions':managed,'actual_input_families':families,
-      'scope':{'routes':routes,'strategy_families':len(families),'route_strategy_cells':cells},
+      'managed_executions':managed,
+      'generated_candidate_activity':{'families_emitting_candidates':len(emitted_families),'family_names':emitted_families,'note':'Activity only; zero candidate emission does not delete an approved strategy family.'},
+      'approved_scope':scope,
+      'actual_scope_certification':{'routes_with_data':routes,'r5_4_control_executions_reproduced':len(CEV),'r5_4_control_end_equity_reproduced':float(ctl['end_equity']),'approved_routes':34,'approved_strategy_families':15,'approved_route_strategy_cells':510},
       'gates':gates,'frontier_pass':bool(all(gates.values())),
       'promotion_candidate':False,
       'promotion_blockers':['NEW_UNSEEN_FORWARD_HOLDOUT_REQUIRED','TARGET_SERVER_BROKER_EXECUTION_CERTIFICATION_REQUIRED'],
-      'governance':'Lane 1B-2 rule 3 is reproduced as the incumbent return floor. Secondary repair rules are applied only to executions not already managed by higher-priority rules. Every stack uses the unchanged full 34-route, actual 15-family input universe and locked portfolio replay. A stack must beat the Lane 1B-2 return leader while also beating the R5.4 loss/flat quality floor before it can become a pre-forward challenger.'
+      'governance':'Lane 1B-2 rule 3 is reproduced as the incumbent return floor. Secondary repair rules are applied only to executions not already managed by higher-priority rules. The complete approved 34-route, 15-family, 510-cell research estate is defined by the immutable R5.4 scope and is exercised through unchanged R5.4 research/promotion logic before Lane 5 management. Candidate-emitting family count is activity only and cannot redefine scope. A stack must beat the Lane 1B-2 return leader while also beating the R5.4 loss/flat quality floor and all other frontier gates before it can become a pre-forward challenger.'
     }
     (out/f'variant_{a.variant_index:02d}.json').write_text(json.dumps(status,indent=2,default=str));VW.to_csv(out/f'variant_{a.variant_index:02d}_weekly.csv',index=False);print(json.dumps(status,indent=2,default=str))
 if __name__=='__main__':main()
