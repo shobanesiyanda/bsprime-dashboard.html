@@ -1,7 +1,7 @@
 {
   "state": "R5_5_LANE2A_ENTRY_THESIS_DISCOVERY_COMPLETE",
   "evidence_class": "SELECTION_FROZEN_CHRONOLOGICAL_ENTRY_GATE_DISCOVERY_ONLY",
-  "revision": "FORENSIC_COHORT_RECONCILED_V2",
+  "revision": "FORENSIC_COHORT_RECONCILED_FRESH_QUARANTINE_V3",
   "r5_4_control": {
     "end_equity": 337.4231242104393,
     "compounded_return_pct": 237.42312421043928,
@@ -42,116 +42,141 @@
       "reproduced_count": 54
     },
     "severe_mae_loss": {
-      "definition": "loss and MAE magnitude >= 1.50R",
+      "definition": "loss and MAE magnitude >= 1.50637003125R",
       "locked_count": 68,
       "reproduced_count": 68,
       "threshold_exact_match": true,
-      "threshold_grid": [
+      "nearest_empirical_thresholds": [
         {
-          "threshold": 1.5,
+          "threshold": 1.5063700312482555,
           "count": 68,
           "distance_to_locked_68": 0
         },
         {
-          "threshold": 1.4,
-          "count": 87,
-          "distance_to_locked_68": 19
+          "threshold": 1.5144580819637565,
+          "count": 67,
+          "distance_to_locked_68": 1
         },
         {
-          "threshold": 1.75,
-          "count": 44,
-          "distance_to_locked_68": 24
+          "threshold": 1.4855072463768286,
+          "count": 69,
+          "distance_to_locked_68": 1
         },
         {
-          "threshold": 2.0,
-          "count": 32,
-          "distance_to_locked_68": 36
+          "threshold": 1.5150939813935826,
+          "count": 66,
+          "distance_to_locked_68": 2
         },
         {
-          "threshold": 1.3,
-          "count": 110,
-          "distance_to_locked_68": 42
+          "threshold": 1.484623541887432,
+          "count": 70,
+          "distance_to_locked_68": 2
         },
         {
-          "threshold": 2.25,
-          "count": 20,
-          "distance_to_locked_68": 48
+          "threshold": 1.5285528877351906,
+          "count": 65,
+          "distance_to_locked_68": 3
         },
         {
-          "threshold": 2.5,
-          "count": 17,
-          "distance_to_locked_68": 51
+          "threshold": 1.4805445761967322,
+          "count": 71,
+          "distance_to_locked_68": 3
         },
         {
-          "threshold": 1.25,
-          "count": 126,
-          "distance_to_locked_68": 58
+          "threshold": 1.5290905272002382,
+          "count": 64,
+          "distance_to_locked_68": 4
         },
         {
-          "threshold": 3.0,
-          "count": 10,
-          "distance_to_locked_68": 58
+          "threshold": 1.479702137881303,
+          "count": 72,
+          "distance_to_locked_68": 4
         },
         {
-          "threshold": 1.2,
-          "count": 141,
-          "distance_to_locked_68": 73
+          "threshold": 1.5346855108426307,
+          "count": 63,
+          "distance_to_locked_68": 5
         },
         {
-          "threshold": 1.15,
-          "count": 158,
-          "distance_to_locked_68": 90
+          "threshold": 1.4777582307110744,
+          "count": 73,
+          "distance_to_locked_68": 5
         },
         {
-          "threshold": 1.1,
-          "count": 175,
-          "distance_to_locked_68": 107
+          "threshold": 1.5403451069240601,
+          "count": 62,
+          "distance_to_locked_68": 6
         },
         {
-          "threshold": 1.05,
-          "count": 211,
-          "distance_to_locked_68": 143
+          "threshold": 1.4775725593676774,
+          "count": 74,
+          "distance_to_locked_68": 6
         },
         {
-          "threshold": 1.0,
-          "count": 228,
-          "distance_to_locked_68": 160
+          "threshold": 1.5541165587429826,
+          "count": 61,
+          "distance_to_locked_68": 7
         },
         {
-          "threshold": 0.9,
-          "count": 229,
-          "distance_to_locked_68": 161
+          "threshold": 1.4692653673163596,
+          "count": 75,
+          "distance_to_locked_68": 7
         },
         {
-          "threshold": 0.8,
-          "count": 230,
-          "distance_to_locked_68": 162
+          "threshold": 1.5552576134837854,
+          "count": 60,
+          "distance_to_locked_68": 8
         },
         {
-          "threshold": 0.75,
-          "count": 231,
-          "distance_to_locked_68": 163
+          "threshold": 1.4637256151983002,
+          "count": 76,
+          "distance_to_locked_68": 8
         },
         {
-          "threshold": 0.7,
-          "count": 231,
-          "distance_to_locked_68": 163
+          "threshold": 1.565708241898429,
+          "count": 59,
+          "distance_to_locked_68": 9
         },
         {
-          "threshold": 0.6,
-          "count": 231,
-          "distance_to_locked_68": 163
+          "threshold": 1.4626697741701382,
+          "count": 77,
+          "distance_to_locked_68": 9
         },
         {
-          "threshold": 0.5,
-          "count": 231,
-          "distance_to_locked_68": 163
+          "threshold": 1.5774867325575677,
+          "count": 58,
+          "distance_to_locked_68": 10
+        },
+        {
+          "threshold": 1.462229778965909,
+          "count": 78,
+          "distance_to_locked_68": 10
+        },
+        {
+          "threshold": 1.6047430830039555,
+          "count": 57,
+          "distance_to_locked_68": 11
+        },
+        {
+          "threshold": 1.460869565218335,
+          "count": 79,
+          "distance_to_locked_68": 11
+        },
+        {
+          "threshold": 1.611253196931028,
+          "count": 56,
+          "distance_to_locked_68": 12
+        },
+        {
+          "threshold": 1.4583333333335424,
+          "count": 80,
+          "distance_to_locked_68": 12
         }
       ]
     }
   },
   "segment": {
-    "first8": {
+    "discovery_first8": {
       "trades": 823,
       "wins": 329,
       "losses": 167,
@@ -173,71 +198,48 @@
         "loss_mfe_lt_0.75": 167,
         "loss_mfe_lt_1.00": 167,
         "loss_mae_ge_0.50": 167,
-        "loss_mae_ge_0.60": 167,
-        "loss_mae_ge_0.70": 167,
         "loss_mae_ge_0.75": 167,
-        "loss_mae_ge_0.80": 167,
-        "loss_mae_ge_0.90": 166,
         "loss_mae_ge_1.00": 166,
-        "loss_mae_ge_1.05": 153,
-        "loss_mae_ge_1.10": 129,
-        "loss_mae_ge_1.15": 118,
-        "loss_mae_ge_1.20": 105,
         "loss_mae_ge_1.25": 91,
-        "loss_mae_ge_1.30": 82,
-        "loss_mae_ge_1.40": 63,
         "loss_mae_ge_1.50": 49,
-        "loss_mae_ge_1.75": 27,
-        "loss_mae_ge_2.00": 19,
-        "loss_mae_ge_2.25": 13,
-        "loss_mae_ge_2.50": 11,
-        "loss_mae_ge_3.00": 8
+        "loss_mae_ge_2.00": 19
       }
     },
-    "last3_untouched": {
-      "trades": 279,
-      "wins": 117,
-      "losses": 64,
-      "flats": 98,
+    "validation_pre_fresh": {
+      "trades": 237,
+      "wins": 99,
+      "losses": 60,
+      "flats": 78,
       "cohorts": {
-        "barely_developed_loss": 33,
+        "barely_developed_loss": 29,
         "brief_fav_loss": 9,
-        "severe_mae_loss": 19,
-        "all_loss": 64
+        "severe_mae_loss": 18,
+        "all_loss": 60
       },
       "threshold_reconciliation": {
-        "loss_mfe_lt_0.10": 26,
-        "loss_mfe_lt_0.20": 33,
-        "loss_mfe_lt_0.25": 36,
-        "loss_mfe_lt_0.30": 40,
-        "loss_mfe_lt_0.40": 46,
-        "loss_mfe_lt_0.50": 55,
-        "loss_mfe_lt_0.60": 58,
-        "loss_mfe_lt_0.75": 64,
-        "loss_mfe_lt_1.00": 64,
-        "loss_mae_ge_0.50": 64,
-        "loss_mae_ge_0.60": 64,
-        "loss_mae_ge_0.70": 64,
-        "loss_mae_ge_0.75": 64,
-        "loss_mae_ge_0.80": 63,
-        "loss_mae_ge_0.90": 63,
-        "loss_mae_ge_1.00": 62,
-        "loss_mae_ge_1.05": 58,
-        "loss_mae_ge_1.10": 46,
-        "loss_mae_ge_1.15": 40,
-        "loss_mae_ge_1.20": 36,
-        "loss_mae_ge_1.25": 35,
-        "loss_mae_ge_1.30": 28,
-        "loss_mae_ge_1.40": 24,
-        "loss_mae_ge_1.50": 19,
-        "loss_mae_ge_1.75": 17,
-        "loss_mae_ge_2.00": 13,
-        "loss_mae_ge_2.25": 7,
-        "loss_mae_ge_2.50": 6,
-        "loss_mae_ge_3.00": 2
+        "loss_mfe_lt_0.10": 23,
+        "loss_mfe_lt_0.20": 29,
+        "loss_mfe_lt_0.25": 32,
+        "loss_mfe_lt_0.30": 36,
+        "loss_mfe_lt_0.40": 42,
+        "loss_mfe_lt_0.50": 51,
+        "loss_mfe_lt_0.60": 54,
+        "loss_mfe_lt_0.75": 60,
+        "loss_mfe_lt_1.00": 60,
+        "loss_mae_ge_0.50": 60,
+        "loss_mae_ge_0.75": 60,
+        "loss_mae_ge_1.00": 58,
+        "loss_mae_ge_1.25": 33,
+        "loss_mae_ge_1.50": 18,
+        "loss_mae_ge_2.00": 12
       }
     },
-    "all": {
+    "fresh_quarantine": {
+      "start": "2026-08-13 00:00:00+00:00",
+      "events": 42,
+      "outcomes_not_used_for_selection": true
+    },
+    "all_forensic_only": {
       "trades": 1102,
       "wins": 446,
       "losses": 231,
@@ -259,25 +261,11 @@
         "loss_mfe_lt_0.75": 231,
         "loss_mfe_lt_1.00": 231,
         "loss_mae_ge_0.50": 231,
-        "loss_mae_ge_0.60": 231,
-        "loss_mae_ge_0.70": 231,
         "loss_mae_ge_0.75": 231,
-        "loss_mae_ge_0.80": 230,
-        "loss_mae_ge_0.90": 229,
         "loss_mae_ge_1.00": 228,
-        "loss_mae_ge_1.05": 211,
-        "loss_mae_ge_1.10": 175,
-        "loss_mae_ge_1.15": 158,
-        "loss_mae_ge_1.20": 141,
         "loss_mae_ge_1.25": 126,
-        "loss_mae_ge_1.30": 110,
-        "loss_mae_ge_1.40": 87,
         "loss_mae_ge_1.50": 68,
-        "loss_mae_ge_1.75": 44,
-        "loss_mae_ge_2.00": 32,
-        "loss_mae_ge_2.25": 20,
-        "loss_mae_ge_2.50": 17,
-        "loss_mae_ge_3.00": 10
+        "loss_mae_ge_2.00": 32
       }
     }
   },
@@ -326,16 +314,16 @@
       "disc_winner_pnl_removed": 16.992199989857284,
       "disc_loss_pnl_removed": -6.664274191071793,
       "disc_target_precision": 0.12048192771084337,
-      "hold_excluded": 11,
-      "hold_excluded_pct": 0.03942652329749104,
-      "hold_target_removed": 2,
-      "hold_wins_removed": 3,
-      "hold_losses_removed": 3,
-      "hold_flats_removed": 5,
-      "hold_selection_frozen_delta_usd": -2.304643271428512,
-      "hold_winner_pnl_removed": 3.2983254142857312,
-      "hold_loss_pnl_removed": -0.9936821428572191,
-      "hold_target_precision": 0.18181818181818182,
+      "valid_excluded": 11,
+      "valid_excluded_pct": 0.046413502109704644,
+      "valid_target_removed": 2,
+      "valid_wins_removed": 3,
+      "valid_losses_removed": 3,
+      "valid_flats_removed": 5,
+      "valid_selection_frozen_delta_usd": -2.304643271428512,
+      "valid_winner_pnl_removed": 3.2983254142857312,
+      "valid_loss_pnl_removed": -0.9936821428572191,
+      "valid_target_precision": 0.18181818181818182,
       "discovery_pass": false,
       "repair_score": -117.5
     },
@@ -360,18 +348,18 @@
       "disc_winner_pnl_removed": 18.251572524143242,
       "disc_loss_pnl_removed": -7.747858733928899,
       "disc_target_precision": 0.03614457831325301,
-      "hold_excluded": 3,
-      "hold_excluded_pct": 0.010752688172043012,
-      "hold_target_removed": 0,
-      "hold_wins_removed": 2,
-      "hold_losses_removed": 0,
-      "hold_flats_removed": 1,
-      "hold_selection_frozen_delta_usd": -2.743112628571345,
-      "hold_winner_pnl_removed": 2.743112628571345,
-      "hold_loss_pnl_removed": 0.0,
-      "hold_target_precision": 0.0,
+      "valid_excluded": 2,
+      "valid_excluded_pct": 0.008438818565400843,
+      "valid_target_removed": 0,
+      "valid_wins_removed": 2,
+      "valid_losses_removed": 0,
+      "valid_flats_removed": 0,
+      "valid_selection_frozen_delta_usd": -2.743112628571345,
+      "valid_winner_pnl_removed": 2.743112628571345,
+      "valid_loss_pnl_removed": 0.0,
+      "valid_target_precision": 0.0,
       "discovery_pass": false,
-      "repair_score": -144.5
+      "repair_score": -144.25
     }
   },
   "best_rule": {
@@ -395,18 +383,18 @@
     "disc_winner_pnl_removed": 16.992199989857284,
     "disc_loss_pnl_removed": -6.664274191071793,
     "disc_target_precision": 0.12048192771084337,
-    "hold_excluded": 11,
-    "hold_excluded_pct": 0.03942652329749104,
-    "hold_target_removed": 2,
-    "hold_wins_removed": 3,
-    "hold_losses_removed": 3,
-    "hold_flats_removed": 5,
-    "hold_selection_frozen_delta_usd": -2.304643271428512,
-    "hold_winner_pnl_removed": 3.2983254142857312,
-    "hold_loss_pnl_removed": -0.9936821428572191,
-    "hold_target_precision": 0.18181818181818182,
+    "valid_excluded": 11,
+    "valid_excluded_pct": 0.046413502109704644,
+    "valid_target_removed": 2,
+    "valid_wins_removed": 3,
+    "valid_losses_removed": 3,
+    "valid_flats_removed": 5,
+    "valid_selection_frozen_delta_usd": -2.304643271428512,
+    "valid_winner_pnl_removed": 3.2983254142857312,
+    "valid_loss_pnl_removed": -0.9936821428572191,
+    "valid_target_precision": 0.18181818181818182,
     "discovery_pass": false,
     "repair_score": -117.5
   },
-  "governance": "Forensic cohort labels are reconciled to the locked R5.4 counts before predictive gate search. The 107 barely-developed losses are exactly MFE <0.20R. MAE is stored as positive adverse-excursion magnitude, so severe-MAE uses >= not a negative sign. Predictive thresholds are estimated only from the first 8 evaluation weeks; final 3 are untouched validation. Only decision-time/pre-entry fields may gate entry. Selection-frozen results cannot promote R5.5; any passing gate must survive the full causal portfolio replay."
+  "governance": "Forensic labels reconcile exactly to the frozen R5.4 counts. Predictor thresholds are estimated only from the first 8 evaluation weeks and validated only on later decisions before 2026-08-13. Aug 13-14 is quarantined and never enters gate selection or ranking. Only decision-time/pre-entry fields may gate entry. After this rule is frozen it may be evaluated once in full replay; because Aug 13-14 has already been inspected during R5.5 development, final R5.5 promotion requires a new unseen forward holdout."
 }
