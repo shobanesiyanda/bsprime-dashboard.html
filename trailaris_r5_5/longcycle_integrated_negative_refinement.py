@@ -4,17 +4,17 @@ import pandas as pd
 import R5_BASE_CAUSAL_ENGINE as base
 import longcycle_bounded_memory_candidate as bounded
 
-# Integrated R5.5 negative-side refinement.
-# All production decisions use only information available at decision/management time.
-# Post-event MFE/MAE were used only to diagnose the structural management defects.
-LOSS_GATE_MAX_QUALITY = 0.76
-LOSS_GATE_MAX_ASSET_STRATEGY_MEAN_R = 0.05
+# Integrated R5.5 negative-side refinement V2.
+# Entry rules use decision-time fields only. Trade management uses the exact
+# contemporaneous feature path; final MFE/MAE are never eligibility inputs.
+R54_GATE_MAX_QUALITY = 0.76
+R54_GATE_MAX_ASSET_STRATEGY_MEAN_R = 0.05
 
-DEVELOPMENT_TRIGGER_R = 0.50
-DEVELOPMENT_FLOOR_R = -0.50
+MEM112_GATE_MAX_QUALITY = 0.65
+MEM112_GATE_MAX_RELIABILITY_SCORE = 0.15
 
 FLAT_TRIGGER_R = 0.75
-FLAT_FLOOR_R = 0.15
+FLAT_PARTIAL_FRACTION = 0.25
 FLAT_MAX_RANK_SCORE = 0.42
 FLAT_MAX_RELIABILITY_SCORE = 0.0
 
@@ -24,11 +24,24 @@ def entry_gate(promoted):
         return promoted.copy(), promoted.copy()
     q = pd.to_numeric(promoted['quality'], errors='coerce')
     ar = pd.to_numeric(promoted['reliability_asset_strategy_mean_r'], errors='coerce')
-    bad = (q <= LOSS_GATE_MAX_QUALITY) & (ar <= LOSS_GATE_MAX_ASSET_STRATEGY_MEAN_R)
+    rel = pd.to_numeric(promoted['reliability_score'], errors='coerce')
+    tier = promoted['promotion_tier'].astype(str)
+
+    bad_r54 = (q <= R54_GATE_MAX_QUALITY) & (ar <= R54_GATE_MAX_ASSET_STRATEGY_MEAN_R)
+    bad_mem112 = (tier == 'A') & (q <= MEM112_GATE_MAX_QUALITY) & (rel <= MEM112_GATE_MAX_RELIABILITY_SCORE)
+    bad = bad_r54 | bad_mem112
+
     kept = promoted.loc[~bad].copy()
     rejected = promoted.loc[bad].copy()
     kept['r5_5_negative_edge_gate_pass'] = True
     rejected['r5_5_negative_edge_gate_pass'] = False
+    if len(rejected):
+        rr54 = bad_r54.loc[rejected.index]
+        rmem = bad_mem112.loc[rejected.index]
+        rejected['r5_5_negative_edge_gate_reason'] = np.where(
+            rr54 & rmem, 'R54_AND_MEMORY112_NEGATIVE_COHORT',
+            np.where(rr54, 'R54_NEGATIVE_COHORT', 'MEMORY112_LOW_QUALITY_RELIABILITY_NEGATIVE_COHORT')
+        )
     return kept, rejected
 
 
@@ -54,38 +67,18 @@ def _path_slice(r, feature_cache):
     return z
 
 
-def _r_paths(z, r):
+def _favorable_path(z, r):
     ent = float(r.entry_price)
     sd = max(float(r.stop_distance), 1e-12)
     dr = int(r.direction)
     hi = pd.to_numeric(z['high'], errors='coerce').to_numpy(float)
     lo = pd.to_numeric(z['low'], errors='coerce').to_numpy(float)
-    if dr == 1:
-        fav = (hi - ent) / sd
-        adv = (lo - ent) / sd
-    else:
-        fav = (ent - lo) / sd
-        adv = (ent - hi) / sd
-    return fav, adv
-
-
-def _first_index_ge(a, threshold):
-    idx = np.flatnonzero(np.asarray(a) >= float(threshold))
-    return int(idx[0]) if len(idx) else None
-
-
-def _first_index_le_after(a, threshold, start):
-    if start is None:
-        return None
-    arr = np.asarray(a)
-    idx = np.flatnonzero(arr[int(start):] <= float(threshold))
-    return int(start + idx[0]) if len(idx) else None
+    return (hi - ent) / sd if dr == 1 else (ent - lo) / sd
 
 
 def _apply_management_row(r, feature_cache):
     if str(r.get('management', '')) != 'PROTECTED_RUNNER':
         return r
-
     weak_state = (
         float(r.get('rank_score', 999.0)) <= FLAT_MAX_RANK_SCORE
         and float(r.get('reliability_score', 999.0)) <= FLAT_MAX_RELIABILITY_SCORE
@@ -94,57 +87,30 @@ def _apply_management_row(r, feature_cache):
         return r
 
     z = _path_slice(r, feature_cache)
-    if z is None or len(z) < 2:
+    if z is None or len(z) == 0:
         return r
-    fav, adv = _r_paths(z, r)
-
-    # Once +0.50R has printed, weak-state trades no longer decay to a full -1R.
-    # Activation starts on the NEXT M1 bar, removing same-bar high/low ordering leakage.
-    dev_i = _first_index_ge(fav, DEVELOPMENT_TRIGGER_R)
-    dev_stop_i = _first_index_le_after(
-        adv, DEVELOPMENT_FLOOR_R, None if dev_i is None else dev_i + 1
-    )
-
-    # Frozen R5.4 leaves the stop at exactly 0R from +0.75R until +1.50R.
-    # Weak-state runners instead ratchet to +0.15R from the next M1 bar.
-    flat_i = _first_index_ge(fav, FLAT_TRIGGER_R)
-    flat_stop_i = _first_index_le_after(
-        adv, FLAT_FLOOR_R, None if flat_i is None else flat_i + 1
-    )
-
-    chosen_i = None
-    chosen_r = None
-    chosen_reason = None
-    if flat_i is not None and flat_stop_i is not None:
-        if dev_stop_i is None or flat_i < dev_stop_i:
-            chosen_i = flat_stop_i
-            chosen_r = FLAT_FLOOR_R
-            chosen_reason = 'R5_5_WEAK_STATE_PROTECTED_PLUS_015R'
-    if chosen_i is None and dev_stop_i is not None:
-        chosen_i = dev_stop_i
-        chosen_r = DEVELOPMENT_FLOOR_R
-        chosen_reason = 'R5_5_DEVELOPED_LOSS_FLOOR_MINUS_050R'
-
-    if chosen_i is None:
+    fav = _favorable_path(z, r)
+    trigger_idx = np.flatnonzero(np.asarray(fav) >= FLAT_TRIGGER_R)
+    if len(trigger_idx) == 0:
         return r
 
-    t = pd.Timestamp(z.loc[chosen_i, 'timestamp'])
-    if t >= pd.Timestamp(r.exit_time):
-        return r
-
+    # Realize 25% of original size at +0.75R, leave 75% on the exact frozen
+    # exit path. This monetizes the structural 0R dead-zone without tightening
+    # the runner stop, shortening holding time, or deleting the right tail.
+    # Conservatively, no extra risk capacity is credited after the partial.
     out = r.copy()
-    ent = float(r.entry_price)
-    sd = max(float(r.stop_distance), 1e-12)
-    dr = int(r.direction)
-    out['exit_time'] = t
-    out['exit_price'] = ent + dr * float(chosen_r) * sd
-    out['gross_r'] = float(chosen_r)
-    out['net_r'] = float(chosen_r) - float(r.get('cost_r', 0.0))
-    out['mfe_r'] = float(np.nanmax(fav[:chosen_i+1]))
-    out['mae_r'] = float(max(0.0, -np.nanmin(adv[:chosen_i+1])))
-    out['giveback_r'] = float(max(0.0, out['mfe_r'] - out['net_r']))
-    out['exit_reason'] = chosen_reason
+    old_gross = float(r.get('gross_r', r.get('net_r', 0.0) + r.get('cost_r', 0.0)))
+    new_gross = FLAT_PARTIAL_FRACTION * FLAT_TRIGGER_R + (1.0 - FLAT_PARTIAL_FRACTION) * old_gross
+    cost = float(r.get('cost_r', 0.0))
+    out['gross_r'] = float(new_gross)
+    out['net_r'] = float(new_gross - cost)
+    out['giveback_r'] = float(max(0.0, float(r.get('mfe_r', np.nan)) - out['net_r'])) if pd.notna(r.get('mfe_r', np.nan)) else r.get('giveback_r', np.nan)
+    out['r5_5_partial_trigger_time'] = pd.Timestamp(z.loc[int(trigger_idx[0]), 'timestamp'])
+    out['r5_5_partial_fraction'] = FLAT_PARTIAL_FRACTION
+    out['r5_5_partial_trigger_r'] = FLAT_TRIGGER_R
     out['r5_5_management_repaired'] = True
+    out['r5_5_original_exit_reason'] = str(r.get('exit_reason', ''))
+    out['exit_reason'] = 'R5_5_WEAK_STATE_PARTIAL_25_AT_075R__' + str(r.get('exit_reason', ''))
     return out
 
 
