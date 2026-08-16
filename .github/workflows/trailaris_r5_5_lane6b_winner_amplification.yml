@@ -82,7 +82,7 @@ jobs:
         with:
           pattern: r5-lane6b-*
           path: collected
-          merge-multiple: true
+          merge-multiple: false
       - name: Aggregate winner amplification evidence
         run: |
           mkdir -p trailaris_r5_5/lane6b_results
@@ -90,7 +90,7 @@ jobs:
           import glob,json,csv
           from pathlib import Path
           rows=[]
-          for f in glob.glob('collected/result.json')+glob.glob('collected/**/result.json',recursive=True):
+          for f in glob.glob('collected/**/result.json',recursive=True):
               try:x=json.load(open(f))
               except:continue
               if x.get('state')!='R5_5_LANE6B_WINNER_AMPLIFICATION_REPLAY_COMPLETE':continue
@@ -98,7 +98,8 @@ jobs:
           uniq={(r['rule_rank'],r['copies'],r['quality_boost']):r for r in rows};rows=list(uniq.values());rows.sort(key=lambda r:(r['frontier_candidate'],r['alpha_candidate'],r['end_equity'],r['fresh_return_pct'],-r['losses'],-r['flat']),reverse=True)
           out=Path('trailaris_r5_5/lane6b_results')
           if rows:
-              with open(out/'R5_5_LANE6B_RESULTS.csv','w',newline='') as h:w=csv.DictWriter(h,fieldnames=list(rows[0]));w.writeheader();w.writerows(rows)
+              with open(out/'R5_5_LANE6B_RESULTS.csv','w',newline='') as h:
+                  w=csv.DictWriter(h,fieldnames=list(rows[0]));w.writeheader();w.writerows(rows)
           s={'state':'R5_5_LANE6B_WINNER_AMPLIFICATION_MATRIX_COMPLETE','variants_expected':12,'variants_completed':len(rows),'alpha_candidates':sum(bool(r['alpha_candidate']) for r in rows),'frontier_candidates':sum(bool(r['frontier_candidate']) for r in rows),'best_variant':rows[0] if rows else {},'benchmark':{'lane1b2_end_equity':343.5447309255116,'r54_losses_max':230,'r54_flats_max':424,'fresh_return_floor':7.261646557142409,'max_weekly_dd_floor':-4.637645574907678,'nonflat_win_rate_floor':0.6671428571428571},'scope':{'routes':34,'strategy_families':15,'route_strategy_cells':510}}
           (out/'R5_5_LANE6B_STATUS.json').write_text(json.dumps(s,indent=2));print(json.dumps(s,indent=2))
           PY
