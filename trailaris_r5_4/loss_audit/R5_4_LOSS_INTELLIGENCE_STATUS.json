@@ -1,0 +1,538 @@
+{
+  "baseline_reconciled": true,
+  "start_equity": 100.0,
+  "end_equity": 254.4465598357797,
+  "executed_trades": 1393,
+  "wins": 545,
+  "losses": 374,
+  "flat": 474,
+  "nonflat_win_rate": 0.5930359085963003,
+  "gross_loss_dollars": 170.04933168821432,
+  "gross_win_dollars": 324.47097715970835,
+  "profit_factor_on_nonflat": 1.9080991024100367,
+  "worst_loss_assets": [
+    {
+      "asset": "GBPCHF",
+      "losses": 19,
+      "loss_dollars": -11.078524999999395,
+      "avg_loss": -0.5830802631578629
+    },
+    {
+      "asset": "ETHUSD",
+      "losses": 24,
+      "loss_dollars": -10.988258214285745,
+      "avg_loss": -0.45784409226190603
+    },
+    {
+      "asset": "NZDUSD",
+      "losses": 25,
+      "loss_dollars": -10.760139285715352,
+      "avg_loss": -0.4304055714286141
+    },
+    {
+      "asset": "AUDJPY",
+      "losses": 18,
+      "loss_dollars": -9.220946428571168,
+      "avg_loss": -0.5122748015872871
+    },
+    {
+      "asset": "USDCHF",
+      "losses": 16,
+      "loss_dollars": -9.08573928571369,
+      "avg_loss": -0.5678587053571056
+    },
+    {
+      "asset": "EURGBP",
+      "losses": 19,
+      "loss_dollars": -9.046146428571088,
+      "avg_loss": -0.4761129699247941
+    },
+    {
+      "asset": "GER40",
+      "losses": 20,
+      "loss_dollars": -8.465761107142606,
+      "avg_loss": -0.4232880553571303
+    },
+    {
+      "asset": "NATGAS",
+      "losses": 20,
+      "loss_dollars": -8.217374285714271,
+      "avg_loss": -0.4108687142857136
+    },
+    {
+      "asset": "USDJPY",
+      "losses": 18,
+      "loss_dollars": -7.750178571428563,
+      "avg_loss": -0.43056547619047575
+    },
+    {
+      "asset": "US100",
+      "losses": 11,
+      "loss_dollars": -6.8139824642856555,
+      "avg_loss": -0.6194529512986959
+    }
+  ],
+  "worst_slices_by_dimension": {
+    "asset": [
+      {
+        "value": "WTI",
+        "trades": 33,
+        "net_pnl": -2.9548105357143384,
+        "wins": 9,
+        "losses": 13,
+        "flat": 11,
+        "nonflat_win_rate": 0.4090909090909091
+      },
+      {
+        "value": "GBPUSD",
+        "trades": 26,
+        "net_pnl": -2.644362499999407,
+        "wins": 5,
+        "losses": 10,
+        "flat": 11,
+        "nonflat_win_rate": 0.3333333333333333
+      },
+      {
+        "value": "EURUSD",
+        "trades": 27,
+        "net_pnl": -1.8074953571408137,
+        "wins": 7,
+        "losses": 11,
+        "flat": 9,
+        "nonflat_win_rate": 0.3888888888888889
+      },
+      {
+        "value": "V25",
+        "trades": 17,
+        "net_pnl": -1.7897564307142801,
+        "wins": 2,
+        "losses": 6,
+        "flat": 9,
+        "nonflat_win_rate": 0.25
+      },
+      {
+        "value": "BRENT",
+        "trades": 32,
+        "net_pnl": -1.0442155714285006,
+        "wins": 12,
+        "losses": 10,
+        "flat": 10,
+        "nonflat_win_rate": 0.5454545454545454
+      },
+      {
+        "value": "EURGBP",
+        "trades": 51,
+        "net_pnl": -0.45191357142864563,
+        "wins": 23,
+        "losses": 19,
+        "flat": 9,
+        "nonflat_win_rate": 0.5476190476190477
+      },
+      {
+        "value": "JP225",
+        "trades": 4,
+        "net_pnl": -0.35778599285724355,
+        "wins": 1,
+        "losses": 2,
+        "flat": 1,
+        "nonflat_win_rate": 0.3333333333333333
+      },
+      {
+        "value": "US100",
+        "trades": 42,
+        "net_pnl": -0.1998525499997268,
+        "wins": 15,
+        "losses": 11,
+        "flat": 16,
+        "nonflat_win_rate": 0.5769230769230769
+      },
+      {
+        "value": "XRPUSD",
+        "trades": 1,
+        "net_pnl": 0.0,
+        "wins": 0,
+        "losses": 0,
+        "flat": 1,
+        "nonflat_win_rate": NaN
+      },
+      {
+        "value": "UK100",
+        "trades": 37,
+        "net_pnl": 0.0003826035710516873,
+        "wins": 9,
+        "losses": 12,
+        "flat": 16,
+        "nonflat_win_rate": 0.42857142857142855
+      }
+    ],
+    "direction": [
+      {
+        "value": "1",
+        "trades": 795,
+        "net_pnl": 58.75430320800885,
+        "wins": 320,
+        "losses": 218,
+        "flat": 257,
+        "nonflat_win_rate": 0.5947955390334573
+      },
+      {
+        "value": "-1",
+        "trades": 598,
+        "net_pnl": 95.66734226348515,
+        "wins": 225,
+        "losses": 156,
+        "flat": 217,
+        "nonflat_win_rate": 0.5905511811023622
+      }
+    ],
+    "entry_dow": [
+      {
+        "value": "Saturday",
+        "trades": 20,
+        "net_pnl": 0.3480582425000755,
+        "wins": 3,
+        "losses": 5,
+        "flat": 12,
+        "nonflat_win_rate": 0.375
+      },
+      {
+        "value": "Thursday",
+        "trades": 269,
+        "net_pnl": 5.666185362857451,
+        "wins": 100,
+        "losses": 84,
+        "flat": 85,
+        "nonflat_win_rate": 0.5434782608695652
+      },
+      {
+        "value": "Sunday",
+        "trades": 90,
+        "net_pnl": 10.740944563928636,
+        "wins": 49,
+        "losses": 32,
+        "flat": 9,
+        "nonflat_win_rate": 0.6049382716049383
+      },
+      {
+        "value": "Friday",
+        "trades": 175,
+        "net_pnl": 11.907366719945873,
+        "wins": 59,
+        "losses": 40,
+        "flat": 76,
+        "nonflat_win_rate": 0.5959595959595959
+      },
+      {
+        "value": "Tuesday",
+        "trades": 280,
+        "net_pnl": 25.75363488300837,
+        "wins": 103,
+        "losses": 79,
+        "flat": 98,
+        "nonflat_win_rate": 0.5659340659340659
+      },
+      {
+        "value": "Wednesday",
+        "trades": 263,
+        "net_pnl": 35.46452963742925,
+        "wins": 105,
+        "losses": 64,
+        "flat": 94,
+        "nonflat_win_rate": 0.621301775147929
+      },
+      {
+        "value": "Monday",
+        "trades": 296,
+        "net_pnl": 64.54092606182434,
+        "wins": 126,
+        "losses": 70,
+        "flat": 100,
+        "nonflat_win_rate": 0.6428571428571429
+      }
+    ],
+    "entry_hour_utc": [
+      {
+        "value": "12",
+        "trades": 68,
+        "net_pnl": -8.286357612499863,
+        "wins": 17,
+        "losses": 22,
+        "flat": 29,
+        "nonflat_win_rate": 0.4358974358974359
+      },
+      {
+        "value": "19",
+        "trades": 85,
+        "net_pnl": -2.0771532842852696,
+        "wins": 21,
+        "losses": 30,
+        "flat": 34,
+        "nonflat_win_rate": 0.4117647058823529
+      },
+      {
+        "value": "3",
+        "trades": 30,
+        "net_pnl": -0.08623164464281727,
+        "wins": 7,
+        "losses": 8,
+        "flat": 15,
+        "nonflat_win_rate": 0.4666666666666667
+      },
+      {
+        "value": "14",
+        "trades": 44,
+        "net_pnl": 0.44528284686408964,
+        "wins": 8,
+        "losses": 10,
+        "flat": 26,
+        "nonflat_win_rate": 0.4444444444444444
+      },
+      {
+        "value": "1",
+        "trades": 27,
+        "net_pnl": 0.5174445785715192,
+        "wins": 10,
+        "losses": 10,
+        "flat": 7,
+        "nonflat_win_rate": 0.5
+      },
+      {
+        "value": "5",
+        "trades": 45,
+        "net_pnl": 0.5450232512496783,
+        "wins": 13,
+        "losses": 15,
+        "flat": 17,
+        "nonflat_win_rate": 0.4642857142857143
+      },
+      {
+        "value": "7",
+        "trades": 54,
+        "net_pnl": 0.8596863303565103,
+        "wins": 17,
+        "losses": 17,
+        "flat": 20,
+        "nonflat_win_rate": 0.5
+      },
+      {
+        "value": "9",
+        "trades": 35,
+        "net_pnl": 1.476202100000019,
+        "wins": 11,
+        "losses": 7,
+        "flat": 17,
+        "nonflat_win_rate": 0.6111111111111112
+      },
+      {
+        "value": "6",
+        "trades": 37,
+        "net_pnl": 1.607860323214488,
+        "wins": 16,
+        "losses": 9,
+        "flat": 12,
+        "nonflat_win_rate": 0.64
+      },
+      {
+        "value": "11",
+        "trades": 56,
+        "net_pnl": 2.0976121722854373,
+        "wins": 19,
+        "losses": 17,
+        "flat": 20,
+        "nonflat_win_rate": 0.5277777777777778
+      }
+    ],
+    "strategy": [
+      {
+        "value": "MEAN_REVERSION_EXTREME",
+        "trades": 148,
+        "net_pnl": -7.2568046061907285,
+        "wins": 90,
+        "losses": 58,
+        "flat": 0,
+        "nonflat_win_rate": 0.6081081081081081
+      },
+      {
+        "value": "BREAKOUT_RETEST",
+        "trades": 40,
+        "net_pnl": -4.8617071928565645,
+        "wins": 8,
+        "losses": 18,
+        "flat": 14,
+        "nonflat_win_rate": 0.3076923076923077
+      },
+      {
+        "value": "SESSION_OPEN_SWEEP_RECLAIM",
+        "trades": 13,
+        "net_pnl": -4.20889776428573,
+        "wins": 1,
+        "losses": 9,
+        "flat": 3,
+        "nonflat_win_rate": 0.1
+      },
+      {
+        "value": "INTRADAY_SWING_CONTINUATION",
+        "trades": 18,
+        "net_pnl": -2.353671875000041,
+        "wins": 3,
+        "losses": 6,
+        "flat": 9,
+        "nonflat_win_rate": 0.3333333333333333
+      },
+      {
+        "value": "COMPRESSION_EXPANSION",
+        "trades": 30,
+        "net_pnl": -1.7926357857152642,
+        "wins": 6,
+        "losses": 12,
+        "flat": 12,
+        "nonflat_win_rate": 0.3333333333333333
+      },
+      {
+        "value": "FAILED_BREAK_REVERSAL",
+        "trades": 18,
+        "net_pnl": -1.4458614285707814,
+        "wins": 3,
+        "losses": 8,
+        "flat": 7,
+        "nonflat_win_rate": 0.2727272727272727
+      },
+      {
+        "value": "VOLATILITY_REVERSAL",
+        "trades": 6,
+        "net_pnl": -1.3600548571431954,
+        "wins": 1,
+        "losses": 3,
+        "flat": 2,
+        "nonflat_win_rate": 0.25
+      },
+      {
+        "value": "SESSION_OPEN_RANGE_BREAKOUT",
+        "trades": 25,
+        "net_pnl": -1.3332900000003607,
+        "wins": 6,
+        "losses": 12,
+        "flat": 7,
+        "nonflat_win_rate": 0.3333333333333333
+      },
+      {
+        "value": "DAY_OPEN_DRIVE_FADE",
+        "trades": 7,
+        "net_pnl": -1.1337357142858693,
+        "wins": 0,
+        "losses": 2,
+        "flat": 5,
+        "nonflat_win_rate": 0.0
+      },
+      {
+        "value": "DAY_OPEN_DRIVE_CONTINUATION",
+        "trades": 8,
+        "net_pnl": -0.9199961428569805,
+        "wins": 1,
+        "losses": 5,
+        "flat": 2,
+        "nonflat_win_rate": 0.16666666666666666
+      }
+    ],
+    "strategy_family": [
+      {
+        "value": "LIQUIDITY_STRUCTURE",
+        "trades": 31,
+        "net_pnl": -5.6547591928565115,
+        "wins": 4,
+        "losses": 17,
+        "flat": 10,
+        "nonflat_win_rate": 0.19047619047619047
+      },
+      {
+        "value": "BREAKOUT_RETEST",
+        "trades": 40,
+        "net_pnl": -4.8617071928565645,
+        "wins": 8,
+        "losses": 18,
+        "flat": 14,
+        "nonflat_win_rate": 0.3076923076923077
+      },
+      {
+        "value": "VOLATILITY_REGIME",
+        "trades": 36,
+        "net_pnl": -3.1526906428584596,
+        "wins": 7,
+        "losses": 15,
+        "flat": 14,
+        "nonflat_win_rate": 0.3181818181818182
+      },
+      {
+        "value": "CAMPAIGN_MANAGEMENT",
+        "trades": 1,
+        "net_pnl": -0.5834237142857455,
+        "wins": 0,
+        "losses": 1,
+        "flat": 0,
+        "nonflat_win_rate": 0.0
+      },
+      {
+        "value": "SUPPLY_DEMAND",
+        "trades": 26,
+        "net_pnl": 1.4090130764285593,
+        "wins": 7,
+        "losses": 10,
+        "flat": 9,
+        "nonflat_win_rate": 0.4117647058823529
+      },
+      {
+        "value": "MOMENTUM_PULLBACK",
+        "trades": 10,
+        "net_pnl": 2.0579092857147523,
+        "wins": 5,
+        "losses": 3,
+        "flat": 2,
+        "nonflat_win_rate": 0.625
+      },
+      {
+        "value": "TREND_FOLLOWING",
+        "trades": 41,
+        "net_pnl": 2.068831614285408,
+        "wins": 11,
+        "losses": 13,
+        "flat": 17,
+        "nonflat_win_rate": 0.4583333333333333
+      },
+      {
+        "value": "SESSION_TIME",
+        "trades": 57,
+        "net_pnl": 9.630216964286411,
+        "wins": 16,
+        "losses": 25,
+        "flat": 16,
+        "nonflat_win_rate": 0.3902439024390244
+      },
+      {
+        "value": "INTERMARKET",
+        "trades": 37,
+        "net_pnl": 10.147616464285806,
+        "wins": 16,
+        "losses": 6,
+        "flat": 15,
+        "nonflat_win_rate": 0.7272727272727273
+      },
+      {
+        "value": "MEAN_REVERSION",
+        "trades": 279,
+        "net_pnl": 12.562043521309715,
+        "wins": 182,
+        "losses": 97,
+        "flat": 0,
+        "nonflat_win_rate": 0.6523297491039427
+      }
+    ]
+  },
+  "diagnostic_dimensions_present": [
+    "asset",
+    "strategy_family",
+    "strategy",
+    "direction",
+    "entry_hour_utc",
+    "entry_dow"
+  ]
+}
