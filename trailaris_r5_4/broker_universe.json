@@ -1,0 +1,95 @@
+{
+  "state": "R5_4_MULTI_BROKER_OPTIMIZATION_UNIVERSE",
+  "hard_lock": {
+    "route_scope": 34,
+    "strategy_scope": 15,
+    "strategy_cells": 510,
+    "baseline_id": "TRAILARIS_R5_3_PORTFOLIO_BASELINE_2026-08-16",
+    "baseline_end_equity": 254.4465598357797,
+    "baseline_compounded_return_pct": 154.4465598357797,
+    "broker_optimization_may_not_override_non_regression_baseline": true,
+    "ib_revenue_may_not_override_customer_execution_quality": true
+  },
+  "selection_principle": "Select execution venue independently per route/account/session/regime using empirical all-in execution evidence. Do not force one broker to win the entire portfolio. Advertised 'from' spreads are discovery evidence only and never sufficient for promotion.",
+  "brokers": [
+    {
+      "broker_id": "EXNESS_RAW_SPREAD_MT5",
+      "role": "INCUMBENT_CANDIDATE",
+      "platform": "MT5",
+      "candidate_asset_classes": ["FX","METAL","CRYPTO","INDEX","ENERGY"],
+      "advertised_commission": {"type":"PER_SIDE_PER_LOT_MAX","usd":3.5},
+      "minimum_lot": 0.01,
+      "route_state": "PENDING_EMPIRICAL_ROUTE_CERTIFICATION",
+      "official_source": "https://www.exness.com/pro-accounts/"
+    },
+    {
+      "broker_id": "IC_MARKETS_RAW_SPREAD_MT5",
+      "role": "NEW_CANDIDATE",
+      "platform": "MT5",
+      "candidate_asset_classes": ["FX","METAL","CRYPTO","INDEX","ENERGY"],
+      "advertised_commission": {"type":"FX_STANDARD_LOT_ROUND_TURN","usd":7.0},
+      "minimum_lot": 0.01,
+      "execution_notes": "Raw pricing; MT4/MT5; no minimum order distance/freeze level 0 claimed on official account page; depth-of-market available.",
+      "route_state": "PENDING_EMPIRICAL_ROUTE_CERTIFICATION",
+      "official_source": "https://www.icmarkets.com/global/jp/help-resources/help-centre"
+    },
+    {
+      "broker_id": "PEPPERSTONE_RAZOR_MT5",
+      "role": "NEW_CANDIDATE",
+      "platform": "MT5",
+      "candidate_asset_classes": ["FX","METAL","CRYPTO","INDEX","ENERGY"],
+      "advertised_commission": {"type":"FX_FROM_PER_SIDE_PER_STANDARD_LOT","usd":3.5},
+      "execution_notes": "Razor raw-spread pricing on FX; other asset classes must be evaluated under instrument-specific spread/financing schedule.",
+      "route_state": "PENDING_EMPIRICAL_ROUTE_CERTIFICATION",
+      "official_source": "https://pepperstone.com/en/ways-to-trade/pricing/"
+    },
+    {
+      "broker_id": "FP_MARKETS_RAW_MT5",
+      "role": "NEW_CANDIDATE",
+      "platform": "MT5",
+      "candidate_asset_classes": ["FX","METAL","CRYPTO","INDEX","ENERGY"],
+      "advertised_commission": {"type":"USD_ACCOUNT_FX_METAL_PER_SIDE_PER_LOT","usd":3.0},
+      "minimum_lot": 0.01,
+      "execution_notes": "Raw account; official fee table lists commission built into spread for commodities, indices and cryptocurrencies.",
+      "route_state": "PENDING_EMPIRICAL_ROUTE_CERTIFICATION",
+      "official_source": "https://www.fpmarkets.com/en-za/mt4-5-fees-charges/"
+    },
+    {
+      "broker_id": "HFM_ZERO_MT5",
+      "role": "NEW_CANDIDATE",
+      "platform": "MT5",
+      "candidate_asset_classes": ["FX","METAL","CRYPTO","INDEX","ENERGY"],
+      "advertised_commission": {"type":"FX_STANDARD_LOT_ROUND_TURN","usd":6.0},
+      "minimum_lot": 0.01,
+      "execution_notes": "Gold has a separate commission schedule; all routes require symbol-specific contract/spec capture.",
+      "route_state": "PENDING_EMPIRICAL_ROUTE_CERTIFICATION",
+      "official_source": "https://www.hfm.com/int/en/trading-accounts/zero-account"
+    },
+    {
+      "broker_id": "TICKMILL_RAW_MT5",
+      "role": "NEW_CANDIDATE",
+      "platform": "MT5",
+      "candidate_asset_classes": ["FX","METAL","CRYPTO","INDEX","ENERGY"],
+      "advertised_commission": {"type":"FX_PRECIOUS_METALS_PER_SIDE_PER_LOT","usd":3.0},
+      "minimum_lot": 0.01,
+      "execution_notes": "Official Raw account allows automated strategies; route-specific non-FX pricing still requires capture.",
+      "route_state": "PENDING_EMPIRICAL_ROUTE_CERTIFICATION",
+      "official_source": "https://www.tickmill.com/trading/raw-account"
+    },
+    {
+      "broker_id": "DERIV_MT5_SYNTHETIC",
+      "role": "SPECIALIST_SYNTHETIC_VENUE",
+      "platform": "MT5",
+      "candidate_asset_classes": ["SYNTHETIC"],
+      "route_state": "REQUIRED_SPECIALIST_CANDIDATE_PENDING_EMPIRICAL_ROUTE_CERTIFICATION",
+      "official_source": "https://deriv.com/markets/derived-indices/synthetic-indices"
+    }
+  ],
+  "required_route_observation_fields": [
+    "broker_id","route","broker_symbol","account_type","server","available","capture_start","capture_end","sample_n",
+    "bid","ask","spread","spread_median","spread_p95","commission_round_turn_usd","slippage_mean_usd","slippage_p95_usd",
+    "financing_long_usd","financing_short_usd","contract_size","tick_size","tick_value","min_lot","lot_step","max_lot",
+    "margin_required_usd","leverage","stop_level","freeze_level","execution_mode","fill_rate","reject_rate","latency_median_ms","latency_p95_ms",
+    "session_rules","weekend_rules","spec_hash","captured_from_target_server","broker_certified"
+  ]
+}
