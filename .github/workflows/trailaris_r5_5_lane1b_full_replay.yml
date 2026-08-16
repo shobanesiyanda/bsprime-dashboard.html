@@ -4,6 +4,7 @@ on:
     branches: [trailaris-ephemeral-research-20260815]
     paths:
       - 'trailaris_r5_5/lane1a2_results/R5_5_LANE1A2_STATUS.json'
+      - '.github/workflows/trailaris_r5_5_lane1b_full_replay.yml'
   workflow_dispatch:
 permissions:
   contents: write
