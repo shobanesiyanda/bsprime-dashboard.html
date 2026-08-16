@@ -4,8 +4,6 @@ on:
     branches: [trailaris-ephemeral-research-20260815]
     paths:
       - 'trailaris_r5_5/lane5_pareto_management_stack.py'
-      - 'trailaris_r5_5/R5_5_FRONTIER_LOCK.json'
-      - '.github/workflows/trailaris_r5_5_lane5_pareto_stack.yml'
   workflow_dispatch:
 permissions:
   contents: write
