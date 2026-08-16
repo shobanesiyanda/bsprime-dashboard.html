@@ -5,7 +5,7 @@
   "scope": {
     "routes_required": 34,
     "routes_active": 34,
-    "routes_with_selected_campaigns": 33,
+    "routes_with_executed_trades": 33,
     "strategy_cells": 510,
     "strategy_families_retained": 15
   },
@@ -23,10 +23,24 @@
     "fresh_holdout_max_drawdown_pct": -0.9205380450303946,
     "max_selected_open_risk_pct": 0.9988110261242715
   },
+  "reconciled_execution_metrics": {
+    "baseline_reconciled": true,
+    "executed_trades": 1393,
+    "total_lots_opened": 320.642,
+    "total_round_turn_lot_sides": 641.284,
+    "winning_trades": 545,
+    "losing_trades": 374,
+    "flat_trades": 474,
+    "fx_trades": 809,
+    "fx_signed_captured_pips": 506.92900000002993,
+    "fx_gross_traded_pips": 1957.184000000023,
+    "point_accounting_rule": "Non-FX price points remain asset-specific and are never summed across unlike contracts as though one point were economically equivalent across crypto, indices, metals, energy and synthetic indices."
+  },
   "compounding_lock": {
     "weekly": "Each completed week's ending balance/equity becomes the starting capital base for the following week.",
     "month_boundary": "The ending balance/equity of the final week crossing a month boundary carries directly into the first trading week of the following month; capital is never reset at month-end.",
-    "continuous": true
+    "continuous": true,
+    "verified_against_reconciled_ledger": true
   },
   "non_regression_rule": "All future BUILD->TEST->REPAIR->RETEST->COMBINE->WEEKLY PORTFOLIO TEST cycles must compare against this baseline. Repairs are intended to improve opportunity capture, precision, drawdown, execution realism, asset participation and full-strategy evidence without knowingly degrading the established portfolio-return behaviour. Any diagnostic run that falls below baseline is not a promoted replacement and cannot overwrite this baseline unless the user explicitly authorizes a new baseline.",
   "truth_constraint": "This baseline is a research-performance comparator, not a live-capital or broker-certified performance claim. Broker/execution certification must be added without silently weakening the baseline comparator."
