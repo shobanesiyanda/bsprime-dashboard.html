@@ -95,7 +95,7 @@ jobs:
         run: |
           rm -rf trailaris_r5_5/liquidity_runway_v3_results
           mkdir -p trailaris_r5_5/liquidity_runway_v3_results
-          python trailaris_r5_5/run_liquidity_runway_v3_from_memory112_promoted.py \
+          python trailaris_r5_5/run_liquidity_runway_v3_guarded.py \
             --rawdir trailaris_longcycle/raw_m1 \
             --specs trailaris_r4/research_proxy_specs.csv \
             --promoted trailaris_r5_5/memory112_evidence/R5_5_MEMORY112_PROMOTED.csv \
