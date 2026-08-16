@@ -1,0 +1,18 @@
+{
+  "state": "R5_5_RECOVERY_REPLAY_GOVERNANCE_LOCK",
+  "superseded_workflow_run_id": 31970026761,
+  "superseded_reason": "Pre-atomic recovery implementation could close a protected incumbent before post-close re-sizing re-confirmed strict risk/margin neutrality. Even if that run completes successfully, its performance evidence is not promotion-eligible.",
+  "canonical_candidate_file": "trailaris_r5_5/longcycle_recovery_reallocation_candidate.py",
+  "canonical_candidate_minimum_commit": "b9d303a684031b4daa77f7ef1263f9a3a41b620c",
+  "canonical_workflow": ".github/workflows/trailaris_r5_5_recovery_reallocation_26w_v2.yml",
+  "required_execution_contract": [
+    "Incoming recovery trade lot/risk/margin fixed before incumbent close",
+    "Incoming risk_cash <= protected incumbent risk_cash",
+    "Incoming margin <= protected incumbent margin",
+    "Incoming utility exceeds incumbent utility by existing frozen +0.05 rule",
+    "Post-swap factor exposure remains within frozen 1.25 cap",
+    "No new recovery risk budget is created",
+    "Full 34-route x 15-family x 510-cell causal replay required"
+  ],
+  "promotion_rule": "Only evidence generated from the atomic candidate at or after the canonical minimum commit can be considered for R5.5 promotion."
+}
