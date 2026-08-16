@@ -1,0 +1,91 @@
+{
+  "state": "R5_5_LANE6_FOUR_PATH_WINNER_PROGRAM_REPLAY_COMPLETE",
+  "evidence_class": "LANE6A_SELECTION_FROZEN_PLUS_6B_6C_6D_END_TO_END_CAUSAL_FULL_REPLAY",
+  "four_paths": [
+    {
+      "path": "6A_WINNER_ATTRIBUTION",
+      "status": "COMPLETE",
+      "best_rule": {
+        "scope_type": "STRATEGY_FAMILY",
+        "scope_value": "MEAN_REVERSION",
+        "rule_type": "2D",
+        "feature1": "reliability_asset_strategy_mean_r",
+        "dir1": "le",
+        "threshold1": 0.2735179291978221,
+        "q1": 0.4,
+        "feature2": "reliability_score",
+        "dir2": "ge",
+        "threshold2": 0.14914416786239051,
+        "q2": 0.1,
+        "disc_n": 30,
+        "disc_share": 0.03558718861209965,
+        "disc_wins": 21,
+        "disc_losses": 9,
+        "disc_flats": 0,
+        "disc_win_rate_all": 0.7,
+        "disc_baseline_win_rate_all": 0.4080664294187426,
+        "disc_win_lift": 1.715406976744186,
+        "disc_mean_net_pnl": 0.07581418223808943,
+        "disc_total_net_pnl": 2.274425467142683,
+        "disc_profit_factor": 1.9127073233551537,
+        "valid_n": 17,
+        "valid_share": 0.07112970711297072,
+        "valid_wins": 16,
+        "valid_losses": 1,
+        "valid_flats": 0,
+        "valid_win_rate_all": 0.9411764705882353,
+        "valid_baseline_win_rate_all": 0.4393305439330544,
+        "valid_win_lift": 2.142296918767507,
+        "valid_mean_net_pnl": 0.494848230504186,
+        "valid_total_net_pnl": 8.412419918571162,
+        "valid_profit_factor": 27.54537806477475,
+        "clean_pass": true,
+        "score": 41.58762205563017
+      },
+      "winner_forensics": {
+        "wins": 467,
+        "winner_net_pnl": 361.82331882515365,
+        "mean_mfe_r": 2.302930744150551,
+        "median_mfe_r": 2.0564042303172463,
+        "mean_mae_r": 0.4155573537994783
+      }
+    },
+    {
+      "path": "6B_WINNER_AMPLIFICATION",
+      "variants_completed": 0,
+      "best_variant": {},
+      "frontier_candidates": 0,
+      "alpha_candidates": 0
+    },
+    {
+      "path": "6C_WINNER_PAYOFF_EXTENSION",
+      "variants_completed": 0,
+      "best_variant": {},
+      "frontier_candidates": 0,
+      "alpha_candidates": 0
+    },
+    {
+      "path": "6D_WINNER_PRIORITY_CAPTURE",
+      "variants_completed": 0,
+      "best_variant": {},
+      "frontier_candidates": 0,
+      "alpha_candidates": 0
+    }
+  ],
+  "overall_best_replay": {},
+  "benchmark": {
+    "r5_4_end_equity": 337.4231242104393,
+    "lane1b2_end_equity": 343.5447309255116,
+    "fresh_return_floor": 7.261646557142409,
+    "max_weekly_dd_floor": -4.637645574907678,
+    "losses_max": 230,
+    "flats_max": 424,
+    "nonflat_win_rate_floor": 0.6671428571428571
+  },
+  "scope": {
+    "approved_routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510
+  },
+  "governance": "6A selects winner signatures without Aug13-14 outcomes. 6B-6D are authentic full portfolio replays; post-trade MFE/MAE never determine eligibility. No winner path promotes without the R5.5 frontier, completeness, unseen-forward and broker-certification gates."
+}
