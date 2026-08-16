@@ -1,0 +1,36 @@
+{
+  "state": "R5_5_LANE3_STRATEGY_REBUILD_V2_COMPLETE",
+  "evidence_class": "END_TO_END_CAUSAL_REBUILT_STRATEGY_REPLAY",
+  "variants_expected": 6,
+  "variants_completed": 6,
+  "passing_variants": 0,
+  "best_variant": {
+    "variant_index": 4,
+    "config_id": "SD_STRICT_ONLY",
+    "rebuilt_candidates": 64,
+    "end_equity": 334.06966928043823,
+    "delta_end_equity": -3.353454930001078,
+    "fresh_return_pct": 7.261646557142409,
+    "fresh_delta_pct": 0.0,
+    "max_weekly_dd_pct": -4.343832243362245,
+    "executed_trades": 1124,
+    "wins": 451,
+    "losses": 235,
+    "flat": 438,
+    "nonflat_win_rate": 0.6574344023323615,
+    "assets_with_selected": 32,
+    "end_equity_not_regressed": false,
+    "fresh_holdout_not_regressed": true,
+    "drawdown_not_worse": true,
+    "losses_not_worse": false,
+    "flats_not_worse": false,
+    "full_universe_34x510": true,
+    "candidate_pass": false
+  },
+  "r5_4_control_end_equity": 337.4231242104393,
+  "approved_scope": {
+    "routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510
+  }
+}
