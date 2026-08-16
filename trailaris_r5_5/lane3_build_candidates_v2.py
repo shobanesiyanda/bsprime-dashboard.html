@@ -36,7 +36,6 @@ def emit(r4,asset,strategy,family,x,i,dr,q,ctx,max_bars,management):
     return c
 
 def origin_for_displacement(x,j,side):
-    # Search only completed candles before the displacement bar; choose the nearest opposite-colour origin.
     for k in range(j-1,max(11,j-5),-1):
         r=x.iloc[k]
         if side=='demand' and r.close<=r.open:return k
@@ -47,7 +46,6 @@ def supply_demand_candidates(asset,x,r4):
     strict=[];balanced=[];seen_s=set();seen_b=set();zones=deque()
     for i in range(16,len(x)-2):
         r=x.iloc[i];prev=x.iloc[i-1];atr=max(num(r.atr,0),EPS)
-        # First evaluate zones that existed before this decision bar.
         keep=deque()
         for z in zones:
             age=i-z['created']
@@ -88,7 +86,6 @@ def supply_demand_candidates(asset,x,r4):
                 z=dict(z);z['touches']+=1
             keep.append(z)
         zones=keep
-        # Then create new zones from displacement/BOS completed on this bar. They cannot be used until a later bar.
         disp=abs(float(r.close-r.open))/atr
         if np.isfinite(r.prior12_hi) and r.close>r.prior12_hi and disp>=.70:
             k=origin_for_displacement(x,i,'demand')
@@ -98,9 +95,14 @@ def supply_demand_candidates(asset,x,r4):
             k=origin_for_displacement(x,i,'supply')
             if k is not None:
                 o=x.iloc[k];zones.append({'side':'supply','origin':k,'created':i,'low':float(min(o.open,o.close)),'high':float(o.high),'disp':float(disp),'touches':0})
-        # Hard bound active-zone count by causal recency; older zones are dominated by fresher provenance under both variants.
         if len(zones)>96:zones=deque(list(zones)[-96:])
     return strict,balanced
+
+def payoff_to_value_r(c,value,dr):
+    if not c:return np.nan
+    ent=num(c.get('entry_price'));sd=abs(num(c.get('stop_distance')))
+    if not np.isfinite(ent) or not np.isfinite(sd) or sd<=EPS or not np.isfinite(value):return np.nan
+    return float((value-ent)*int(dr)/sd)
 
 def mean_reversion_candidates(asset,x,r4):
     strict=[];balanced=[];seen_s=set();seen_b=set()
@@ -109,21 +111,27 @@ def mean_reversion_candidates(asset,x,r4):
     rng=(x.high.shift(1)-x.low.shift(1)).replace(0,np.nan)
     upper_wick=(x.high.shift(1)-pd.concat([x.open.shift(1),x.close.shift(1)],axis=1).max(axis=1))/rng
     lower_wick=(pd.concat([x.open.shift(1),x.close.shift(1)],axis=1).min(axis=1)-x.low.shift(1))/rng
-    high_base=(pz>=2.0)&(z<pz)&(z<2.0)&(x.close<x.open)&(x.close<x.close.shift(1))&(x.high.shift(1)>prior11_hi)&(upper_wick>=.20)&(strength<=.50)&(comp<=1.45)
-    low_base=(pz<=-2.0)&(z>pz)&(z>-2.0)&(x.close>x.open)&(x.close>x.close.shift(1))&(x.low.shift(1)<prior11_lo)&(lower_wick>=.20)&(strength<=.50)&(comp<=1.45)
+    high_base=(pz>=2.0)&(z<pz)&(z<2.0)&(x.close<x.open)&(x.close<x.close.shift(1))&(x.high.shift(1)>prior11_hi)&(upper_wick>=.20)&(strength<=.50)&(comp<=1.45)&(x.close>x.ema20)
+    low_base=(pz<=-2.0)&(z>pz)&(z>-2.0)&(x.close>x.open)&(x.close>x.close.shift(1))&(x.low.shift(1)<prior11_lo)&(lower_wick>=.20)&(strength<=.50)&(comp<=1.45)&(x.close<x.ema20)
     idx=np.flatnonzero((high_base|low_base).fillna(False).to_numpy())
     for i in idx:
         if i<61 or i>=len(x)-2:continue
-        dr=-1 if bool(high_base.iloc[i]) else 1;wick=float(upper_wick.iloc[i] if dr==-1 else lower_wick.iloc[i]);peak=float(pz.iloc[i]);cv=float(comp.iloc[i]);key=(pd.Timestamp(x.timestamp.iloc[i]).floor('30min'),dr)
+        dr=-1 if bool(high_base.iloc[i]) else 1;wick=float(upper_wick.iloc[i] if dr==-1 else lower_wick.iloc[i]);peak=float(pz.iloc[i]);cv=float(comp.iloc[i]);value=float(x.ema20.iloc[i]);key=(pd.Timestamp(x.timestamp.iloc[i]).floor('30min'),dr)
         if key not in seen_b:
-            q=.62+.06*min(abs(peak)-2,2)+.08*min(wick,1)+.05*max(0,1-cv);ctx=f"R55_BALANCED_EXHAUST;peak_z={peak:.2f};reentry_z={float(z.iloc[i]):.2f};wick={wick:.2f};compression={cv:.2f};VALUE_REENTRY"
-            c=emit(r4,asset,'MEAN_REVERSION_EXTREME','MEAN_REVERSION',x,i,dr,q,ctx,30,'PARTIAL_RUNNER')
-            if c:balanced.append(c);seen_b.add(key)
-        strict_ok=(abs(peak)>=2.25 and strength.iloc[i]<=.35 and cv<=1.25 and wick>=.30 and ((x.close.iloc[i]>x.ema20.iloc[i]) if dr==-1 else (x.close.iloc[i]<x.ema20.iloc[i])))
+            q=.62+.06*min(abs(peak)-2,2)+.08*min(wick,1)+.05*max(0,1-cv)
+            c=emit(r4,asset,'MEAN_REVERSION_EXTREME','MEAN_REVERSION',x,i,dr,q,'R55_BALANCED_EXHAUST_PENDING_PAYOFF',30,'PARTIAL_RUNNER')
+            payoff=payoff_to_value_r(c,value,dr)
+            if c and np.isfinite(payoff) and payoff>=.75:
+                c['quality']=float(np.clip(q+.03*min(payoff,2),0,1));c['context']=f"R55_BALANCED_EXHAUST;peak_z={peak:.2f};reentry_z={float(z.iloc[i]):.2f};wick={wick:.2f};compression={cv:.2f};value_payoff_r={payoff:.2f};VALUE_REENTRY;PAYOFF_GATE"
+                balanced.append(c);seen_b.add(key)
+        strict_ok=(abs(peak)>=2.25 and strength.iloc[i]<=.35 and cv<=1.25 and wick>=.30)
         if strict_ok and key not in seen_s:
-            q=.66+.06*min(abs(peak)-2,2)+.08*min(wick,1)+.05*max(0,1-cv);ctx=f"R55_STRICT_EXHAUST;peak_z={peak:.2f};reentry_z={float(z.iloc[i]):.2f};wick={wick:.2f};compression={cv:.2f};VALUE_REENTRY"
-            c=emit(r4,asset,'MEAN_REVERSION_EXTREME','MEAN_REVERSION',x,i,dr,q,ctx,30,'PARTIAL_RUNNER')
-            if c:strict.append(c);seen_s.add(key)
+            q=.66+.06*min(abs(peak)-2,2)+.08*min(wick,1)+.05*max(0,1-cv)
+            c=emit(r4,asset,'MEAN_REVERSION_EXTREME','MEAN_REVERSION',x,i,dr,q,'R55_STRICT_EXHAUST_PENDING_PAYOFF',30,'PARTIAL_RUNNER')
+            payoff=payoff_to_value_r(c,value,dr)
+            if c and np.isfinite(payoff) and payoff>=1.00:
+                c['quality']=float(np.clip(q+.04*min(payoff,2),0,1));c['context']=f"R55_STRICT_EXHAUST;peak_z={peak:.2f};reentry_z={float(z.iloc[i]):.2f};wick={wick:.2f};compression={cv:.2f};value_payoff_r={payoff:.2f};VALUE_REENTRY;PAYOFF_GATE"
+                strict.append(c);seen_s.add(key)
     return strict,balanced
 
 def main():
@@ -143,6 +151,6 @@ def main():
         print(asset,len(ss),len(sb),len(ms),len(mb),flush=True)
     for name,rows in buckets.items():pd.DataFrame(rows).to_csv(out/f'{name}.csv',index=False)
     pd.DataFrame(stats).to_csv(out/'by_asset.csv',index=False)
-    status={'state':'R5_5_LANE3_CANDIDATE_BUILD_V2_COMPLETE','routes':34,'counts':{k:len(v) for k,v in buckets.items()},'governance':'Each rebuilt candidate is generated causally from bars completed before its decision bar. Supply/demand zones are created only after displacement/BOS completes, then tracked forward for age, invalidation and touches. Mean reversion requires a completed extreme/exhaustion bar and subsequent value re-entry. Candidate files are built once and reused unchanged across the replay matrix.'}
+    status={'state':'R5_5_LANE3_CANDIDATE_BUILD_V2_COMPLETE','revision':'PAYOFF_GATED_V2_1','routes':34,'counts':{k:len(v) for k,v in buckets.items()},'governance':'Each rebuilt candidate is generated causally from bars completed before its decision bar. Supply/demand zones are created only after displacement/BOS completes, then tracked forward for age, invalidation and touches. Mean reversion requires completed exhaustion, re-entry while still on the extreme side of EMA20 value, weak-trend/volatility controls, and decision-time reward-to-value of at least 0.75R balanced or 1.00R strict relative to the candidate stop distance. Candidate files are built once and reused unchanged across the replay matrix.'}
     (out/'status.json').write_text(json.dumps(status,indent=2));print(json.dumps(status,indent=2),flush=True)
 if __name__=='__main__':main()
