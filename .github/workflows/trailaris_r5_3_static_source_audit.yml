@@ -1,0 +1,73 @@
+name: Trailaris R5.3 Static Source Audit
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_3_static_source_audit.yml']
+permissions:
+  contents: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-ephemeral-research-20260815
+          fetch-depth: 0
+      - name: Reconstruct frozen engines
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > /tmp/r4.py
+          cat trailaris_r5/r5.part00 trailaris_r5/r5.part01 trailaris_r5/r5.part02 trailaris_r5/r5.part03 | base64 -d | gzip -d > /tmp/r5.py
+      - name: Audit causal sequencing and modelled costs
+        run: |
+          mkdir -p trailaris_r5_3_forensic
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib,json,re
+          r4=Path('/tmp/r4.py').read_text(); r5=Path('/tmp/r5.py').read_text()
+          def sha(s): return hashlib.sha256(s.encode()).hexdigest()
+          # isolate simulator to establish intrabar ordering from the exact frozen source
+          a=r4.find('def simulate_trade'); b=r4.find('\n# ---------------- signal generation',a); sim=r4[a:b]
+          ix_mfe=sim.find('mfe=max')
+          ix_prot=sim.find('if management=="PROTECTED_RUNNER"')
+          ix_stop=sim.find('stopped=')
+          samebar = (ix_mfe>=0 and ix_prot>=0 and ix_stop>=0 and ix_mfe < ix_prot < ix_stop)
+          checks={
+            'r4_sha256':sha(r4),'r5_sha256':sha(r5),
+            'r5_base_copy_sha256':sha(Path('trailaris_r5_4/R5_BASE_CAUSAL_ENGINE.py').read_text()) if Path('trailaris_r5_4/R5_BASE_CAUSAL_ENGINE.py').exists() else None,
+            'r5_base_copy_exact_match': Path('trailaris_r5_4/R5_BASE_CAUSAL_ENGINE.py').exists() and Path('trailaris_r5_4/R5_BASE_CAUSAL_ENGINE.py').read_text()==r5,
+            'promotion_old_history_only':'exit_time<val0' in r5 and 'exit_time<week_start' in r5,
+            'trailing_stats_past_exit_only':'hist.exit_time<asof' in r5,
+            'fresh_holdout_freezes_aug10_promotion':"aug10=pd.Timestamp('2026-08-10T00:00:00Z')" in r5 and 'fresh_pr=week_prom' in r5,
+            'entry_next_bar_open':'ent_i=i+1' in sim and 'ent=float(x.open.iloc[ent_i])' in sim,
+            'same_bar_mfe_protection_before_stop_check':samebar,
+            'same_bar_sequence_indices':{'mfe_update':ix_mfe,'protection_update':ix_prot,'stop_check':ix_stop},
+            'spread_cost_present':'spread' in sim and 'cost_r=' in sim,
+            'commission_tokens_r4':len(re.findall(r'commission',r4,re.I)),
+            'slippage_tokens_r4':len(re.findall(r'slippage',r4,re.I)),
+            'funding_tokens_r4':len(re.findall(r'funding',r4,re.I)),
+            'swap_tokens_r4':len(re.findall(r'\bswap',r4,re.I)),
+            'commission_tokens_r5':len(re.findall(r'commission',r5,re.I)),
+            'slippage_tokens_r5':len(re.findall(r'slippage',r5,re.I)),
+            'funding_tokens_r5':len(re.findall(r'funding',r5,re.I)),
+            'swap_tokens_r5':len(re.findall(r'\bswap',r5,re.I)),
+            'winner_addon_present':'WINNER_ONLY_ADDON' in r4,
+            'partial_runner_present':'PARTIAL_RUNNER' in r4,
+            'protected_runner_present':'PROTECTED_RUNNER' in r4,
+            'capital_recycle_present':'DYNAMIC_CAPITAL_RECYCLE_R5' in r5,
+            'factor_duplication_gate_present':'FACTOR_DUPLICATION' in r5,
+            'config_weekly_loss_breaker_present':'CONFIG_WEEKLY_LOSS_BREAKER' in r5,
+            'asset_weekly_loss_breaker_present':'ASSET_WEEKLY_LOSS_BREAKER' in r5,
+            'adaptive_rank_present':'rank_score' in r5 and 'expected_r' in r5,
+            'continuous_equity_sizing_present':'size_trade(r.asset,eq,rf' in r5,
+          }
+          Path('trailaris_r5_3_forensic/STATIC_SOURCE_AUDIT.json').write_text(json.dumps(checks,indent=2))
+          print(json.dumps(checks,indent=2))
+          PY
+      - name: Commit source audit
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git pull --rebase origin trailaris-ephemeral-research-20260815 || true
+          git add -f trailaris_r5_3_forensic/STATIC_SOURCE_AUDIT.json
+          git commit -m 'audit: frozen R5.3 static source falsification results [skip ci]' || true
+          git push origin HEAD:trailaris-ephemeral-research-20260815
