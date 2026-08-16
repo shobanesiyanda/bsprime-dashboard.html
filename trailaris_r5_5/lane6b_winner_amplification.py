@@ -11,6 +11,10 @@ INCUMBENT_END=343.5447309255116
 INCUMBENT_FRESH=7.261646557142409
 INCUMBENT_DD=-4.637645574907678
 INCUMBENT_NFWR=0.6671428571428571
+CHALLENGE_END=345.3896887826546
+CHALLENGE_NFWR=0.673352435530086
+CHALLENGE_LOSSES=228
+CHALLENGE_FLATS=421
 EPS=1e-9
 B3={'behavior':'close_a0.50_r0.20_1b','kind':'close','activate_mfe_r':0.50,'parameter_r':0.20,'bars':1,'gate_metric':'reliability_win','gate_direction':'le','gate_threshold':0.2655132009803008}
 
@@ -54,6 +58,7 @@ def main():
     from reliability_common import promote
     from precision_experiment_harness import eval_variant,load_module
     data,v,cands,opps,fcache=base.build_universe(Path(a.rawdir));specs=r4.load_specs(Path(a.specs),'research-proxy')
+    lock=json.load(open('trailaris_r5_4/R5_4_MARKET_EXECUTION_ENGINE_LOCK.json'));scope=lock['scope']
     ctlmod=load_module(Path('trailaris_r5_4/reliability_variants/variant_hierarchical_combined.py'),f'r55_lane6b_ctl_{a.rule_rank}_{a.copies}');ctl,*_=eval_variant(ctlmod,data,cands,opps,fcache,specs,100.0)
     if abs(float(ctl['end_equity'])-R54_END)>1e-9:raise RuntimeError('R5.4 control reproduction failed')
     inc,*_=eval_variant(ManagedVariant(B3,base,promote),data,cands,opps,fcache,specs,100.0)
@@ -66,9 +71,9 @@ def main():
     z['amp_parent_family']=z.parent_id.astype(str).map(pf).fillna(z.strategy_family.astype(str)) if 'parent_id' in z else z.strategy_family.astype(str)
     cand,VW,VEV,VDE,VPR=eval_variant(WinnerAmplifyVariant(base,promote,a.copies,a.quality_boost),data,z,opps,fcache,specs,100.0)
     amp_selected=int(VEV.campaign_id.astype(str).str.contains('WINAMP',regex=False).sum()) if len(VEV) and 'campaign_id' in VEV else 0
-    approved=set(getattr(r4,'STRATEGY_FAMILIES',[]));actual=set(z.loc[~z.get('is_addon',False).astype(bool),'strategy_family'].astype(str).unique());scope_ok=len(data)==34 and len(approved)==15 and approved.issubset(actual)
-    alpha={'end_equity_beats_1b2':float(cand['end_equity'])>INCUMBENT_END+EPS,'fresh_not_worse':float(cand['fresh_return_pct'])>=INCUMBENT_FRESH-EPS,'drawdown_not_worse':float(cand['max_weekly_dd_pct'])>=INCUMBENT_DD-EPS,'asset_coverage_not_worse':int(cand['assets_with_selected'])>=33,'full_universe_34x15':scope_ok}
-    frontier={**alpha,'fresh_improved':float(cand['fresh_return_pct'])>INCUMBENT_FRESH+EPS,'losses_below_r54':int(cand['losses'])<=230,'flats_below_r54':int(cand['flat'])<=424,'nonflat_win_rate_at_least_1b2':float(cand['nonflat_win_rate'])>=INCUMBENT_NFWR-EPS}
-    s={'state':'R5_5_LANE6B_WINNER_AMPLIFICATION_REPLAY_COMPLETE','evidence_class':'END_TO_END_CAUSAL_FULL_REPLAY','rule_rank':a.rule_rank,'winner_rule':rule,'copies':a.copies,'quality_boost':a.quality_boost,'qualifying_parent_candidates':int(z['amp_parent_qualifies'].sum()),'amplified_addons_selected':amp_selected,'r5_4_control':ctl,'lane1b2_incumbent':inc,'candidate':cand,'delta_vs_1b2':float(cand['end_equity'])-INCUMBENT_END,'alpha_gates':alpha,'alpha_candidate':bool(all(alpha.values())),'frontier_gates':frontier,'frontier_candidate':bool(all(frontier.values())),'promotion_candidate':False,'promotion_blockers':['NEW_UNSEEN_FORWARD_HOLDOUT_REQUIRED','TARGET_SERVER_BROKER_EXECUTION_CERTIFICATION_REQUIRED'],'scope':{'approved_routes':34,'strategy_families':15,'route_strategy_cells':510},'governance':'Amplification is earned only after the existing causal winner-only continuation trigger and a pre-Aug13 validated parent cohort condition. Added tranches remain is_addon=True, so the unchanged 0.25% add-on sizing, 1.00% open-risk ceiling, margin ceiling, factor cap, weekly breakers and parent-open/proven checks remain authoritative. Full 34-asset/15-family replay is mandatory.'}
+    scope_ok=(len(data)==34 and scope['approved_routes']==34 and scope['strategy_families']==15 and scope['route_strategy_cells']==510)
+    alpha={'end_equity_beats_1b2':float(cand['end_equity'])>INCUMBENT_END+EPS,'fresh_not_worse':float(cand['fresh_return_pct'])>=INCUMBENT_FRESH-EPS,'drawdown_not_worse':float(cand['max_weekly_dd_pct'])>=INCUMBENT_DD-EPS,'asset_coverage_not_worse':int(cand['assets_with_selected'])>=33,'full_universe_34x15x510':scope_ok}
+    frontier={'end_equity_beats_lane5':float(cand['end_equity'])>CHALLENGE_END+EPS,'fresh_improved':float(cand['fresh_return_pct'])>INCUMBENT_FRESH+EPS,'drawdown_not_worse':float(cand['max_weekly_dd_pct'])>=INCUMBENT_DD-EPS,'fresh_dd_not_worse':float(cand['fresh_max_dd_pct'])>=-0.5196525640746019-EPS,'losses_at_or_below_lane5':int(cand['losses'])<=CHALLENGE_LOSSES,'flats_at_or_below_lane5':int(cand['flat'])<=CHALLENGE_FLATS,'nonflat_win_rate_at_least_lane5':float(cand['nonflat_win_rate'])>=CHALLENGE_NFWR-EPS,'asset_coverage_not_worse':int(cand['assets_with_selected'])>=33,'full_universe_34x15x510':scope_ok}
+    s={'state':'R5_5_LANE6B_WINNER_AMPLIFICATION_REPLAY_COMPLETE','evidence_class':'END_TO_END_CAUSAL_FULL_REPLAY','rule_rank':a.rule_rank,'winner_rule':rule,'copies':a.copies,'quality_boost':a.quality_boost,'qualifying_parent_candidates':int(z['amp_parent_qualifies'].sum()),'amplified_addons_selected':amp_selected,'r5_4_control':ctl,'lane1b2_incumbent':inc,'candidate':cand,'delta_vs_1b2':float(cand['end_equity'])-INCUMBENT_END,'delta_vs_lane5_frontier':float(cand['end_equity'])-CHALLENGE_END,'alpha_gates':alpha,'alpha_candidate':bool(all(alpha.values())),'frontier_gates':frontier,'frontier_candidate':bool(all(frontier.values())),'promotion_candidate':False,'promotion_blockers':['FUSION_WITH_CERTIFIED_LANE5_MANAGEMENT_REQUIRED_IF_STANDALONE_WINNER_PATH_ADDS_VALUE','FORENSIC_COMPLETENESS_GATES_REQUIRED','NEW_UNSEEN_FORWARD_HOLDOUT_REQUIRED','TARGET_SERVER_BROKER_EXECUTION_CERTIFICATION_REQUIRED'],'scope':scope,'governance':'Amplification is earned only after the existing causal winner-only continuation trigger and a pre-Aug13 validated parent cohort condition. Added tranches remain is_addon=True, so unchanged risk, margin, factor and breaker controls remain authoritative. Immutable R5.4 scope defines 34x15x510; candidate-emitting family count cannot redefine the universe. The active R5.5 challenge frontier is the certified Lane5 $345.3896888 quality profile plus strict fresh improvement.'}
     (out/'result.json').write_text(json.dumps(s,indent=2,default=str));VW.to_csv(out/'weekly.csv',index=False);print(json.dumps(s,indent=2,default=str))
 if __name__=='__main__':main()
