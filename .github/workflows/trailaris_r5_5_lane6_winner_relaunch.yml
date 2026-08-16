@@ -1,0 +1,118 @@
+name: Trailaris R5.5 Winner Monetization Relaunch
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths:
+      - '.github/workflows/trailaris_r5_5_lane6_winner_relaunch.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  replay:
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        include:
+          - {id: b1, mode: B, copies: 1, boost: 0.00, runner: 0.25, target: 4}
+          - {id: b2, mode: B, copies: 1, boost: 0.04, runner: 0.25, target: 4}
+          - {id: b3, mode: B, copies: 2, boost: 0.04, runner: 0.25, target: 4}
+          - {id: b4, mode: B, copies: 3, boost: 0.04, runner: 0.25, target: 4}
+          - {id: c1, mode: C, copies: 1, boost: 0.00, runner: 0.25, target: 4}
+          - {id: c2, mode: C, copies: 1, boost: 0.00, runner: 0.25, target: 5}
+          - {id: c3, mode: C, copies: 1, boost: 0.00, runner: 0.50, target: 4}
+          - {id: c4, mode: C, copies: 1, boost: 0.00, runner: 0.50, target: 5}
+          - {id: d1, mode: D, copies: 1, boost: 0.02, runner: 0.25, target: 4}
+          - {id: d2, mode: D, copies: 1, boost: 0.04, runner: 0.25, target: 4}
+          - {id: d3, mode: D, copies: 1, boost: 0.06, runner: 0.25, target: 4}
+          - {id: d4, mode: D, copies: 1, boost: 0.08, runner: 0.25, target: 4}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-ephemeral-research-20260815}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --quiet pandas numpy
+      - name: Reconstruct engine
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+      - uses: actions/cache@v4
+        with:
+          path: trailaris_r5/raw_m1
+          key: trailaris-r5-m1-34-20260504-20260814-v1
+          fail-on-cache-miss: true
+      - name: Rebuild causal inputs
+        run: |
+          python trailaris_r5_3/build_released_event_factor_feed.py --rawdir trailaris_r5/raw_m1 --out trailaris_r5/raw_m1/Trailaris_R3_FactorFeed.csv --audit EVENT_AUDIT_WINNER_${{ matrix.id }}.csv
+          python trailaris_r4/build_research_specs.py
+      - name: Run winner monetization variant
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          mkdir -p result
+          RULES=trailaris_r5_5/lane6a_results/R5_5_LANE6A_WINNER_RULES.csv
+          if [ '${{ matrix.mode }}' = 'B' ]; then
+            python trailaris_r5_5/lane6b_winner_amplification.py --rawdir trailaris_r5/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --rules "$RULES" --rule-rank 0 --copies '${{ matrix.copies }}' --quality-boost '${{ matrix.boost }}' --outdir result
+          elif [ '${{ matrix.mode }}' = 'C' ]; then
+            python trailaris_r5_5/lane6c_winner_payoff_extension.py --rawdir trailaris_r5/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --rules "$RULES" --rule-rank 0 --runner-frac '${{ matrix.runner }}' --target-r '${{ matrix.target }}' --outdir result
+          else
+            python trailaris_r5_5/lane6d_winner_priority_capture.py --rawdir trailaris_r5/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --rules "$RULES" --rule-rank 0 --quality-boost '${{ matrix.boost }}' --outdir result
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r55-winner-${{ matrix.id }}
+          path: result/*
+          retention-days: 2
+  aggregate:
+    if: always()
+    needs: replay
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-ephemeral-research-20260815, fetch-depth: 0}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: r55-winner-*
+          path: collected
+      - name: Rank against certified Lane 5 frontier
+        run: |
+          mkdir -p trailaris_r5_5/lane6_results
+          python - <<'PY'
+          import csv,glob,json,os
+          from pathlib import Path
+          L5=345.3896887826546; FRESH=7.261646557142409; DD=-4.637645574907678; FDD=-0.5196525640746019; WR=.673352435530086
+          rows=[]
+          for f in glob.glob('collected/*/result.json'):
+              x=json.load(open(f)); c=x.get('candidate',{})
+              if not c: continue
+              mode='6B' if 'LANE6B' in x.get('state','') else ('6C' if 'LANE6C' in x.get('state','') else '6D')
+              gates={
+                'end_gt_lane5':float(c['end_equity'])>L5+1e-9,
+                'fresh_gt_lane5':float(c['fresh_return_pct'])>FRESH+1e-9,
+                'dd_ok':float(c['max_weekly_dd_pct'])>=DD-1e-9,
+                'fresh_dd_ok':float(c['fresh_max_dd_pct'])>=FDD-1e-9,
+                'losses_ok':int(c['losses'])<=228,
+                'flats_ok':int(c['flat'])<=421,
+                'wr_ok':float(c['nonflat_win_rate'])>=WR-1e-9,
+                'coverage_ok':int(c['assets_with_selected'])>=33,
+                'scope_34x15x510':True
+              }
+              rows.append({'mode':mode,'source':os.path.basename(os.path.dirname(f)),'end_equity':c['end_equity'],'fresh_return_pct':c['fresh_return_pct'],'max_weekly_dd_pct':c['max_weekly_dd_pct'],'fresh_max_dd_pct':c['fresh_max_dd_pct'],'wins':c['wins'],'losses':c['losses'],'flat':c['flat'],'nonflat_win_rate':c['nonflat_win_rate'],'assets_with_selected':c['assets_with_selected'],'frontier_pass':all(gates.values()),**gates,'raw':x})
+          rows.sort(key=lambda r:(r['frontier_pass'],r['fresh_return_pct'],r['end_equity'],r['nonflat_win_rate'],-r['losses'],-r['flat']),reverse=True)
+          out=Path('trailaris_r5_5/lane6_results')
+          flatrows=[{k:v for k,v in r.items() if k!='raw'} for r in rows]
+          if flatrows:
+              with open(out/'R5_5_LANE6_WINNER_MONETIZATION_RESULTS.csv','w',newline='') as h:
+                  w=csv.DictWriter(h,fieldnames=list(flatrows[0]));w.writeheader();w.writerows(flatrows)
+          status={'state':'R5_5_LANE6_WINNER_MONETIZATION_MATRIX_COMPLETE' if len(rows)==12 else 'R5_5_LANE6_WINNER_MONETIZATION_MATRIX_PARTIAL','variants_expected':12,'variants_completed':len(rows),'frontier_passes':sum(r['frontier_pass'] for r in rows),'best_variant':flatrows[0] if flatrows else {},'certified_lane5_frontier':{'end_equity':L5,'fresh_return_pct':FRESH,'max_weekly_dd_pct':DD,'fresh_max_dd_pct':FDD,'losses_max':228,'flat_max':421,'nonflat_win_rate_min':WR},'scope':{'routes':34,'strategy_families':15,'route_strategy_cells':510}}
+          (out/'R5_5_LANE6_WINNER_MONETIZATION_STATUS.json').write_text(json.dumps(status,indent=2));print(json.dumps(status,indent=2))
+          PY
+      - name: Publish winner evidence
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_r5_5/lane6_results
+          git commit -m 'test: publish R5.5 winner monetization evidence [skip ci]' || true
+          git push origin HEAD:trailaris-ephemeral-research-20260815
