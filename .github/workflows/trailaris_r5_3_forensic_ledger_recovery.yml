@@ -13,6 +13,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: trailaris-ephemeral-research-20260815
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -72,10 +73,21 @@ jobs:
           shutil.copy2(root/'R5_STATUS.json','trailaris_r5_3_forensic/R5_STATUS.json')
           print(json.dumps(manifest,indent=2))
           PY
+      - name: Upload forensic ledger artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-r5-3-forensic-ledgers
+          path: |
+            trailaris_r5_3_forensic/FORENSIC_LEDGER_MANIFEST.json
+            trailaris_r5_3_forensic/R5_STATUS.json
+            trailaris_r5_3_forensic/EVENT_FACTOR_RECONCILIATION_AUDIT.csv
+            trailaris_r5_3_forensic/*.csv.gz
+          retention-days: 7
       - name: Commit forensic ledgers only
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git pull --rebase origin trailaris-ephemeral-research-20260815
           git add -f trailaris_r5_3_forensic/FORENSIC_LEDGER_MANIFEST.json trailaris_r5_3_forensic/R5_STATUS.json trailaris_r5_3_forensic/EVENT_FACTOR_RECONCILIATION_AUDIT.csv trailaris_r5_3_forensic/*.csv.gz
           git commit -m 'audit: recover frozen R5.3 forensic ledgers [skip ci]' || true
           git push origin HEAD:trailaris-ephemeral-research-20260815
