@@ -1,0 +1,28 @@
+{
+  "state": "R5_4_NAIVE_PRECISION_EXPERIMENT_COMPLETE",
+  "source_workflow_run": 31949865337,
+  "compute_step": "PASS",
+  "result_commit_step": "FAILED_ONLY_DUE_TO_CONCURRENT_NON_FAST_FORWARD_PUSH",
+  "variants_tested": 5,
+  "variants": [
+    "baseline",
+    "strict_validation",
+    "downside_rank",
+    "strict_tierb",
+    "combined_precision"
+  ],
+  "promotion_eligible_variants_under_experiment_gate": 0,
+  "best_variant": "baseline",
+  "baseline_end_equity": 254.4465598357797,
+  "baseline_compounded_return_pct": 154.44655983577974,
+  "baseline_mean_week_pct": 9.004861168026705,
+  "baseline_median_week_pct": 10.760554729262605,
+  "baseline_max_weekly_dd_pct": -7.083721208160998,
+  "baseline_executed_trades": 1393,
+  "baseline_wins": 545,
+  "baseline_losses": 374,
+  "baseline_flat": 474,
+  "baseline_fresh_return_pct": 7.826996335713843,
+  "decision": "REJECT_ALL_FOUR_NAIVE_PRECISION_TIGHTENING_VARIANTS. Preserve R5.3 baseline. Continue with causal hierarchical reliability, market-intelligence and payoff-specific repair rather than indiscriminate threshold tightening.",
+  "hard_lock": "No failed precision variant may overwrite the R5.3 baseline."
+}
