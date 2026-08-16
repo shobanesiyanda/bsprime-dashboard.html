@@ -2,8 +2,10 @@
   "routes": 34,
   "brokers": 7,
   "cells": 238,
-  "native_candidate_cells": 179,
-  "gated_non_native_cells": 59,
+  "scope_eligible_candidate_cells": 179,
+  "specialist_scope_gated_cells": 59,
+  "confirmed_available_cells": 0,
   "certified_cells": 0,
-  "selection_state": "FAIL_CLOSED_UNTIL_TARGET_SERVER_EVIDENCE"
+  "selection_state": "FAIL_CLOSED_UNTIL_TARGET_SERVER_EVIDENCE",
+  "truth_rule": "scope eligible is not confirmed symbol availability; availability remains false until exact target-server evidence exists"
 }
