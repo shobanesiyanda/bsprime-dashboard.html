@@ -1,0 +1,42 @@
+{
+  "lock_id": "TRAILARIS_R5_4_MARKET_EXECUTION_ENGINE_2026-08-16",
+  "rule": "R5.4 metrics and logic are immutable. These gaps are post-lock refinement targets and may only alter a successor candidate.",
+  "gaps": [
+    {
+      "id": "GOLD_EXECUTION",
+      "state": "PARTIALLY_RESOLVED",
+      "evidence": "XAUUSD is present in the 34-route and 510-cell estate. Locked R5.4 selected zero XAU trades. HFM Cent research-proxy full-portfolio experiments executed XAU, but target-server certification is absent.",
+      "success_condition": "XAU remains continuously evaluated and may execute when causally qualified on a target-server-certified account profile without forced trades or portfolio regression."
+    },
+    {
+      "id": "BROKER_TARGET_SERVER_CERTIFICATION",
+      "state": "OPEN",
+      "evidence": "7 broker candidates, 238 route-broker cells, 179 scope-eligible candidate cells, 0 confirmed-available cells, 0 certified cells.",
+      "success_condition": "Exact target-server symbol availability, contract specification and empirical execution evidence for candidate broker/account/route combinations."
+    },
+    {
+      "id": "BROKER_AUTHENTIC_PERFORMANCE_REPLAY",
+      "state": "OPEN",
+      "evidence": "Locked R5.4 is historical-market/research-proxy execution evidence, not broker-certified execution.",
+      "success_condition": "Replay locked logic under certified route-specific spreads, commission, slippage, financing, lot steps, margin, fills, rejects and latency without silently changing the R5.4 historical record."
+    },
+    {
+      "id": "REMAINING_LOSS_REDUCTION",
+      "state": "QUANTIFIED_OPEN_REFINEMENT",
+      "evidence": "231 losses remain. 228 are STOP exits; 107 low-MFE losses, 68 severe-MAE losses and 54 positive-MFE-then-loss cases identify separate repair classes.",
+      "success_condition": "Reduce economically avoidable losses while retaining or improving expectancy, opportunity capture, drawdown, full-universe participation and fresh out-of-sample behavior."
+    },
+    {
+      "id": "RESEARCH_DEPTH",
+      "state": "OPEN_CONTINUOUS",
+      "evidence": "Released-event, crypto funding/basis and crypto order-flow evidence exist; indiscriminate full-intelligence combination regressed performance, proving the need for causal factor-specific reliability/regime gating.",
+      "success_condition": "Expand institutional research evidence breadth and depth while admitting only factors that improve chronological out-of-sample decisions under route/regime-specific reliability and execution evidence."
+    },
+    {
+      "id": "IB_ECONOMICS",
+      "state": "OPEN_PENDING_VOLUME_AND_ROUTE_CERTIFICATION",
+      "evidence": "IB remuneration is intentionally excluded from broker execution ranking. Exact customer-volume and certified broker/account/instrument payout mapping are required for actual fee attribution.",
+      "success_condition": "Persist per-trade/route lot volume and map it to actual signed IB terms after execution-quality selection, never allowing IB economics to promote inferior customer execution."
+    }
+  ]
+}
