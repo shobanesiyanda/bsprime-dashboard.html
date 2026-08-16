@@ -1,0 +1,101 @@
+name: Trailaris R5.5 Sealed Forward Holdout Acquisition
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_freeze_sha:
+        description: Frozen pre-forward R5.5 candidate commit SHA
+        required: true
+        type: string
+      forward_start:
+        description: Forward sample start date YYYY-MM-DD
+        required: true
+        type: string
+      forward_end:
+        description: Forward sample end date YYYY-MM-DD
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  acquire_sealed_34:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-ephemeral-research-20260815
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: '24'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Bind sample to frozen candidate before acquisition
+        env:
+          FREEZE_SHA: ${{ inputs.candidate_freeze_sha }}
+          FORWARD_START: ${{ inputs.forward_start }}
+          FORWARD_END: ${{ inputs.forward_end }}
+        run: |
+          set -euo pipefail
+          git cat-file -e "$FREEZE_SHA^{commit}"
+          python - <<'PY'
+          import os,subprocess,json
+          from datetime import date
+          sha=os.environ['FREEZE_SHA'];start=date.fromisoformat(os.environ['FORWARD_START']);end=date.fromisoformat(os.environ['FORWARD_END'])
+          if end<start:raise SystemExit('forward_end before forward_start')
+          frozen=subprocess.check_output(['git','show','-s','--format=%cI',sha],text=True).strip()
+          Path=None
+          manifest={'state':'FORWARD_HOLDOUT_BOUND_BEFORE_ACQUISITION','candidate_freeze_sha':sha,'candidate_commit_time':frozen,'forward_start':str(start),'forward_end':str(end),'selection_access':'PROHIBITED','optimization_access':'PROHIBITED','allowed_use':'ONE_SHOT_POST_FREEZE_FORWARD_EVALUATION'}
+          import pathlib;pathlib.Path('trailaris_r5_5/forward_holdout').mkdir(parents=True,exist_ok=True);pathlib.Path('trailaris_r5_5/forward_holdout/FORWARD_BINDING.json').write_text(json.dumps(manifest,indent=2))
+          PY
+      - name: Install acquisition dependencies
+        run: |
+          npm install --no-save --silent dukascopy-node@1.50.0 ws
+          python -m pip install --quiet pandas
+      - name: Acquire all 34 forward M1 routes
+        env:
+          FORWARD_START: ${{ inputs.forward_start }}
+          FORWARD_END: ${{ inputs.forward_end }}
+          FORWARD_RAW: trailaris_r5_5/forward_holdout/raw
+        run: |
+          set -euo pipefail
+          mkdir -p "$FORWARD_RAW"
+          node trailaris_r5_5/forward_holdout/acquire_forward_m1.js > trailaris_r5_5/forward_holdout/acquire_public_synthetic.log 2>&1 & P1=$!
+          python trailaris_r5_5/forward_holdout/acquire_forward_binance_m1.py > trailaris_r5_5/forward_holdout/acquire_crypto.log 2>&1 & P2=$!
+          wait $P1
+          wait $P2
+      - name: Validate full-universe sample and seal hashes
+        env:
+          FREEZE_SHA: ${{ inputs.candidate_freeze_sha }}
+          FORWARD_START: ${{ inputs.forward_start }}
+          FORWARD_END: ${{ inputs.forward_end }}
+        run: |
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          import pandas as pd
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          raw=Path('trailaris_r5_5/forward_holdout/raw');rows=[];failed=[]
+          for a in routes:
+              p=raw/f'{a}_M1_normalized.csv'
+              if not p.exists():failed.append(a);rows.append({'asset':a,'state':'MISSING'});continue
+              d=pd.read_csv(p);ts=pd.to_datetime(d.timestamp,utc=True,errors='coerce');med=ts.sort_values().diff().dropna().dt.total_seconds().median();src=str(d.source.dropna().iloc[0]) if len(d) and d.source.notna().any() else ''
+              h=hashlib.sha256(p.read_bytes()).hexdigest();ok=len(d)>100 and not ts.isna().any() and (pd.isna(med) or med<=75) and bool(src)
+              if not ok:failed.append(a)
+              rows.append({'asset':a,'state':'PASS' if ok else 'FAIL','rows':len(d),'first':str(ts.min()),'last':str(ts.max()),'median_sec':None if pd.isna(med) else float(med),'source':src,'sha256':h})
+          out=pd.DataFrame(rows);out.to_csv('trailaris_r5_5/forward_holdout/FORWARD_34_ROUTE_MANIFEST.csv',index=False)
+          binding=json.load(open('trailaris_r5_5/forward_holdout/FORWARD_BINDING.json'))
+          status={'state':'SEALED_FORWARD_HOLDOUT_ACQUIRED' if not failed else 'FORWARD_HOLDOUT_FULL_UNIVERSE_GATE_FAILED','candidate_freeze_sha':os.environ['FREEZE_SHA'],'forward_start':os.environ['FORWARD_START'],'forward_end':os.environ['FORWARD_END'],'routes_required':34,'routes_pass':34-len(failed),'failed_routes':failed,'raw_files_hashed':len(rows)-sum(r.get('state')=='MISSING' for r in rows),'selection_access':'PROHIBITED','optimization_access':'PROHIBITED','allowed_use':'ONE_SHOT_POST_FREEZE_FORWARD_EVALUATION','binding':binding}
+          Path('trailaris_r5_5/forward_holdout/FORWARD_HOLDOUT_STATUS.json').write_text(json.dumps(status,indent=2));print(json.dumps(status,indent=2))
+          if failed:raise SystemExit('34-route forward holdout gate failed: '+','.join(failed))
+          PY
+      - name: Upload sealed forward market paths
+        uses: actions/upload-artifact@v4
+        with:
+          name: r5-5-sealed-forward-${{ inputs.candidate_freeze_sha }}-${{ inputs.forward_start }}-${{ inputs.forward_end }}
+          path: |
+            trailaris_r5_5/forward_holdout/raw/*
+            trailaris_r5_5/forward_holdout/FORWARD_BINDING.json
+            trailaris_r5_5/forward_holdout/FORWARD_34_ROUTE_MANIFEST.csv
+            trailaris_r5_5/forward_holdout/FORWARD_HOLDOUT_STATUS.json
+          retention-days: 90
+          compression-level: 9
