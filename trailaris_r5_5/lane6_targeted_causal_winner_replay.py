@@ -63,8 +63,6 @@ class CausalWinnerVariant:
             mm=m & (~z.get('is_addon',pd.Series(False,index=z.index)).astype(bool))
             q=pd.to_numeric(z.quality,errors='coerce').fillna(0)
             z.loc[mm,'quality']=np.minimum(.995,q.loc[mm]+self.quality_boost)
-            # Baseline rank_score carries a .42 quality coefficient. Apply the equivalent priority delta
-            # after causal eligibility is fixed, so priority cannot manufacture new promotion eligibility.
             z.loc[mm,'rank_score']=pd.to_numeric(z.loc[mm,'rank_score'],errors='coerce').fillna(0)+.42*self.quality_boost
         elif self.mode=='AMPLIFY':
             parents=z[~z.get('is_addon',pd.Series(False,index=z.index)).astype(bool)].copy()
@@ -72,18 +70,15 @@ class CausalWinnerVariant:
             pstr=dict(zip(parents.campaign_id.astype(str),parents.strategy.astype(str)))
             pfam=dict(zip(parents.campaign_id.astype(str),parents.strategy_family.astype(str)))
             addons=z[z.get('is_addon',pd.Series(False,index=z.index)).astype(bool)&z.strategy.astype(str).eq('WINNER_ONLY_ADDON')].copy()
-            if len(addons) and 'parent_id' in addons.columns:
-                addons=addons[addons.parent_id.astype(str).map(pqual).fillna(False)].copy()
+            if len(addons) and 'parent_id' in addons.columns:addons=addons[addons.parent_id.astype(str).map(pqual).fillna(False)].copy()
             else:addons=addons.iloc[0:0].copy()
             parts=[z]
             for k in range(self.copies):
                 if not len(addons):break
                 q=addons.copy();q['campaign_id']=q.campaign_id.astype(str)+f'|WINAMP{k+1}'
-                # This is still an add-on economically. Cap each extra tranche at the engine's 0.25% add-on risk.
                 q['risk_fraction']=np.minimum(pd.to_numeric(q.risk_fraction,errors='coerce').fillna(.0025),.0025)
                 q['quality']=np.minimum(.995,pd.to_numeric(q.quality,errors='coerce').fillna(0)+self.quality_boost)
                 q['rank_score']=pd.to_numeric(q.rank_score,errors='coerce').fillna(0)+.42*self.quality_boost
-                # Preserve the parent strategy/family for attribution while is_addon + parent_id keep add-on controls authoritative.
                 q['strategy']=q.parent_id.astype(str).map(pstr).fillna(q.strategy.astype(str))
                 q['strategy_family']=q.parent_id.astype(str).map(pfam).fillna(q.strategy_family.astype(str))
                 parts.append(q);self.extra_tranches_created+=len(q)
@@ -109,7 +104,8 @@ def main():
     from reliability_common import promote
     from precision_experiment_harness import eval_variant,load_module
     data,v,cands,opps,fcache=base.build_universe(Path(a.rawdir));specs=r4.load_specs(Path(a.specs),'research-proxy');scope=json.load(open('trailaris_r5_4/R5_4_MARKET_EXECUTION_ENGINE_LOCK.json'))['scope']
-    if len(data)!=34 or scope!={'approved_routes':34,'strategy_families':15,'route_strategy_cells':510}:raise RuntimeError(f'full-universe scope failure data={len(data)} scope={scope}')
+    scope_ok=(len(data)==34 and int(scope.get('approved_routes',0))==34 and int(scope.get('strategy_families',0))==15 and int(scope.get('route_strategy_cells',0))==510 and bool(scope.get('full_universe_required',True)))
+    if not scope_ok:raise RuntimeError(f'full-universe scope failure data={len(data)} scope={scope}')
     ctlmod=load_module(Path('trailaris_r5_4/reliability_variants/variant_hierarchical_combined.py'),'r55_l6target_ctl');ctl,*_=eval_variant(ctlmod,data,cands,opps,fcache,specs,100.)
     if abs(float(ctl['end_equity'])-R54_END)>EPS:raise RuntimeError(f'R5.4 exact reproduction failed {ctl["end_equity"]}')
     b3,*_=eval_variant(ManagedVariant(B3,base,promote),data,cands,opps,fcache,specs,100.)
@@ -120,7 +116,7 @@ def main():
     standalone,SW,SEV,SDE,SPR=eval_variant(standalone_var,data,cands,opps,fcache,specs,100.)
     fusion_var=CausalWinnerVariant(a.mode,rule,base,promote,fcache,'LANE5',a.copies,a.quality_boost,a.runner_frac,a.target_r,a.trail_gap,a.max_extra_bars)
     fusion,FW,FEV,FDE,FPR=eval_variant(fusion_var,data,cands,opps,fcache,specs,100.)
-    gates={'end_equity_above_lane5':float(fusion['end_equity'])>LANE5_END+EPS,'fresh_return_strictly_above':float(fusion['fresh_return_pct'])>FRESH_FLOOR+EPS,'max_weekly_dd_not_worse':float(fusion['max_weekly_dd_pct'])>=DD_FLOOR-EPS,'fresh_dd_not_worse':float(fusion['fresh_max_dd_pct'])>=FRESH_DD_FLOOR-EPS,'losses_at_or_below_228':int(fusion['losses'])<=LANE5_LOSSES,'flats_at_or_below_421':int(fusion['flat'])<=LANE5_FLATS,'nonflat_win_rate_at_least_lane5':float(fusion['nonflat_win_rate'])>=LANE5_NFWR-EPS,'assets_with_selected_at_least_33':int(fusion['assets_with_selected'])>=33,'full_universe_34x15x510':True}
+    gates={'end_equity_above_lane5':float(fusion['end_equity'])>LANE5_END+EPS,'fresh_return_strictly_above':float(fusion['fresh_return_pct'])>FRESH_FLOOR+EPS,'max_weekly_dd_not_worse':float(fusion['max_weekly_dd_pct'])>=DD_FLOOR-EPS,'fresh_dd_not_worse':float(fusion['fresh_max_dd_pct'])>=FRESH_DD_FLOOR-EPS,'losses_at_or_below_228':int(fusion['losses'])<=LANE5_LOSSES,'flats_at_or_below_421':int(fusion['flat'])<=LANE5_FLATS,'nonflat_win_rate_at_least_lane5':float(fusion['nonflat_win_rate'])>=LANE5_NFWR-EPS,'assets_with_selected_at_least_33':int(fusion['assets_with_selected'])>=33,'full_universe_34x15x510':scope_ok}
     status={'state':'R5_5_LANE6_TARGETED_CAUSAL_WINNER_REPLAY_COMPLETE','evidence_class':'POST_RELIABILITY_PRE_SELECTION_WINNER_QUALIFICATION_PLUS_FULL_PORTFOLIO_REPLAY','mode':a.mode,'rule_file':str(a.rules),'rule_rank':a.rule_rank,'passing_rules_in_file':passing,'winner_rule':rule,'parameters':{'copies':a.copies,'quality_boost':a.quality_boost,'runner_frac':a.runner_frac,'target_r':a.target_r,'trail_gap':a.trail_gap,'max_extra_bars':a.max_extra_bars},'r5_4_control':ctl,'lane1b2_control':b3,'certified_lane5_control':lane5,'standalone_on_b3':standalone,'fusion_on_lane5':fusion,'standalone_delta_vs_b3':float(standalone['end_equity'])-B3_END,'fusion_delta_vs_lane5':float(fusion['end_equity'])-LANE5_END,'fresh_delta_vs_lane5':float(fusion['fresh_return_pct'])-FRESH_FLOOR,'runtime_counts':{'standalone_qualifying_promoted':standalone_var.qualifying_promoted,'standalone_extra_tranches_created':standalone_var.extra_tranches_created,'standalone_extensions_attempted':standalone_var.extensions_attempted,'standalone_extension_delta_r_pre_portfolio':standalone_var.extension_delta_r,'fusion_qualifying_promoted':fusion_var.qualifying_promoted,'fusion_extra_tranches_created':fusion_var.extra_tranches_created,'fusion_extensions_attempted':fusion_var.extensions_attempted,'fusion_extension_delta_r_pre_portfolio':fusion_var.extension_delta_r},'frontier_gates':gates,'frontier_pass':bool(all(gates.values())),'candidate_freeze':False,'scope':scope,'governance':'Winner rules were selected without Aug13-14 outcomes. At runtime they are evaluated only after the exact causal weekly promotion/reliability state exists and before portfolio selection. Amplification copies are created only after an already-promoted WINNER_ONLY_ADDON opportunity and remain add-ons capped at 0.25% risk. Priority changes ordering only after promotion eligibility is fixed. Extension activates only after a qualified unmodified base trade reaches the original 3R target. Full 34x15x510 chronology is recomputed. A frontier pass still requires forensic-completeness gates before freeze, then unseen forward and broker/server certification.'}
     (out/'R5_5_LANE6_TARGETED_STATUS.json').write_text(json.dumps(status,indent=2,default=str));SW.to_csv(out/'standalone_weekly.csv',index=False);FW.to_csv(out/'fusion_weekly.csv',index=False);print(json.dumps(status,indent=2,default=str))
 if __name__=='__main__':main()
