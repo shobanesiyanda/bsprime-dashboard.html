@@ -1,0 +1,105 @@
+name: Trailaris R5 34-Route Capture Repair
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_capture_repair.yml']
+permissions:
+  contents: write
+jobs:
+  r5:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-ephemeral-research-20260815
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          python -m pip install --quiet pandas numpy
+          npm install --no-save --silent dukascopy-node@1.50.0 ws
+      - name: Reconstruct R4 and R5 engines
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          cat trailaris_r5/r5.part00 trailaris_r5/r5.part01 trailaris_r5/r5.part02 trailaris_r5/r5.part03 | base64 -d | gzip -d > trailaris_r5/trailaris_r5_capture_repair.py
+          PYTHONPATH=trailaris_r4 python -m py_compile trailaris_r4/trailaris_r4_full_universe_loop.py trailaris_r4/trailaris_r4_asset_adapter.py trailaris_r5/trailaris_r5_capture_repair.py
+      - name: Restore extended true-M1 cache
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: trailaris_r5/raw_m1
+          key: trailaris-r5-m1-34-20260504-20260814-v1
+      - name: Acquire all 34 routes through 14 August
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf trailaris_r5/raw_m1 && mkdir -p trailaris_r5/raw_m1
+          sed "s#const RAW='trailaris_r4/raw_m1'#const RAW='trailaris_r5/raw_m1'#; s#2026-08-13T00:00:00Z#2026-08-15T00:00:00Z#" trailaris_r4/acquire_m1.js > trailaris_r5/acquire_m1.js
+          sed "s#OUT=Path('trailaris_r4/raw_m1')#OUT=Path('trailaris_r5/raw_m1')#; s#END=date(2026,8,12)#END=date(2026,8,14)#; s#trailaris_r4/coverage_m1_binance.json#trailaris_r5/coverage_m1_binance.json#" trailaris_r4/acquire_binance_m1.py > trailaris_r5/acquire_binance_m1.py
+          node trailaris_r5/acquire_m1.js > trailaris_r5/acquire_node.log 2>&1 & P1=$!
+          python trailaris_r5/acquire_binance_m1.py > trailaris_r5/acquire_binance.log 2>&1 & P2=$!
+          wait $P1; wait $P2
+      - name: Validate 34/34 extended M1 gate
+        run: |
+          python - <<'PY'
+          import json,pandas as pd
+          from pathlib import Path
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          start=pd.Timestamp('2026-05-04T00:00:00Z'); end=pd.Timestamp('2026-08-14T23:59:59Z'); rows=[]; passed=[]
+          for a in routes:
+            p=Path('trailaris_r5/raw_m1')/f'{a}_M1_normalized.csv'
+            if not p.exists(): rows.append({'asset':a,'state':'MISSING'}); continue
+            d=pd.read_csv(p,usecols=['timestamp','source']); ts=pd.to_datetime(d.timestamp,utc=True,errors='coerce').sort_values(); med=ts.diff().dropna().dt.total_seconds().median(); first=ts.min(); last=ts.max(); src=str(d.source.dropna().iloc[0]) if d.source.notna().any() else ''
+            reason=[]
+            if ts.isna().any():reason.append('bad_timestamp')
+            if pd.notna(med) and med>75:reason.append(f'not_M1={med}')
+            if first>start+pd.Timedelta(days=1):reason.append('late_start')
+            if last<end-pd.Timedelta(days=1):reason.append('early_end')
+            state='PASS' if not reason and len(d)>100 else 'FAIL'
+            if state=='PASS':passed.append(a)
+            rows.append({'asset':a,'state':state,'rows':len(d),'first':str(first),'last':str(last),'median_sec':float(med) if pd.notna(med) else None,'source':src,'reason':';'.join(reason)})
+          pd.DataFrame(rows).to_csv('trailaris_r5/M1_34Route_Coverage.csv',index=False)
+          s={'routes_required':34,'routes_pass':len(passed),'missing_or_failed':sorted(set(routes)-set(passed)),'gate_pass':len(passed)==34}
+          Path('trailaris_r5/M1_34Route_Coverage.json').write_text(json.dumps(s,indent=2)); print(json.dumps(s,indent=2)); assert len(passed)==34
+          PY
+      - name: Save extended M1 cache
+        if: success() && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: trailaris_r5/raw_m1
+          key: trailaris-r5-m1-34-20260504-20260814-v1
+      - name: Build non-certified research sizing layer
+        run: |
+          python trailaris_r4/build_research_specs.py
+          cp trailaris_r4/research_proxy_specs.csv trailaris_r5/research_proxy_specs.csv
+      - name: Execute causal R5 capture repair
+        env:
+          PYTHONPATH: trailaris_r4
+        run: |
+          rm -rf trailaris_r5/results && mkdir -p trailaris_r5/results
+          python trailaris_r5/trailaris_r5_capture_repair.py --rawdir trailaris_r5/raw_m1 --specs trailaris_r5/research_proxy_specs.csv --outdir trailaris_r5/results --start 100 | tee trailaris_r5/r5.log
+      - name: Audit R5 safety and scope
+        run: |
+          python - <<'PY'
+          import json,pandas as pd
+          from pathlib import Path
+          s=json.load(open('trailaris_r5/results/R5_STATUS.json')); a=pd.read_csv('trailaris_r5/results/R5_34_asset_state.csv'); w=pd.read_csv('trailaris_r5/results/R5_walkforward_weekly.csv')
+          audit={'routes':s['routes'],'asset_rows':len(a),'weeks':len(w),'max_selected_open_risk_pct':s['max_selected_open_risk_pct'],'assets_with_selected':s['assets_with_selected'],'fresh_return_pct':s['fresh_return_pct'],'pass':s['routes']==34 and len(a)==34 and s['max_selected_open_risk_pct']<=1.000001}
+          Path('trailaris_r5/results/R5_AUDIT.json').write_text(json.dumps(audit,indent=2)); print(json.dumps(audit,indent=2)); assert audit['pass']
+          PY
+      - name: Commit compact R5 evidence
+        if: always()
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_r5/M1_34Route_Coverage.csv trailaris_r5/M1_34Route_Coverage.json trailaris_r5/r5.log 2>/dev/null || true
+          git add -f trailaris_r5/results/R5_STATUS.json trailaris_r5/results/R5_AUDIT.json trailaris_r5/results/R5_walkforward_weekly.csv trailaris_r5/results/R5_confirmed_configs.csv trailaris_r5/results/R5_34_asset_state.csv trailaris_r5/results/R5_capture_attribution.csv trailaris_r5/results/R5_fresh_Aug13_14_performance.csv trailaris_r5/results/R5_fresh_Aug13_14_capture.csv 2>/dev/null || true
+          git commit -m 'test: R5 34-route causal capture repair [skip ci]' || true
+          git push origin HEAD:trailaris-ephemeral-research-20260815
