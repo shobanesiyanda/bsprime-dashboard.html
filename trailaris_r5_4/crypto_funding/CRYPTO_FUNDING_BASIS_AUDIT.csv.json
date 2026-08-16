@@ -1,0 +1,10 @@
+{
+  "assets_required": 5,
+  "assets_pass": 5,
+  "factor_rows": 1265,
+  "trigger_rows_abs_ge_070": 537,
+  "funding_archive_window": "2026-05-04 through latest completed official monthly archive (expected 2026-07-31 at run date)",
+  "august_policy": "NO_SYNTHETIC_FUNDING; no August funding-basis trigger without official archived settlement evidence",
+  "causality": "funding settlement and premium observed at/before timestamp; z-score baselines use shifted prior observations only",
+  "evidence_state": "VERIFIED_BINANCE_PUBLIC_ARCHIVE_FUNDING_BASIS_CAUSAL"
+}
