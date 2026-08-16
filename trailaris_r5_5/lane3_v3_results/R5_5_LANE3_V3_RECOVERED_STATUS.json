@@ -1,0 +1,32 @@
+{
+  "state": "R5_5_LANE3_V3_RECOVERED_COMPLETE_REJECTED",
+  "evidence_class": "END_TO_END_CAUSAL_REBUILT_STRATEGY_REPLAY_RECOVERED_FROM_SIX_SUCCESSFUL_VARIANT_ARTIFACTS",
+  "aggregator_defect": "The original aggregate job failed on a missing reporting key fresh_delta_pct after all six replay jobs had completed successfully. Replay evidence itself was intact.",
+  "variants_completed": 6,
+  "passing_variants": 0,
+  "best_variant": {
+    "variant_index": 4,
+    "config_id": "SD_STRICT_ONLY",
+    "rebuilt_candidates": 64,
+    "end_equity": 334.06966928043823,
+    "fresh_return_pct": 7.261646557142409,
+    "max_weekly_dd_pct": -4.343832243362245,
+    "wins": 451,
+    "losses": 235,
+    "flat": 438,
+    "nonflat_win_rate": 0.6574344023323615,
+    "assets_with_selected": 32,
+    "candidate_pass": false
+  },
+  "remaining_variants": [
+    {"variant_index":0,"config_id":"BOTH_STRICT","end_equity":329.84136115829585,"fresh_return_pct":7.261646557142409,"max_weekly_dd_pct":-4.343832243362245,"wins":452,"losses":236,"flat":438,"nonflat_win_rate":0.6569767441860465,"assets_with_selected":32,"rebuilt_candidates":462,"candidate_pass":false},
+    {"variant_index":5,"config_id":"MR_STRICT_ONLY","end_equity":329.84136115829585,"fresh_return_pct":7.261646557142409,"max_weekly_dd_pct":-4.343832243362245,"wins":452,"losses":236,"flat":438,"nonflat_win_rate":0.6569767441860465,"assets_with_selected":32,"rebuilt_candidates":398,"candidate_pass":false},
+    {"variant_index":2,"config_id":"SD_BALANCED_MR_STRICT","end_equity":329.84136115829585,"fresh_return_pct":7.261646557142409,"max_weekly_dd_pct":-4.343832243362245,"wins":452,"losses":236,"flat":438,"nonflat_win_rate":0.6569767441860465,"assets_with_selected":32,"rebuilt_candidates":697,"candidate_pass":false},
+    {"variant_index":1,"config_id":"SD_STRICT_MR_BALANCED","end_equity":306.7620287575821,"fresh_return_pct":6.525425842856758,"max_weekly_dd_pct":-4.808433751272068,"wins":445,"losses":248,"flat":420,"nonflat_win_rate":0.6421356421356421,"assets_with_selected":32,"rebuilt_candidates":2854,"candidate_pass":false},
+    {"variant_index":3,"config_id":"BOTH_BALANCED","end_equity":306.7620287575821,"fresh_return_pct":6.525425842856758,"max_weekly_dd_pct":-4.808433751272068,"wins":445,"losses":248,"flat":420,"nonflat_win_rate":0.6421356421356421,"assets_with_selected":32,"rebuilt_candidates":3089,"candidate_pass":false}
+  ],
+  "decision": "REJECT_AND_CLOSE_LANE3_V3",
+  "fusion_eligibility": false,
+  "reason": "No variant beats R5.4 or the R5.5 management frontier, no variant improves fresh return, and all variants reduce selected-asset coverage to 32. The rebuilt-strategy component has no independent causal value worth carrying into the current R5.5 fusion path.",
+  "approved_scope": {"routes":34,"strategy_families":15,"route_strategy_cells":510}
+}
