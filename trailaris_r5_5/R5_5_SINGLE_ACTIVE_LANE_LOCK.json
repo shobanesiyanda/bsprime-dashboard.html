@@ -1,10 +1,11 @@
 {
-  "state": "HARD_LOCKED_SINGLE_ACTIVE_REFINEMENT_LANE",
-  "active_lane": "R5_5_INTEGRATED_REFINEMENT_FROM_V2_BASELINE",
-  "active_branch": "trailaris-ephemeral-research-20260815",
-  "active_baseline": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
-  "active_baseline_end_equity": 1366.8938578865148,
-  "active_baseline_return_pct": 1266.8938578865148,
+  "state": "CLOSED_NO_ACTIVE_R5_5_REFINEMENT_LANE",
+  "active_lane": null,
+  "release_id": "TRAILARIS_R5_5_FINAL_20260817",
+  "final_branch_source": "trailaris-ephemeral-research-20260815",
+  "canonical_engine": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
+  "end_equity": 1366.8938578865148,
+  "compounded_return_pct": 1266.8938578865148,
   "executed_trades": 2136,
   "wins": 1221,
   "losses": 478,
@@ -16,14 +17,14 @@
   "route_strategy_cells_required": 510,
   "historical_control": "R5_4_FROZEN_26W_20260816",
   "historical_control_preserved": true,
+  "v3_challenger_disposition": "REJECTED_FOR_RELEASE_REPLACEMENT_PRESERVED_AS_RESEARCH_EVIDENCE",
   "actions_policy": {
-    "automatic_trigger": false,
-    "baseline_rerun": "PROHIBITED",
-    "candidate_replay": "PROHIBITED_WITHOUT_EXPLICIT_USER_AUTHORIZATION",
-    "data_acquisition": "PROHIBITED_WITHOUT_EXPLICIT_USER_AUTHORIZATION",
-    "optimization_sweep": "PROHIBITED_WITHOUT_EXPLICIT_USER_AUTHORIZATION",
-    "legacy_lane_reactivation": "PROHIBITED"
+    "r5_5_candidate_replay": "CLOSED",
+    "r5_5_baseline_rerun": "PROHIBITED_AS_REFINEMENT_ACTIVITY",
+    "r5_5_optimization_sweep": "CLOSED",
+    "legacy_lane_reactivation": "PROHIBITED",
+    "future_research": "MUST_USE_SEPARATELY_VERSIONED_SUCCESSOR_OR_UPDATE"
   },
-  "baseline_governance": "All future refinement starts from the locked V2 baseline. No silent scope narrowing, architecture reversion or baseline replacement is permitted. A replacement baseline requires explicit user authorization.",
-  "continuation_rule": "Refine the remaining 478 losses, 437 flat outcomes, liquidity/runway qualification, profit banking and weekly drawdown while preserving the validated winner mechanisms and full 34x15x510 scope."
+  "version_governance": "Trailaris R5.5 is final and immutable. No additional refinement, optimization, threshold tuning, model upgrade, liquidity/runway change, risk change, execution change or evidence-driven architecture change may mutate this release. Future work must use a separately versioned successor or update.",
+  "evidence_class": "FINAL_LOCKED_RESEARCH_RELEASE; FULL_26_WEEK_CAUSAL_WALK_FORWARD_RESEARCH_PROXY; BROKER_PRODUCTION_CERTIFICATION_SEPARATE"
 }
