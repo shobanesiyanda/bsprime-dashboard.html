@@ -1,0 +1,39 @@
+{
+  "state": "AUTHORIZED_FULL_REPLAY_FROM_LOCKED_V2_BASELINE",
+  "baseline": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
+  "scope": {"weeks": 26, "routes": 34, "strategy_families": 15, "route_strategy_cells": 510},
+  "mandate": "Execute all approved liquidity/runway recommendations together without narrowing universe, capping right-tail winners, or using hindsight in live eligibility.",
+  "upgrades": {
+    "entry_quality_vs_continuation_quality": "separate causal estimates",
+    "entry_runway": "P(+0.75R), P(+1.50R), Expected Executable Excursion, predicted net-R and liquidity-sufficiency proxy",
+    "liquidity_proxy_inputs": ["strictly pre-decision realized range/volatility", "directional impulse", "path efficiency", "range expansion", "cost-to-range friction", "session time"],
+    "runway_learning": "112-day regularized nearest-state model trained only on promotions exited before each evaluation week",
+    "campaign_classes": ["RUNNER", "EXTRACTION", "REJECT_INSUFFICIENT_RUNWAY"],
+    "developed_position_state": "re-underwrite at +0.75R, +1.00R and +1.25R",
+    "adaptive_profit_banking": "0-60% cumulative according to causal continuation/runway deterioration",
+    "runner": "all unbanked size remains on frozen exit path with no global 3R ceiling",
+    "loss_treatment": "preserve V2 negative-edge gate and add causal insufficient-runway rejection/risk scaling",
+    "flat_treatment": "monetize developed but weak-continuation trades rather than forcing all positions through the same horizon",
+    "capacity_after_partial": "no extra capacity credit; conservative replay",
+    "direct_order_book_liquidity": "not present in historical evidence; this replay uses the approved causal liquidity proxy layer"
+  },
+  "causality": {
+    "entry": "strictly pre-decision bars only",
+    "training": "historical MFE and outcomes permitted only as labels after exit and only for prior weeks",
+    "management": "checkpoint re-underwriting occurs only when the contemporaneous path first reaches that checkpoint",
+    "prohibited": ["future MFE/MAE as current eligibility", "same-bar future information", "global 3R cap", "universe narrowing", "automatic baseline promotion"]
+  },
+  "comparison_baseline": {
+    "end_equity": 1366.8938578865148,
+    "return_pct": 1266.8938578865148,
+    "trades": 2136,
+    "wins": 1221,
+    "losses": 478,
+    "flats": 437,
+    "nonflat_win_rate": 0.7186580341377281,
+    "profit_factor": 2.9195127192871873,
+    "max_weekly_drawdown_pct": -3.7440606836682933,
+    "max_event_drawdown_pct": -2.7023988320913572
+  },
+  "promotion": "No automatic promotion. Report all deltas versus locked V2."
+}
