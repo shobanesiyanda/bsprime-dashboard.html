@@ -8,10 +8,10 @@ FIELDS=['broker_symbol','account_type','server','capture_start','capture_end','s
 rows=[]
 for a in ROUTES:
   for b in BROKERS:
-    native=(b=='DERIV_MT5_SYNTHETIC' and a in SYN) or (b!='DERIV_MT5_SYNTHETIC' and a not in SYN)
-    r={'route':a,'broker_id':b,'scope_state':'IN_SCOPE_238_CELL_ESTATE','candidate_native':native,'available':False,'captured_from_target_server':False,'broker_certified':False,'certification_state':'TARGET_SERVER_EVIDENCE_REQUIRED' if native else 'NON_NATIVE_BROKER_ROUTE_GATED'}
+    scope_eligible=(b=='DERIV_MT5_SYNTHETIC' and a in SYN) or (b!='DERIV_MT5_SYNTHETIC' and a not in SYN)
+    r={'route':a,'broker_id':b,'scope_state':'IN_SCOPE_238_CELL_ESTATE','candidate_scope_eligible':scope_eligible,'availability_state':'UNVERIFIED_TARGET_SERVER' if scope_eligible else 'OUT_OF_SPECIALIST_SCOPE','available':False,'captured_from_target_server':False,'broker_certified':False,'certification_state':'TARGET_SERVER_EVIDENCE_REQUIRED' if scope_eligible else 'SPECIALIST_SCOPE_GATED'}
     for c in FIELDS:r[c]=''
     rows.append(r)
 df=pd.DataFrame(rows);Path('trailaris_r5_4').mkdir(exist_ok=True);df.to_csv('trailaris_r5_4/R5_4_BROKER_ROUTE_CERTIFICATION_238.csv',index=False)
-s={'routes':len(ROUTES),'brokers':len(BROKERS),'cells':len(df),'native_candidate_cells':int(df.candidate_native.sum()),'gated_non_native_cells':int((~df.candidate_native).sum()),'certified_cells':0,'selection_state':'FAIL_CLOSED_UNTIL_TARGET_SERVER_EVIDENCE'}
+s={'routes':len(ROUTES),'brokers':len(BROKERS),'cells':len(df),'scope_eligible_candidate_cells':int(df.candidate_scope_eligible.sum()),'specialist_scope_gated_cells':int((~df.candidate_scope_eligible).sum()),'confirmed_available_cells':int(df.available.sum()),'certified_cells':int(df.broker_certified.sum()),'selection_state':'FAIL_CLOSED_UNTIL_TARGET_SERVER_EVIDENCE','truth_rule':'scope eligible is not confirmed symbol availability; availability remains false until exact target-server evidence exists'}
 Path('trailaris_r5_4/R5_4_BROKER_ROUTE_CERTIFICATION_STATUS.json').write_text(json.dumps(s,indent=2));print(json.dumps(s,indent=2));assert len(df)==238 and df.route.nunique()==34 and df.broker_id.nunique()==7
