@@ -1,0 +1,52 @@
+{
+  "state": "R5_3_STRATEGY_EVIDENCE_TRUTH_HARDENED",
+  "scope": {
+    "assets": 34,
+    "strategy_families": 15,
+    "strategy_cells": 510,
+    "scope_gate_pass": true
+  },
+  "trigger_observation": {
+    "families_triggered": 12,
+    "families_without_trigger": [
+      "ORDER_FLOW_MICROSTRUCTURE",
+      "CARRY_VALUE",
+      "CRYPTO_FUNDING_BASIS"
+    ],
+    "interpretation": "A retained cell is not evidence-complete merely because it exists in the 510-cell factory. EXECUTED_NO_TRIGGER is insufficient to claim a factor family was empirically tested when its native score column contained no populated evidence."
+  },
+  "factor_evidence": {
+    "EVENT_RESPONSE": {
+      "state": "EVIDENCE_PRESENT",
+      "native_routes_with_evidence": 29,
+      "non_native_synthetic_routes": 5,
+      "factor_rows": 342,
+      "evidence_class": "RELEASED_OFFICIAL_CALENDAR_CAUSAL_POST_EVENT"
+    },
+    "ORDER_FLOW_MICROSTRUCTURE": {
+      "state": "EVIDENCE_INCOMPLETE_FAIL_CLOSED",
+      "native_applicable_routes": 34,
+      "required_evidence": "native tick/trade-flow plus executable spread/depth where available",
+      "promotion_allowed": false
+    },
+    "CARRY_VALUE": {
+      "state": "EVIDENCE_INCOMPLETE_FAIL_CLOSED",
+      "native_applicable_routes": 29,
+      "required_evidence": "asset-class-native rates/swaps/forwards, basis/yield, futures basis/dividends or term-structure/roll-yield",
+      "promotion_allowed": false
+    },
+    "CRYPTO_FUNDING_BASIS": {
+      "state": "EVIDENCE_INCOMPLETE_FAIL_CLOSED",
+      "native_applicable_routes": 5,
+      "required_evidence": "perpetual funding plus basis plus open-interest/liquidation evidence where historically obtainable",
+      "promotion_allowed": false
+    }
+  },
+  "portfolio_promotion": {
+    "research_scope_pass": true,
+    "full_strategy_evidence_pass": false,
+    "broker_certified": false,
+    "performance_claim_allowed": false
+  },
+  "hard_lock": "All 34 assets and all 15 strategy families remain in scope. Missing native evidence gates a family or cell; it never removes it from the universe and never authorizes a proxy performance claim."
+}
