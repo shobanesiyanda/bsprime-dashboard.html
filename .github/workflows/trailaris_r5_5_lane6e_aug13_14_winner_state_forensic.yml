@@ -10,7 +10,7 @@ permissions:
   contents: write
 concurrency:
   group: trailaris-r5-5-lane6e-fresh-forensic
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   BRANCH: trailaris-ephemeral-research-20260815
