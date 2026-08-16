@@ -1,0 +1,54 @@
+{
+  "state": "LOCKED_R5_4_FLAT_FORENSIC_COMPLETE",
+  "locked_result": {
+    "end_equity": 337.4231242104393,
+    "compounded_return_pct": 237.42312421043928,
+    "weeks": 11,
+    "mean_week_pct": 11.742009304999732,
+    "median_week_pct": 12.49921336356319,
+    "weeks_ge5": 10,
+    "weeks_ge10": 9,
+    "max_weekly_dd_pct": -4.637645574907678,
+    "executed_trades": 1102,
+    "wins": 446,
+    "losses": 231,
+    "flat": 425,
+    "nonflat_win_rate": 0.6587887740029542,
+    "fresh_return_pct": 7.261646557142409,
+    "fresh_max_dd_pct": -0.5196525640746019,
+    "assets_with_selected": 33,
+    "beats_or_matches_return_baseline": true,
+    "fresh_not_regressed": false,
+    "losses_improved": true,
+    "drawdown_improved": true,
+    "promotion_eligible": false
+  },
+  "overall": {
+    "trades": 1102,
+    "wins": 446,
+    "losses": 231,
+    "flats": 425,
+    "flat_rate": 0.3856624319419238,
+    "flat_avg_mfe_r": 1.0184198607306916,
+    "flat_avg_giveback_r": 1.0184198607306916
+  },
+  "diagnostic_first_8_weeks": {
+    "trades": 823,
+    "wins": 329,
+    "losses": 167,
+    "flats": 327,
+    "flat_rate": 0.3973268529769137,
+    "flat_avg_mfe_r": 1.018958987652619,
+    "flat_avg_giveback_r": 1.018958987652619
+  },
+  "observation_last_3_weeks": {
+    "trades": 279,
+    "wins": 117,
+    "losses": 64,
+    "flats": 98,
+    "flat_rate": 0.35125448028673834,
+    "flat_avg_mfe_r": 1.0166209372258934,
+    "flat_avg_giveback_r": 1.0166209372258934
+  },
+  "interpretation_rule": "High flat rate is a repair target only when causal management changes improve net P&L/capture without increasing loss tails."
+}
