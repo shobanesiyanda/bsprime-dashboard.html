@@ -1,0 +1,81 @@
+name: Trailaris R5.4 Flat and Negative Strategy Audit
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_4_flat_negative_strategy_audit.yml']
+permissions:
+  contents: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-ephemeral-research-20260815}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --quiet pandas numpy
+      - name: Reconstruct dependencies
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+      - uses: actions/cache@v4
+        with:
+          path: trailaris_r5/raw_m1
+          key: trailaris-r5-m1-34-20260504-20260814-v1
+          fail-on-cache-miss: true
+      - name: Rebuild causal evidence and specs
+        run: |
+          mkdir -p trailaris_r5_4/postlock_diagnostics
+          python trailaris_r5_3/build_released_event_factor_feed.py --rawdir trailaris_r5/raw_m1 --out trailaris_r5/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_r5_4/postlock_diagnostics/EVENT_AUDIT.csv
+          python trailaris_r4/build_research_specs.py
+      - name: Reproduce locked R5.4 and profile flats
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import pandas as pd,numpy as np
+          import R5_BASE_CAUSAL_ENGINE as base
+          import trailaris_r4_full_universe_loop as r4
+          from precision_experiment_harness import eval_variant,load_module
+          out=Path('trailaris_r5_4/postlock_diagnostics');raw=Path('trailaris_r5/raw_m1')
+          data,v,cands,opps,fcache=base.build_universe(raw);specs=r4.load_specs(Path('trailaris_r4/research_proxy_specs.csv'),'research-proxy')
+          mod=load_module(Path('trailaris_r5_4/reliability_variants/variant_hierarchical_combined.py'),'locked')
+          res,W,EV,DE,PR=eval_variant(mod,data,cands,opps,fcache,specs,100.0)
+          assert abs(res['end_equity']-337.4231242104393)<=1e-9 and len(EV)==1102
+          for c in ['net_pnl','net_r','mfe_r','mae_r','giveback_r','quality','expected_r','rank_score']:
+            if c in EV:EV[c]=pd.to_numeric(EV[c],errors='coerce')
+          flat=EV[EV.net_pnl==0].copy(); assert len(flat)==425
+          bins=[-np.inf,.2,.5,.75,1.0,1.5,2.0,3.0,np.inf];labels=['<=0.2R','0.2-0.5R','0.5-0.75R','0.75-1.0R','1.0-1.5R','1.5-2.0R','2.0-3.0R','>3.0R']
+          flat['mfe_bucket']=pd.cut(flat.mfe_r,bins=bins,labels=labels)
+          by_mfe=flat.groupby('mfe_bucket',observed=False).agg(flats=('net_pnl','size'),avg_mfe_r=('mfe_r','mean'),median_mae_r=('mae_r','median'),avg_giveback_r=('giveback_r','mean')).reset_index();by_mfe.to_csv(out/'R5_4_FLATS_BY_MFE.csv',index=False)
+          for col in ['asset','strategy','strategy_family','exit_reason']:
+            z=flat.groupby(col,dropna=False).agg(flats=('net_pnl','size'),avg_mfe_r=('mfe_r','mean'),avg_mae_r=('mae_r','mean'),avg_giveback_r=('giveback_r','mean')).reset_index().sort_values('flats',ascending=False);z.to_csv(out/f'R5_4_FLATS_BY_{col.upper()}.csv',index=False)
+          # Persistence check: first 8 weeks diagnosis vs last 3 weeks validation-style observation.
+          EV['eval_week']=pd.to_datetime(EV.eval_week,utc=True);weeks=sorted(EV.eval_week.dropna().unique());cut=weeks[-3]
+          early=EV[EV.eval_week<cut];late=EV[EV.eval_week>=cut]
+          def seg(x):
+            f=x[x.net_pnl==0];l=x[x.net_pnl<0];w=x[x.net_pnl>0]
+            return {'trades':len(x),'wins':len(w),'losses':len(l),'flats':len(f),'flat_rate':len(f)/len(x) if len(x) else 0,'flat_avg_mfe_r':float(f.mfe_r.mean()) if len(f) else 0,'flat_avg_giveback_r':float(f.giveback_r.mean()) if len(f) else 0}
+          s={'state':'LOCKED_R5_4_FLAT_FORENSIC_COMPLETE','locked_result':res,'overall':seg(EV),'diagnostic_first_8_weeks':seg(early),'observation_last_3_weeks':seg(late),'interpretation_rule':'High flat rate is a repair target only when causal management changes improve net P&L/capture without increasing loss tails.'}
+          (out/'R5_4_FLAT_FORENSIC_STATUS.json').write_text(json.dumps(s,indent=2,default=str))
+          # Negative-strategy audit by early/late segment. Do not retroactively delete strategies from the lock.
+          rows=[]
+          for strategy in sorted(EV.strategy.unique()):
+            for name,x in [('first8',early),('last3',late),('all',EV)]:
+              g=x[x.strategy==strategy];w=g[g.net_pnl>0];l=g[g.net_pnl<0]
+              if not len(g):continue
+              rows.append({'strategy':strategy,'segment':name,'trades':len(g),'wins':len(w),'losses':len(l),'flats':int((g.net_pnl==0).sum()),'net_pnl':float(g.net_pnl.sum()),'profit_factor':float(w.net_pnl.sum()/(-l.net_pnl.sum())) if len(l) and -l.net_pnl.sum()>0 else np.nan,'avg_mfe_r':float(g.mfe_r.mean()),'avg_mae_r':float(g.mae_r.mean())})
+          pd.DataFrame(rows).to_csv(out/'R5_4_STRATEGY_EARLY_LATE_ATTRIBUTION.csv',index=False)
+          print(json.dumps(s,indent=2,default=str))
+          PY
+      - name: Commit diagnostics
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_r5_4/postlock_diagnostics/R5_4_FLAT_* trailaris_r5_4/postlock_diagnostics/R5_4_STRATEGY_EARLY_LATE_ATTRIBUTION.csv
+          git commit -m 'audit: locked R5.4 flat and negative-strategy attribution [skip ci]' || true
+          git pull --rebase origin trailaris-ephemeral-research-20260815
+          git push origin HEAD:trailaris-ephemeral-research-20260815
