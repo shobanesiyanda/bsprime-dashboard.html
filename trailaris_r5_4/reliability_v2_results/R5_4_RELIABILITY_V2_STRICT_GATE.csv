@@ -1,0 +1,5 @@
+variant,end_equity,mean_week_pct,median_week_pct,weeks_ge5,weeks_ge10,max_weekly_dd,fresh_return,fresh_dd,asset_participation,fewer_losses,higher_nonflat_win_rate,higher_profit_factor,higher_end_equity,better_max_weekly_dd,behavioral_non_regression_pass,promotion_allowed
+variant_high_confidence_gate,True,True,True,True,True,True,False,True,False,True,True,False,True,True,False,False
+variant_baseline,True,True,True,True,True,True,True,True,True,False,False,False,False,False,True,False
+variant_strategy_only_gate,False,False,True,True,True,True,False,True,False,True,True,False,False,True,False,False
+variant_high_confidence_rank,False,False,False,False,False,True,True,True,True,True,False,False,False,True,False,False
