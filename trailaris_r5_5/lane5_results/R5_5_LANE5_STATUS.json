@@ -1,15 +1,37 @@
 {
-  "state": "R5_5_LANE5_PARETO_MANAGEMENT_STACK_COMPLETE",
-  "evidence_class": "END_TO_END_CAUSAL_FULL_REPLAY_MATRIX",
+  "state": "R5_5_LANE5_LEADER_RECERTIFIED_MATRIX_TAIL_IN_PROGRESS",
+  "evidence_class": "END_TO_END_CAUSAL_FULL_REPLAY_LEADER_RECERTIFICATION",
+  "authoritative_run_id": 31964215446,
+  "superseded_cancelled_run_id": 31964659049,
+  "integrity_note": "The cancelled duplicate run executed an always() aggregate with zero completed artifacts and temporarily overwrote this summary with 0/11. That summary was invalid. Canonical leader evidence is preserved in R5_5_LANE5_LEADER_RECERTIFICATION.json and R5_5_FRONTIER_LOCK.json.",
   "variants_expected": 11,
-  "variants_completed": 0,
-  "frontier_passes": 0,
-  "best_variant": {},
-  "r5_4_control_end_equity": 337.4231242104393,
-  "lane1b2_incumbent_end_equity": 343.5447309255116,
-  "scope": {
-    "routes": 34,
-    "strategy_families": 15,
-    "route_strategy_cells": 510
-  }
+  "variants_known_completed_on_authoritative_run_at_repair": 7,
+  "certified_best_variant": {
+    "equivalent_config_ids": ["B3_B4_B8", "B3_B5_B8"],
+    "end_equity": 345.3896887826546,
+    "compounded_return_pct": 245.38968878265464,
+    "fresh_return_pct": 7.261646557142409,
+    "fresh_max_dd_pct": -0.5196525640746019,
+    "max_weekly_dd_pct": -4.637645574907678,
+    "executed_trades": 1119,
+    "wins": 470,
+    "losses": 228,
+    "flat": 421,
+    "nonflat_win_rate": 0.673352435530086,
+    "assets_with_selected": 33,
+    "managed_executions": 16,
+    "full_universe_34x15x510": true
+  },
+  "r5_4_control_reproduced": {
+    "end_equity": 337.4231242104393,
+    "executed_trades": 1102
+  },
+  "scope": {"routes":34,"strategy_families":15,"route_strategy_cells":510},
+  "historical_frontier_certified": true,
+  "candidate_freeze": false,
+  "unresolved_gate": "fresh_return_pct must be strictly above 7.261646557142409 while preserving the certified Lane 5 frontier",
+  "canonical_evidence_files": [
+    "trailaris_r5_5/lane5_results/R5_5_LANE5_LEADER_RECERTIFICATION.json",
+    "trailaris_r5_5/R5_5_FRONTIER_LOCK.json"
+  ]
 }
