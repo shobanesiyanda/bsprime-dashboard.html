@@ -6,7 +6,7 @@ import numpy as np,pandas as pd
 from lane5_pareto_management_stack import apply_stack
 from lane6b_winner_amplification import rule_mask
 from lane6c_winner_payoff_extension import extend_candidates
-from winner_causal_features import causal_decision_features,combined_promote_clean_history
+from winner_causal_features import causal_decision_features
 
 R54_END=337.4231242104393
 L5_END=345.3896887826546
@@ -24,13 +24,15 @@ def boolcol(z,name):return z[name].astype(bool) if name in z.columns else pd.Ser
 class FusionVariant:
     def __init__(self,base,promote,mode,params,history=None):self.base=base;self.promote=promote;self.mode=mode;self.p=params;self.history=history;self.extended=0;self.delta_r=0.
     def promote_for_week(self,cands,week_start):
-        z=cands.copy()
         if self.mode=='AMPLIFY':
-            parts=[z];elig=z[boolcol(z,'amp_parent_qualifies') & z.strategy.astype(str).eq('WINNER_ONLY_ADDON')].copy()
+            p,conf,stats=self.promote(self.history,week_start,'combined')
+            if p.empty:return p,conf,stats
+            elig=p[boolcol(p,'amp_parent_qualifies') & p.strategy.astype(str).eq('WINNER_ONLY_ADDON')].copy();parts=[p]
             for k in range(int(self.p['copies'])):
                 if not len(elig):break
-                q=elig.copy();q['strategy']=q['amp_parent_strategy'];q['strategy_family']=q['amp_parent_family'];q['quality']=np.minimum(.995,pd.to_numeric(q.quality,errors='coerce').fillna(0)+float(self.p['quality_boost']));q['campaign_id']=q.campaign_id.astype(str)+f'|L7AMP{k+1}';parts.append(q)
-            return combined_promote_clean_history(pd.concat(parts,ignore_index=True,sort=False),self.history,week_start)
+                q=elig.copy();boost=float(self.p['quality_boost']);q['quality']=np.minimum(.995,pd.to_numeric(q.quality,errors='coerce').fillna(0)+boost);q['rank_score']=pd.to_numeric(q.rank_score,errors='coerce').fillna(0)+.42*boost;q['campaign_id']=q.campaign_id.astype(str)+f'|L7AMP{k+1}';q['amplification_copy']=k+1;parts.append(q)
+            return pd.concat(parts,ignore_index=True,sort=False),conf,stats
+        z=cands.copy()
         if self.mode=='PRIORITY':
             m=boolcol(z,'winner_priority_qualifies') & ~boolcol(z,'is_addon');q=pd.to_numeric(z.quality,errors='coerce').fillna(0);z.loc[m,'quality']=np.minimum(.995,q.loc[m]+float(self.p['quality_boost']))
         return self.promote(z,week_start,'combined')
@@ -56,10 +58,9 @@ def main():
     if a.mode=='PRIORITY':z['winner_priority_qualifies']=qual
     elif a.mode=='EXTEND':z['winner_extend_qualifies']=qual
     else:
-        parents=z[~boolcol(z,'is_addon')].copy();pm=rule_mask(parents,rule);qm=dict(zip(parents.campaign_id.astype(str),pm.astype(bool)));ps=dict(zip(parents.campaign_id.astype(str),parents.strategy.astype(str)));pf=dict(zip(parents.campaign_id.astype(str),parents.strategy_family.astype(str)))
-        z['amp_parent_qualifies']=z.parent_id.astype(str).map(qm).fillna(False) if 'parent_id' in z else False;z['amp_parent_strategy']=z.parent_id.astype(str).map(ps).fillna(z.strategy.astype(str)) if 'parent_id' in z else z.strategy.astype(str);z['amp_parent_family']=z.parent_id.astype(str).map(pf).fillna(z.strategy_family.astype(str)) if 'parent_id' in z else z.strategy_family.astype(str)
+        parents=z[~boolcol(z,'is_addon')].copy();pm=rule_mask(parents,rule);qm=dict(zip(parents.campaign_id.astype(str),pm.astype(bool)));z['amp_parent_qualifies']=z.parent_id.astype(str).map(qm).fillna(False) if 'parent_id' in z else False
     p={'copies':a.copies,'quality_boost':a.quality_boost,'runner_frac':a.runner_frac,'target_r':a.target_r,'trail_gap':a.trail_gap,'max_extra_bars':a.max_extra_bars};var=FusionVariant(base,promote,a.mode,p,z);cand,VW,VEV,VDE,VPR=eval_variant(var,data,z,opps,fcache,specs,100.0)
     scope_ok=(len(data)==34 and scope=={'approved_routes':34,'strategy_families':15,'route_strategy_cells':510});gates={'end_equity_above_345_3896888':float(cand['end_equity'])>L5_END+EPS,'fresh_return_above_7_2616466':float(cand['fresh_return_pct'])>FRESH_FLOOR+EPS,'max_weekly_dd_not_worse':float(cand['max_weekly_dd_pct'])>=DD_FLOOR-EPS,'fresh_dd_not_worse':float(cand['fresh_max_dd_pct'])>=FRESH_DD_FLOOR-EPS,'losses_max_228':int(cand['losses'])<=LOSS_MAX,'flats_max_421':int(cand['flat'])<=FLAT_MAX,'nonflat_wr_at_least_67_3352pct':float(cand['nonflat_win_rate'])>=NFWR_MIN-EPS,'selected_assets_at_least_33':int(cand['assets_with_selected'])>=33,'full_universe_34x15x510':scope_ok}
-    s={'state':'R5_5_LANE7_WINNER_MANAGEMENT_FUSION_REPLAY_COMPLETE','evidence_class':'END_TO_END_CAUSAL_FULL_REPLAY','mode':a.mode,'parameters':p,'winner_rule_rank':a.rule_rank,'winner_rule':rule,'lane5_baseline':baseline,'candidate':cand,'delta_vs_lane5':float(cand['end_equity'])-L5_END,'extended_candidates':var.extended,'extension_delta_r_pre_portfolio':var.delta_r,'gates':gates,'frontier_pass':bool(all(gates.values())),'promotion_candidate':False,'scope':scope,'governance':'Lane 7 starts from the certified Lane 5 B3+B5+B8 historical frontier. Winner qualification is reconstructed from weekly-causal decision state; amplification copies cannot contaminate reliability history. The complete portfolio is replayed under unchanged risk, margin, factor and breaker controls.'}
+    s={'state':'R5_5_LANE7_WINNER_MANAGEMENT_FUSION_REPLAY_COMPLETE','evidence_class':'END_TO_END_CAUSAL_FULL_REPLAY','mode':a.mode,'parameters':p,'winner_rule_rank':a.rule_rank,'winner_rule':rule,'lane5_baseline':baseline,'candidate':cand,'delta_vs_lane5':float(cand['end_equity'])-L5_END,'extended_candidates':var.extended,'extension_delta_r_pre_portfolio':var.delta_r,'gates':gates,'frontier_pass':bool(all(gates.values())),'promotion_candidate':False,'scope':scope,'governance':'Lane 7 starts from the certified Lane 5 historical frontier. Winner qualification is weekly-causal. Amplification units are created only after the original continuation add-on survives the immutable weekly selector, so copied tranches cannot alter selector learning or historical evidence.'}
     (out/'result.json').write_text(json.dumps(s,indent=2,default=str));VW.to_csv(out/'weekly.csv',index=False);print(json.dumps(s,indent=2,default=str))
 if __name__=='__main__':main()
