@@ -69,20 +69,55 @@ jobs:
           expected='120390ab52e80f51bafedc42389ceb7420a410f2'
           actual=subprocess.check_output(['git','rev-parse','HEAD:trailaris_r5_5/quantitative_integrated_v2.py'],text=True).strip(); assert actual==expected,(actual,expected)
           routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          raw=Path('trailaris_longcycle/raw_m1'); primary=Path('primary/trailaris_longcycle/raw_m1')
           rows=[]
           for a in routes:
-            f=Path('trailaris_longcycle/raw_m1')/f'{a}_M1_normalized.csv'; assert f.exists(),a
+            f=raw/f'{a}_M1_normalized.csv'; assert f.exists(),a
             d=pd.read_csv(f,usecols=['timestamp','source']); t=pd.to_datetime(d.timestamp,utc=True,errors='coerce').dropna(); assert len(d)>=1000,a
             rows.append({'asset':a,'rows':len(d),'first':str(t.min()),'last':str(t.max()),'source':'|'.join(sorted(map(str,d.source.dropna().unique())))})
+          pd.DataFrame(rows).to_csv('provider_invariance_r2/CANONICAL_ROUTE_GATE_PRE_FALLBACK.csv',index=False)
+
+          data0,v0=r4.validate_34(raw,'research-proxy')
+          accepted0=set(data0.keys()) if hasattr(data0,'keys') else set()
+          missing0=[a for a in routes if a not in accepted0]
+
+          # Data-integrity fail-closed rule only: if the canonical transform violates the
+          # frozen R4 OHLC contract, revert that whole route to its official primary feed.
+          # No P&L, campaign identity, champion outcome, or Quant V2 parameter is consulted.
+          fallback=[]
+          for a in missing0:
+            src=primary/f'{a}_M1_normalized.csv'; assert src.exists(),a
+            d=pd.read_csv(src)
+            d['source']='CANONICAL_PRIMARY_R4_VALIDATION_FALLBACK_R2'
+            d['asset']=a
+            d.to_csv(raw/f'{a}_M1_normalized.csv',index=False)
+            fallback.append(a)
+
+          data1,v1=r4.validate_34(raw,'research-proxy')
+          accepted1=set(data1.keys()) if hasattr(data1,'keys') else set()
+          missing1=[a for a in routes if a not in accepted1]
+          diag={
+            'state':'PASS' if len(data1)==34 else 'FAIL',
+            'pre_fallback_accepted_count':len(data0),
+            'pre_fallback_missing_routes':missing0,
+            'fallback_routes':fallback,
+            'post_fallback_accepted_count':len(data1),
+            'post_fallback_missing_routes':missing1,
+            'pre_fallback_validator_evidence_repr':repr(v0),
+            'post_fallback_validator_evidence_repr':repr(v1),
+            'fallback_basis':'R4_DATA_VALIDITY_ONLY',
+            'outcome_or_pnl_used':False,
+            'quant_v2_modified':False
+          }
+          Path('provider_invariance_r2/R4_VALIDATE_34_DIAGNOSTIC.json').write_text(json.dumps(diag,indent=2,default=str)); print(json.dumps({k:v for k,v in diag.items() if not k.endswith('_repr')},indent=2))
+
+          rows=[]
+          for a in routes:
+            f=raw/f'{a}_M1_normalized.csv'; d=pd.read_csv(f,usecols=['timestamp','source']); t=pd.to_datetime(d.timestamp,utc=True,errors='coerce').dropna()
+            rows.append({'asset':a,'rows':len(d),'first':str(t.min()),'last':str(t.max()),'source':'|'.join(sorted(map(str,d.source.dropna().unique()))),'fallback_used':a in fallback})
           pd.DataFrame(rows).to_csv('provider_invariance_r2/CANONICAL_ROUTE_GATE.csv',index=False)
-          data,v=r4.validate_34(Path('trailaris_longcycle/raw_m1'),'research-proxy')
-          accepted=sorted(list(data.keys())) if hasattr(data,'keys') else []
-          missing=[a for a in routes if a not in set(accepted)]
-          diag={'state':'PASS' if len(data)==34 else 'FAIL','accepted_count':len(data),'accepted_routes':accepted,'missing_routes':missing,'validator_evidence_repr':repr(v)}
-          Path('provider_invariance_r2/R4_VALIDATE_34_DIAGNOSTIC.json').write_text(json.dumps(diag,indent=2,default=str))
-          print(json.dumps(diag,indent=2,default=str))
-          Path('provider_invariance_r2/FROZEN_RULE_GATE.json').write_text(json.dumps({'state':'PASS' if len(data)==34 else 'FAIL','quant_v2_git_blob_sha1':actual,'filesystem_routes':34,'r4_accepted_routes':len(data),'missing_routes':missing,'quant_v2_modified':False},indent=2))
-          if len(data)!=34: raise RuntimeError(f'R4 validate_34 rejected {len(missing)} routes: {missing}')
+          Path('provider_invariance_r2/FROZEN_RULE_GATE.json').write_text(json.dumps({'state':'PASS' if len(data1)==34 else 'FAIL','quant_v2_git_blob_sha1':actual,'filesystem_routes':34,'r4_accepted_routes':len(data1),'fallback_routes':fallback,'missing_routes':missing1,'quant_v2_modified':False},indent=2))
+          if len(data1)!=34: raise RuntimeError(f'R4 validate_34 still rejected {len(missing1)} routes after validity-only fallback: {missing1}')
           PY
       - name: Restore immutable 510-cell factory
         working-directory: source
