@@ -1,0 +1,40 @@
+{
+  "lock_id": "TRAILARIS_R5_5_QUANT_V2_PROVIDER_INVARIANCE_R1_20260817",
+  "state": "PROVIDER_INVARIANCE_R1_COMPLETE__ACCEPTANCE_FAILED__NON_PROMOTIONAL",
+  "run_id": 32043845611,
+  "artifact_id": 9293703692,
+  "artifact_sha256": "b64c1dc7730cce823aebb346f6abc1c0817ba1c7bbc3111bb9d8f5742b6f0aac",
+  "frozen_quant_v2_git_blob_sha1": "120390ab52e80f51bafedc42389ceb7420a410f2",
+  "quant_v2_modified": false,
+  "campaign_identity": {
+    "provider_diverse_baseline_jaccard": 0.13562091503267973,
+    "r1_jaccard": 0.13969087197433655,
+    "multiple_vs_baseline": 1.0300098029914937,
+    "required_jaccard": 0.30,
+    "substantial_pass": false
+  },
+  "performance": {
+    "start_equity": 100.0,
+    "end_equity": 974.819482446552,
+    "compounded_return_pct": 874.819482446552,
+    "positive_weeks": 26,
+    "negative_weeks": 0,
+    "executed_trades": 1789,
+    "wins": 1013,
+    "losses": 355,
+    "flats": 421,
+    "nonflat_win_rate_pct": 74.04970760233918,
+    "profit_factor": 2.8727183877162608,
+    "max_weekly_drawdown_pct": -3.0743265484236115,
+    "max_event_equity_drawdown_pct": -3.0743265484236337
+  },
+  "acceptance": {
+    "identity_pass": false,
+    "moved_toward_champion": true,
+    "risk_no_increase_pass": true,
+    "drawdown_no_increase_pass": false,
+    "overall_pass": false
+  },
+  "diagnosis": "Equal-weight two-provider return median created a third price path and did not restore campaign identity. R1 is rejected as the recovery architecture despite improved equity and profit factor.",
+  "promotion_allowed": false
+}
