@@ -42,7 +42,8 @@
     "rolling_11w_mean_return_pct": 154.85001259727133,
     "rolling_11w_max_return_pct": 193.9113998077087
   },
-  "fresh_control_same_engine_estate": {
+  "reference_frozen_control": {
+    "qualification": "Reference control carried by the frozen replay harness; not a separately rerun provider-diverse control on the R4 independent-provider estate.",
     "end_equity": 1136.4556497760627,
     "compounded_return_pct": 1036.4556497760627,
     "executed_trades": 2152,
