@@ -1,0 +1,42 @@
+{
+  "spec_id": "R5_5_QUANTITATIVE_INTEGRATED_V1_26W_20260817",
+  "state": "REPLAY_RULES_FROZEN_BEFORE_EXECUTION",
+  "parent_baseline": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
+  "scope": {
+    "weeks": 26,
+    "routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510,
+    "starting_equity_usd": 100.0
+  },
+  "causality": {
+    "lookback_days": 112,
+    "current_or_future_trade_outcome_used_for_decision": false,
+    "current_trade_mfe_mae_used_for_entry_decision": false,
+    "future_bars_used_for_entry_decision": false,
+    "target_week_outcomes_used_for_parameter_selection": false
+  },
+  "quantitative_components": [
+    "hierarchical_bayesian_win_probability_shrinkage",
+    "regularised_conditional_expected_r",
+    "uncertainty_penalised_conservative_expected_value",
+    "downside_tail_penalty",
+    "bounded_fractional_kelly_risk_allocation",
+    "causal_cross_currency_and_cross_factor_consensus",
+    "existing_factor_duplication_and_portfolio_risk_constraints",
+    "existing_v2_causal_execution_and_management"
+  ],
+  "risk_hard_limits": {
+    "maximum_per_trade_risk_fraction": 0.005,
+    "maximum_aggregate_open_risk_fraction": 0.01,
+    "no_risk_limit_relaxation": true
+  },
+  "comparison": {
+    "immutable_control_end_equity": 1366.8938578865148,
+    "immutable_control_return_pct": 1266.8938578865148,
+    "immutable_control_positive_weeks": 26,
+    "immutable_control_profit_factor": 2.9195127192871873
+  },
+  "evidence_class": "FULL_26_WEEK_CAUSAL_WALK_FORWARD_RESEARCH_PROXY; BROKER_PRODUCTION_CERTIFICATION_SEPARATE",
+  "promotion_rule": "No automatic promotion. Quantitative V1 must be compared against the exact frozen V2 baseline and retained only if the evidence supports it."
+}
