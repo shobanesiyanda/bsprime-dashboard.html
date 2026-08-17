@@ -1,0 +1,63 @@
+{
+  "candidate_id": "R5_5_QUANTITATIVE_INTEGRATED_V2_EXACT_CANONICAL_ESTATE_20260817",
+  "state": "INTERNAL_PROMOTION_GATE_PASSED__PENDING_INDEPENDENT_REPRODUCIBILITY_REPLAY",
+  "parent_control": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
+  "evidence_run_id": 32016989011,
+  "evidence_artifact_id": 9284801783,
+  "evidence_artifact_digest": "sha256:8c6e42d95e107c1826c9a9c4cd533153ab866b09b55d6329ec3e1e726a12cac7",
+  "canonical_identity_gate": "PASS",
+  "scope": {
+    "weeks": 26,
+    "routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510,
+    "starting_equity_usd": 100.0
+  },
+  "candidate_performance": {
+    "end_equity": 1389.6425169269207,
+    "compounded_return_pct": 1289.6425169269207,
+    "positive_weeks": 26,
+    "negative_weeks": 0,
+    "executed_trades": 2119,
+    "wins": 1222,
+    "losses": 466,
+    "flats": 431,
+    "nonflat_win_rate": 0.7239336492890995,
+    "profit_factor": 2.9703730692297037,
+    "max_weekly_drawdown_pct": -3.7440606836682933,
+    "max_event_equity_drawdown_pct": -2.7023988320913572
+  },
+  "delta_vs_frozen_v2": {
+    "end_equity": 22.748659040405983,
+    "compounded_return_percentage_points": 22.748659040405983,
+    "executed_trades": -17,
+    "wins": 1,
+    "losses": -12,
+    "flats": -6,
+    "nonflat_win_rate_percentage_points": 0.5275615151371427,
+    "profit_factor": 0.050860349942516425,
+    "max_weekly_drawdown_percentage_points": 0.0,
+    "max_event_equity_drawdown_percentage_points": 0.0
+  },
+  "quantitative_action": {
+    "canonical_v2_post_gate_candidates": 3189,
+    "strict_negative_vetoed": 38,
+    "kept": 3151,
+    "rank_preserved": true,
+    "risk_fraction_preserved": true,
+    "execution_preserved": true,
+    "management_preserved": true,
+    "universal_kelly_rescaling": false
+  },
+  "promotion_gate": {
+    "positive_weeks_26": "PASS",
+    "end_equity_at_least_frozen_v2": "PASS",
+    "profit_factor_at_least_frozen_v2": "PASS",
+    "max_weekly_drawdown_no_worse": "PASS",
+    "max_event_drawdown_no_worse": "PASS",
+    "all_numeric_gates": "PASS"
+  },
+  "automatic_production_promotion": false,
+  "required_next_gate": "SEPARATE_INDEPENDENTLY_REPRODUCIBLE_26_WEEK_REPLAY_USING_FRESH_INDEPENDENT_HISTORICAL_DATA_ACQUISITION_AND_IDENTICAL_FROZEN_EXECUTION_ASSUMPTIONS",
+  "evidence_class": "FULL_26_WEEK_CAUSAL_WALK_FORWARD_RESEARCH_PROXY; BROKER_PRODUCTION_CERTIFICATION_SEPARATE"
+}
