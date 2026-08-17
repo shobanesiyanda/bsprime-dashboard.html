@@ -75,7 +75,7 @@ jobs:
       - name: Rebuild factor evidence and research specifications
         working-directory: source
         run: |
-          python trailaris_longcycle/build_longcycle_factors.py --rawdir trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_longcycle/R5_5_QUANT_V1_FACTOR_EVIDENCE.json
+          python ../trailaris_longcycle/build_longcycle_factors.py --rawdir trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_longcycle/R5_5_QUANT_V1_FACTOR_EVIDENCE.json
           python trailaris_r4/build_research_specs.py
 
       - name: Execute full independent 34x15x510 quantitative 26-week replay
