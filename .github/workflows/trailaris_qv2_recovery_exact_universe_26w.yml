@@ -1,0 +1,206 @@
+name: Trailaris Quant V2 — Recovery Exact Universe 26W
+
+on:
+  push:
+    branches: [trailaris-quant-v2-recovered-frozen-20260818]
+    paths:
+      - '.github/workflows/trailaris_qv2_recovery_exact_universe_26w.yml'
+      - 'trailaris_full_universe/qv2_asset_universe_adapter.py'
+      - 'trailaris_full_universe/acquire_duka_exact_26w_shard.js'
+      - 'trailaris_full_universe/build_candidate_shard_exact_qv2.py'
+      - 'trailaris_full_universe/select_full_universe_exact_qv2.py'
+      - 'trailaris_full_universe/build_feature_cache_shard_exact_qv2.py'
+      - 'trailaris_full_universe/replay_full_universe_exact_qv2.py'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: trailaris-qv2-recovery-exact-universe-26w
+  cancel-in-progress: false
+
+env:
+  QV2_BLOB: 120390ab52e80f51bafedc42389ceb7420a410f2
+  DISCOVERY_ARTIFACT_ID: 9301401424
+  CANONICAL_ARTIFACT_ID: 9270611209
+
+jobs:
+  control:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Enforce frozen Quant V2 and execution dependency blobs
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "120390ab52e80f51bafedc42389ceb7420a410f2"
+          test "$(git rev-parse HEAD:trailaris_r5_5/longcycle_integrated_negative_refinement.py)" = "a6f6fcc8dfc1d265c5917dc9df3f3c73eb08d6cb"
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v1.py)" = "c3debf8da3f184d86c59a287b25a58ebe105bd03"
+          test "$(git rev-parse HEAD:trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py)" = "7bdd29922829a3ac53c110dd91a7d5f14201cc34"
+          test "$(git rev-parse HEAD:trailaris_r5_5/R5_5_V2_26W_CANONICAL_BASELINE.json)" = "d0a260daf3c59c646e91a10f190aa806937bf165"
+          ! grep -R "normalized_size_trade\|NORMALIZED_R" trailaris_full_universe/replay_full_universe_exact_qv2.py
+      - name: Verify preserved canonical control evidence
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          set -euo pipefail
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${CANONICAL_ARTIFACT_ID}/zip > canonical.zip
+          echo 'a8f48dc53f8e38de961bc757984bba12f90c37bce68ecdefa4e0ece59667dffb  canonical.zip' | sha256sum -c -
+          mkdir canonical && unzip -q canonical.zip -d canonical
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          b=json.loads(Path('trailaris_r5_5/R5_5_V2_26W_CANONICAL_BASELINE.json').read_text())
+          assert b['state']=='LOCKED_CANONICAL_BASELINE'
+          p=b['performance'];assert abs(p['start_equity']-100.0)<1e-12;assert abs(p['end_equity']-1366.8938578865148)<1e-9;assert p['executed_trades']==2136;assert p['positive_weeks']==26
+          s=json.loads(Path('canonical/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_STATUS.json').read_text());assert abs(s['candidate']['end_equity']-1366.8938578865148)<1e-9
+          print('FROZEN_QV2_CANONICAL_CONTROL PASS')
+          PY
+
+  candidates:
+    needs: control
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 24
+      matrix:
+        shard: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Restore preserved discovery manifest
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          set -euo pipefail
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${DISCOVERY_ARTIFACT_ID}/zip > discovery.zip
+          mkdir discovery && unzip -q discovery.zip -d discovery
+          python - <<'PY'
+          import json
+          s=json.load(open('discovery/DISCOVERY_SUMMARY.json'))
+          assert s['provider_metadata_instruments']==1499 and s['with_full_26w_m1_window']==1492 and s['frozen_factor_contract_compatible']==1492 and s['outcome_information_used'] is False
+          print('PRESERVED_DISCOVERY PASS')
+          PY
+      - name: Install exact runtime and reconstruct frozen R4
+        run: |
+          set -euo pipefail
+          npm install --no-save --silent dukascopy-node@1.50.0
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+      - name: Acquire exact 26-week M1 shard
+        run: node trailaris_full_universe/acquire_duka_exact_26w_shard.js --manifest discovery/FACTOR_COMPATIBLE_UNIVERSE.tsv --outdir work/raw --shard ${{ matrix.shard }} --shards 48 --concurrency 2
+      - name: Generate candidates without modifying frozen Quant V2
+        env: {PYTHONPATH: 'trailaris_r4:trailaris_full_universe'}
+        run: python trailaris_full_universe/build_candidate_shard_exact_qv2.py --rawdir work/raw --outdir work/candidate-${{ matrix.shard }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qv2-recovery-candidate-${{ matrix.shard }}
+          path: work/candidate-${{ matrix.shard }}/
+          retention-days: 30
+
+  select:
+    needs: candidates
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: qv2-recovery-candidate-*
+          path: all-candidates
+      - name: Restore frozen execution runtime
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+      - name: Run frozen Quant V2 selection across recovered universe
+        env: {PYTHONPATH: 'trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5:trailaris_full_universe'}
+        run: python trailaris_full_universe/select_full_universe_exact_qv2.py --candidate-root all-candidates --outdir selection
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-recovery-selection
+          path: selection/
+          retention-days: 30
+
+  features:
+    needs: select
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 16
+      matrix:
+        shard: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/download-artifact@v4
+        with: {name: qv2-recovery-selection, path: selection}
+      - name: Restore acquisition and frozen R4 runtime
+        run: |
+          set -euo pipefail
+          npm install --no-save --silent dukascopy-node@1.50.0
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+      - name: Reacquire only frozen-Quant-V2 promoted assets
+        run: node trailaris_full_universe/acquire_duka_exact_26w_shard.js --manifest selection/SELECTED_ASSETS.tsv --outdir feature-work/raw --shard ${{ matrix.shard }} --shards 24 --concurrency 3
+      - name: Build promoted mark-to-market feature cache
+        env: {PYTHONPATH: 'trailaris_r4:trailaris_full_universe'}
+        run: python trailaris_full_universe/build_feature_cache_shard_exact_qv2.py --rawdir feature-work/raw --outdir feature-work/feature-${{ matrix.shard }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qv2-recovery-feature-${{ matrix.shard }}
+          path: feature-work/feature-${{ matrix.shard }}/
+          retention-days: 30
+
+  replay:
+    needs: features
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/download-artifact@v4
+        with: {name: qv2-recovery-selection, path: selection}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: qv2-recovery-feature-*
+          path: all-features
+      - name: Restore frozen R4 and research-proxy sizing semantics
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          python trailaris_r4/build_research_specs.py
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+          ! grep -R "normalized_size_trade\|NORMALIZED_R" trailaris_full_universe/replay_full_universe_exact_qv2.py
+      - name: Execute exact frozen Quant V2 26-week replay
+        env: {PYTHONPATH: 'trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5:trailaris_full_universe'}
+        run: python trailaris_full_universe/replay_full_universe_exact_qv2.py --selection-dir selection --feature-root all-features --specs trailaris_r4/research_proxy_specs.csv --outdir replay-results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trailaris-qv2-recovery-exact-universe-26w
+          path: replay-results/
+          retention-days: 30
