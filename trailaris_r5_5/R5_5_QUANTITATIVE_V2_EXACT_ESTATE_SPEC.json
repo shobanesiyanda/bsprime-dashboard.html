@@ -1,0 +1,66 @@
+{
+  "spec_id": "R5_5_QUANTITATIVE_V2_EXACT_CANONICAL_ESTATE_26W_20260817",
+  "state": "RECONCILIATION_RULES_FROZEN_BEFORE_EXECUTION",
+  "parent_baseline": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
+  "canonical_evidence": {
+    "workflow_run_id": 31973576216,
+    "artifact_id": 9270611209,
+    "artifact_name": "trailaris-r5-5-integrated-negative-refinement-v2-26w",
+    "source_promotion_estate": "EXACT_R5_5_MEMORY112_PROMOTED_3417",
+    "memory112_rows_before_v2_gate": 3417,
+    "v2_gate_rejected": 228,
+    "v2_rows_after_gate": 3189
+  },
+  "reason_for_reconciliation": "The accelerated Quantitative V2 diagnostic harness regenerated the V2 promotion estate. Its AUDIT_ONLY identity lane therefore did not reproduce the immutable V2 control and cannot be used as promotion evidence.",
+  "identity_gate": {
+    "required": true,
+    "end_equity": 1366.8938578865148,
+    "compounded_return_pct": 1266.8938578865148,
+    "positive_weeks": 26,
+    "executed_trades": 2136,
+    "wins": 1221,
+    "losses": 478,
+    "flats": 437,
+    "profit_factor": 2.9195127192871873,
+    "max_weekly_drawdown_pct": -3.7440606836682933,
+    "max_event_equity_drawdown_pct": -2.7023988320913572,
+    "fail_closed_on_any_mismatch": true
+  },
+  "quantitative_v2_rules": {
+    "lookback_days": 112,
+    "starting_estate": "EXACT_CANONICAL_V2_POST_GATE_3189",
+    "v2_rank_score_preserved": true,
+    "v2_risk_fraction_preserved": true,
+    "v2_execution_preserved": true,
+    "v2_management_preserved": true,
+    "factor_support_audit_only": true,
+    "universal_fractional_kelly_rescaling": false,
+    "positive_quantitative_risk_boost": false,
+    "broad_quantitative_rank_overlay": false,
+    "strict_negative_veto": {
+      "minimum_route_history_n": 24,
+      "minimum_strategy_history_n": 48,
+      "posterior_win_probability_below": 0.40,
+      "conservative_expected_r_below": -0.12,
+      "tail_loss_r_at_least": 0.75,
+      "all_conditions_required": true
+    }
+  },
+  "causality": {
+    "current_or_future_trade_outcome_used_for_decision": false,
+    "current_trade_mfe_mae_used_for_entry_decision": false,
+    "future_bars_used_for_entry_decision": false,
+    "target_week_outcomes_used_for_parameter_selection": false,
+    "prior_accelerated_ablation_results_allowed_to_tune_rules": false
+  },
+  "promotion_gate": {
+    "positive_weeks_must_equal": 26,
+    "end_equity_must_be_at_least": 1366.8938578865148,
+    "profit_factor_must_be_at_least": 2.9195127192871873,
+    "max_weekly_drawdown_pct_must_be_no_worse_than": -3.7440606836682933,
+    "max_event_equity_drawdown_pct_must_be_no_worse_than": -2.7023988320913572,
+    "all_numeric_gates_required": true,
+    "automatic_promotion": false
+  },
+  "evidence_class": "FULL_26_WEEK_CAUSAL_WALK_FORWARD_RESEARCH_PROXY; BROKER_PRODUCTION_CERTIFICATION_SEPARATE"
+}
