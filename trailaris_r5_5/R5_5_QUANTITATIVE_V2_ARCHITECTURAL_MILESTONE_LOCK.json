@@ -1,0 +1,75 @@
+{
+  "lock_id": "TRAILARIS_R5_5_QUANT_V2_ARCHITECTURAL_MILESTONE_20260817",
+  "effective_date": "2026-08-17",
+  "state": "FROZEN_ARCHITECTURAL_RELEASE_CANDIDATE__PENDING_INDEPENDENT_REPRODUCTION_AND_BROKER_CERTIFICATION",
+  "candidate_commit": "194031e05594e6921b5410e3eb328a5fb53fde94",
+  "candidate_id": "R5_5_QUANTITATIVE_INTEGRATED_V2_EXACT_CANONICAL_ESTATE_20260817",
+  "parent_control": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
+  "evidence": {
+    "workflow_run_id": 32016989011,
+    "artifact_id": 9284801783,
+    "artifact_digest": "sha256:8c6e42d95e107c1826c9a9c4cd533153ab866b09b55d6329ec3e1e726a12cac7",
+    "evidence_class": "FULL_26_WEEK_CAUSAL_WALK_FORWARD_RESEARCH_PROXY; BROKER_PRODUCTION_CERTIFICATION_SEPARATE"
+  },
+  "scope": {
+    "starting_equity_usd": 100.0,
+    "evaluated_weeks": 26,
+    "routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510
+  },
+  "locked_internal_milestone_metrics": {
+    "ending_equity_usd": 1389.6425169269207,
+    "compounded_return_pct": 1289.6425169269207,
+    "positive_weeks": 26,
+    "negative_weeks": 0,
+    "mean_week_pct": 10.696520991381531,
+    "median_week_pct": 11.47300673886491,
+    "weeks_ge_5_pct": 22,
+    "weeks_ge_10_pct": 21,
+    "executed_trades": 2119,
+    "wins": 1222,
+    "losses": 466,
+    "flats": 431,
+    "nonflat_win_rate": 0.7239336492890995,
+    "profit_factor": 2.9703730692297037,
+    "max_weekly_drawdown_pct": -3.7440606836682933,
+    "max_event_equity_drawdown_pct": -2.7023988320913572
+  },
+  "architectural_role": {
+    "control_engine": "R5.5 Integrated Negative Refinement V2 remains the frozen control architecture",
+    "quant_layer": "Quantitative V2 is the frozen mathematical decision overlay release candidate",
+    "allowed_action": "strict adverse-outcome veto / mathematical confirmation",
+    "preserve_canonical_ranking": true,
+    "preserve_canonical_risk_fraction": true,
+    "preserve_execution": true,
+    "preserve_campaign_management": true,
+    "universal_kelly_rescaling": false
+  },
+  "immutability": {
+    "retuning_during_validation": "PROHIBITED",
+    "threshold_changes_during_validation": "PROHIBITED",
+    "ranking_rewrite": "PROHIBITED",
+    "risk_rewrite": "PROHIBITED",
+    "execution_rewrite": "PROHIBITED",
+    "management_rewrite": "PROHIBITED",
+    "synthetic_backfill_to_force_identity": "PROHIBITED",
+    "future_data_or_lookahead": "PROHIBITED"
+  },
+  "validation_sequence": [
+    "FRESH_HISTORICAL_REACQUISITION_FROZEN_RULES_REPLAY",
+    "INDEPENDENT_PROVIDER_OR_BROKER_DATA_REPRODUCTION",
+    "EXECUTION_COST_SLIPPAGE_LATENCY_PROVENANCE_AUDIT",
+    "BROKER_SHADOW_EXECUTION_CERTIFICATION",
+    "PRODUCTION_PROMOTION_DECISION"
+  ],
+  "promotion_status": {
+    "internal_numeric_gates": "PASS",
+    "independent_reproduction_gate": "PENDING",
+    "provider_diversity_gate": "PENDING",
+    "cost_slippage_latency_gate": "PENDING",
+    "broker_certification_gate": "PENDING",
+    "production_promotion": "NOT_ALLOWED_YET"
+  },
+  "hard_lock_note": "The $100 to $1,389.6425169269207 26-week result is the canonical internal Quant V2 milestone and comparison target. It must not be represented as independently empirical, provider-diverse, or broker-certified until the remaining validation gates are passed."
+}
