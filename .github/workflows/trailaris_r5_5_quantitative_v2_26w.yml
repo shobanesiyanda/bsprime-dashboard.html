@@ -1,0 +1,361 @@
+name: Trailaris R5.5 — Quantitative V2 + V1 Attribution 26W
+
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_5_quantitative_v2_26w.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trailaris-r5-5-quantitative-v2-attribution-26w
+  cancel-in-progress: false
+
+jobs:
+  ablation:
+    name: ablation-${{ matrix.mode }}
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [AUDIT_ONLY, NO_SIZING, NO_GATING, NO_FACTOR, NO_RANK]
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout active research branch
+        uses: actions/checkout@v4
+        with:
+          ref: trailaris-ephemeral-research-20260815
+          path: active
+
+      - name: Checkout immutable frozen R5.4 replay estate
+        uses: actions/checkout@v4
+        with:
+          ref: trailaris-r5-4-26week-validation-20260816
+          path: frozen
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install --quiet pandas numpy
+
+      - name: Inject frozen attribution sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p frozen/trailaris_r5_5
+          cp active/trailaris_r5_5/*.py frozen/trailaris_r5_5/
+          cp active/trailaris_r5_5/R5_5_V2_26W_CANONICAL_BASELINE.json frozen/trailaris_r5_5/
+          cp active/trailaris_r5_5/R5_5_QUANTITATIVE_INTEGRATED_V2_SPEC.json frozen/trailaris_r5_5/
+
+      - name: Reconstruct exact frozen R4 dependencies
+        working-directory: frozen
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          python -m py_compile trailaris_r5_5/quantitative_integrated_v1_ablation.py trailaris_r5_5/run_longcycle_variant_accelerated.py
+
+      - name: Restore exact active R5.5 34-route 26-week M1 cache
+        uses: actions/cache/restore@v4
+        with:
+          path: frozen/trailaris_longcycle/raw_m1
+          key: trailaris-r5-5-active-m1-34-20260119-20260814-v1
+          fail-on-cache-miss: true
+
+      - name: Enforce authentic 34-route coverage gate
+        working-directory: frozen
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          from pathlib import Path
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          start=pd.Timestamp('2026-01-19T00:00:00Z'); end=pd.Timestamp('2026-08-14T23:59:59Z')
+          for a in routes:
+              p=Path('trailaris_longcycle/raw_m1')/f'{a}_M1_normalized.csv'; assert p.exists(),a
+              d=pd.read_csv(p,usecols=['timestamp']); ts=pd.to_datetime(d.timestamp,utc=True,errors='coerce').sort_values(); med=ts.diff().dropna().dt.total_seconds().median()
+              assert not ts.isna().any() and len(d)>=1000 and (pd.isna(med) or med<=75) and ts.min()<=start+pd.Timedelta(days=1) and ts.max()>=end-pd.Timedelta(days=2),a
+          print('AUTHENTIC_34_ROUTE_GATE PASS')
+          PY
+
+      - name: Rebuild causal factor evidence and specs
+        working-directory: frozen
+        run: |
+          python trailaris_longcycle/build_longcycle_factors.py --rawdir trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_longcycle/R5_5_QUANT_ABLATION_${{ matrix.mode }}_FACTOR_EVIDENCE.json
+          python trailaris_r4/build_research_specs.py
+
+      - name: Execute diagnostic ablation replay
+        working-directory: frozen
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+          TRAILARIS_QUANT_ABLATION: ${{ matrix.mode }}
+        run: |
+          OUT="trailaris_r5_5/quant_ablation_${{ matrix.mode }}"
+          rm -rf "$OUT" && mkdir -p "$OUT"
+          python trailaris_r5_5/run_longcycle_variant_accelerated.py \
+            --rawdir trailaris_longcycle/raw_m1 \
+            --specs trailaris_r4/research_proxy_specs.csv \
+            --variant trailaris_r5_5/quantitative_integrated_v1_ablation.py \
+            --name R5_5_QUANT_ABLATION_${{ matrix.mode }} \
+            --outdir "$OUT"
+
+      - name: Upload ablation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-r5-5-quant-ablation-${{ matrix.mode }}
+          path: frozen/trailaris_r5_5/quant_ablation_${{ matrix.mode }}/
+          retention-days: 30
+
+  quantitative_v2:
+    name: quantitative-v2-frozen-replay
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout active research branch
+        uses: actions/checkout@v4
+        with:
+          ref: trailaris-ephemeral-research-20260815
+          path: active
+
+      - name: Checkout immutable frozen R5.4 replay estate
+        uses: actions/checkout@v4
+        with:
+          ref: trailaris-r5-4-26week-validation-20260816
+          path: frozen
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install --quiet pandas numpy
+
+      - name: Verify V1 freeze, V2 control and V2 rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile active/trailaris_r5_5/quantitative_integrated_v2.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          b=json.loads(Path('active/trailaris_r5_5/R5_5_V2_26W_CANONICAL_BASELINE.json').read_text())
+          f=json.loads(Path('active/trailaris_r5_5/R5_5_QUANTITATIVE_V1_RESEARCH_FREEZE.json').read_text())
+          q=json.loads(Path('active/trailaris_r5_5/R5_5_QUANTITATIVE_INTEGRATED_V2_SPEC.json').read_text())
+          assert b['baseline_id']=='R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816'
+          assert abs(b['performance']['end_equity']-1366.8938578865148)<1e-9
+          assert f['state']=='FROZEN_RESEARCH_CANDIDATE_REJECTED_FOR_PROMOTION'
+          assert q['state']=='REPLAY_RULES_FROZEN_BEFORE_EXECUTION'
+          assert q['causality']['target_week_outcomes_used_for_parameter_selection'] is False
+          assert q['causality']['v1_ablation_results_allowed_to_tune_v2_parameters'] is False
+          assert q['v2_preservation']['v2_rank_score_preserved'] is True
+          assert q['v2_preservation']['v2_risk_fraction_preserved'] is True
+          print('FROZEN_V2_CONTROL_AND_QUANT_V2_RULES PASS')
+          PY
+
+      - name: Inject frozen Quantitative V2 into immutable replay estate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p frozen/trailaris_r5_5
+          cp active/trailaris_r5_5/*.py frozen/trailaris_r5_5/
+          cp active/trailaris_r5_5/R5_5_V2_26W_CANONICAL_BASELINE.json frozen/trailaris_r5_5/
+          cp active/trailaris_r5_5/R5_5_QUANTITATIVE_INTEGRATED_V2_SPEC.json frozen/trailaris_r5_5/
+
+      - name: Reconstruct exact frozen R4 dependencies
+        working-directory: frozen
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          python -m py_compile trailaris_r5_5/quantitative_integrated_v2.py trailaris_r5_5/run_longcycle_variant_accelerated.py
+
+      - name: Restore exact active R5.5 34-route 26-week M1 cache
+        uses: actions/cache/restore@v4
+        with:
+          path: frozen/trailaris_longcycle/raw_m1
+          key: trailaris-r5-5-active-m1-34-20260119-20260814-v1
+          fail-on-cache-miss: true
+
+      - name: Enforce authentic 34-route coverage gate
+        working-directory: frozen
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          from pathlib import Path
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          start=pd.Timestamp('2026-01-19T00:00:00Z'); end=pd.Timestamp('2026-08-14T23:59:59Z')
+          for a in routes:
+              p=Path('trailaris_longcycle/raw_m1')/f'{a}_M1_normalized.csv'; assert p.exists(),a
+              d=pd.read_csv(p,usecols=['timestamp']); ts=pd.to_datetime(d.timestamp,utc=True,errors='coerce').sort_values(); med=ts.diff().dropna().dt.total_seconds().median()
+              assert not ts.isna().any() and len(d)>=1000 and (pd.isna(med) or med<=75) and ts.min()<=start+pd.Timedelta(days=1) and ts.max()>=end-pd.Timedelta(days=2),a
+          print('AUTHENTIC_34_ROUTE_GATE PASS')
+          PY
+
+      - name: Rebuild causal factor evidence and specs
+        working-directory: frozen
+        run: |
+          python trailaris_longcycle/build_longcycle_factors.py --rawdir trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_longcycle/R5_5_QUANT_V2_FACTOR_EVIDENCE.json
+          python trailaris_r4/build_research_specs.py
+
+      - name: Execute full independent 34x15x510 Quantitative V2 replay
+        working-directory: frozen
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          rm -rf trailaris_r5_5/quantitative_v2_results
+          mkdir -p trailaris_r5_5/quantitative_v2_results
+          python trailaris_r5_5/run_longcycle_variant_accelerated.py \
+            --rawdir trailaris_longcycle/raw_m1 \
+            --specs trailaris_r4/research_proxy_specs.csv \
+            --variant trailaris_r5_5/quantitative_integrated_v2.py \
+            --name R5_5_QUANTITATIVE_INTEGRATED_V2 \
+            --outdir trailaris_r5_5/quantitative_v2_results
+
+      - name: Upload complete Quantitative V2 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-r5-5-quantitative-integrated-v2-26w
+          path: frozen/trailaris_r5_5/quantitative_v2_results/
+          retention-days: 30
+
+  aggregate:
+    name: attribution-and-promotion-audit
+    needs: [ablation, quantitative_v2]
+    runs-on: ubuntu-latest
+    if: always() && needs.ablation.result == 'success' && needs.quantitative_v2.result == 'success'
+    steps:
+      - name: Checkout active research branch
+        uses: actions/checkout@v4
+        with:
+          ref: trailaris-ephemeral-research-20260815
+          path: active
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install --quiet pandas numpy
+
+      - name: Download all attribution and V2 evidence
+        uses: actions/download-artifact@v4
+        with:
+          pattern: trailaris-r5-5-quant-*
+          path: evidence
+          merge-multiple: true
+
+      - name: Build component attribution, Quant V2 audit and hard promotion decision
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import pandas as pd
+
+          root=Path('evidence')
+          active=Path('active/trailaris_r5_5')
+          baseline=json.loads((active/'R5_5_V2_26W_CANONICAL_BASELINE.json').read_text())
+          control=baseline['performance']
+          v1=json.loads((active/'quantitative_v1_results/R5_5_QUANTITATIVE_INTEGRATED_V1_STATUS.json').read_text())['candidate']
+          spec=json.loads((active/'R5_5_QUANTITATIVE_INTEGRATED_V2_SPEC.json').read_text())
+
+          statuses={}
+          for p in root.glob('*_STATUS.json'):
+              s=json.loads(p.read_text())
+              statuses[s['variant']]=s['candidate']
+          required=['R5_5_QUANTITATIVE_INTEGRATED_V2','R5_5_QUANT_ABLATION_AUDIT_ONLY','R5_5_QUANT_ABLATION_NO_SIZING','R5_5_QUANT_ABLATION_NO_GATING','R5_5_QUANT_ABLATION_NO_FACTOR','R5_5_QUANT_ABLATION_NO_RANK']
+          missing=[x for x in required if x not in statuses]
+          if missing: raise RuntimeError(f'missing result statuses: {missing}')
+
+          def delta(a,b):
+              keys=sorted(set(a).intersection(b))
+              return {k:float(a[k])-float(b[k]) for k in keys if isinstance(a[k],(int,float)) and isinstance(b[k],(int,float))}
+
+          abl={}
+          for name in required[1:]:
+              c=statuses[name]
+              abl[name]={
+                'candidate':c,
+                'delta_vs_quant_v1':delta(c,v1),
+                'delta_vs_frozen_v2':delta(c,control)
+              }
+
+          c=statuses['R5_5_QUANTITATIVE_INTEGRATED_V2']
+          pg=spec['promotion_gate']
+          checks={
+            'positive_weeks': int(c['positive_weeks'])==int(pg['positive_weeks_must_equal']),
+            'end_equity': float(c['end_equity'])>=float(pg['end_equity_must_be_at_least']),
+            'profit_factor': float(c['profit_factor'])>=float(pg['profit_factor_must_be_at_least']),
+            'max_weekly_drawdown': float(c['max_weekly_drawdown_pct'])>=float(pg['max_weekly_drawdown_pct_must_be_no_worse_than']),
+            'max_event_equity_drawdown': float(c['max_event_equity_drawdown_pct'])>=float(pg['max_event_equity_drawdown_pct_must_be_no_worse_than'])
+          }
+          passes=all(checks.values())
+
+          pr=pd.read_csv(root/'R5_5_QUANTITATIVE_INTEGRATED_V2_PROMOTED.csv')
+          ev=pd.read_csv(root/'R5_5_QUANTITATIVE_INTEGRATED_V2_EVENTS.csv')
+          de=pd.read_csv(root/'R5_5_QUANTITATIVE_INTEGRATED_V2_DECISIONS.csv')
+          audit_pr=pd.read_csv(root/'R5_5_QUANT_ABLATION_AUDIT_ONLY_PROMOTED.csv')
+          def mean(col):
+              return float(pd.to_numeric(pr[col],errors='coerce').mean()) if col in pr and len(pr) else None
+          v2audit={
+            'state':'QUANTITATIVE_V2_26W_AUDIT_COMPLETE',
+            'baseline_id':baseline['baseline_id'],
+            'promoted_candidates_after_veto':int(len(pr)),
+            'v2_candidates_before_quant_veto':int(len(audit_pr)),
+            'quantitative_vetoed_candidates':int(len(audit_pr)-len(pr)),
+            'executed_trades':int(len(ev)),
+            'selected_decisions':int(de['selected'].astype(bool).sum()) if len(de) else 0,
+            'mean_posterior_win_probability':mean('quant_pwin'),
+            'mean_regularised_expected_r':mean('quant_ev_r'),
+            'mean_conservative_expected_r':mean('quant_conservative_ev_r'),
+            'mean_quant_confidence':mean('quant_confidence'),
+            'mean_factor_support_audit_only':mean('quant_factor_support'),
+            'mean_risk_scale':mean('quant_risk_scale'),
+            'mean_final_risk_fraction':mean('risk_fraction'),
+            'assets_promoted':int(pr['asset'].nunique()) if len(pr) else 0,
+            'strategies_promoted':int(pr['strategy'].nunique()) if len(pr) else 0,
+            'v2_rank_preserved':True,
+            'v2_risk_preserved':True,
+            'causality':'ALL_MODEL_INPUTS_EXITED_BEFORE_EVALUATED_WEEK; V1_ABLATIONS_NOT_USED_TO_TUNE_V2; FACTOR_SUPPORT_AUDIT_ONLY',
+            'evidence_class':'FULL_26_WEEK_CAUSAL_WALK_FORWARD_RESEARCH_PROXY; BROKER_PRODUCTION_CERTIFICATION_SEPARATE'
+          }
+
+          report={
+            'state':'QUANTITATIVE_V2_ATTRIBUTION_AND_PROMOTION_AUDIT_COMPLETE',
+            'baseline_id':baseline['baseline_id'],
+            'quant_v1_frozen_result':v1,
+            'v1_component_ablations':abl,
+            'quant_v2_candidate':c,
+            'delta_quant_v2_minus_frozen_v2':delta(c,control),
+            'delta_quant_v2_minus_quant_v1':delta(c,v1),
+            'quant_v2_audit':v2audit,
+            'hard_promotion_gate_checks':checks,
+            'hard_promotion_gate_pass':passes,
+            'successor_recommendation':'ELIGIBLE_FOR_SEPARATE_INDEPENDENT_REPRODUCIBILITY_REPLAY' if passes else 'RESEARCH_ONLY__FROZEN_V2_REMAINS_CONTROL',
+            'automatic_baseline_promotion':False,
+            'v2_rules_frozen_before_attribution_outputs':True,
+            'ablation_results_used_to_tune_v2':False
+          }
+
+          out=active/'quantitative_v2_results'
+          out.mkdir(parents=True,exist_ok=True)
+          (out/'R5_5_QUANTITATIVE_V2_ATTRIBUTION_AND_DECISION.json').write_text(json.dumps(report,indent=2,default=str))
+          (out/'R5_5_QUANTITATIVE_INTEGRATED_V2_AUDIT.json').write_text(json.dumps(v2audit,indent=2,default=str))
+          for fn in ['R5_5_QUANTITATIVE_INTEGRATED_V2_STATUS.json','R5_5_QUANTITATIVE_INTEGRATED_V2_WEEKLY.csv','R5_5_QUANTITATIVE_INTEGRATED_V2_ROLLING_11W.csv']:
+              src=root/fn
+              if not src.exists(): raise RuntimeError(f'missing {src}')
+              (out/fn).write_bytes(src.read_bytes())
+          print(json.dumps(report,indent=2,default=str))
+          PY
+
+      - name: Commit compact attribution and Quantitative V2 evidence
+        run: |
+          cd active
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_r5_5/quantitative_v2_results/
+          git commit -m 'test: quantitative V2 attribution and 26-week evidence [skip ci]' || true
+          git pull --rebase origin trailaris-ephemeral-research-20260815 || true
+          git push origin HEAD:trailaris-ephemeral-research-20260815
