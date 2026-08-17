@@ -37,9 +37,6 @@ def causal_clip(p: pd.Series, q: pd.Series, mode: str):
     diff=(p-q).abs()
     threshold=diff.shift(1).rolling(WINDOW,min_periods=MIN_PERIODS).quantile(Q)
     available=q.notna() & threshold.notna()
-    # The reference feed is only corrected when its move/excursion is more extreme
-    # than the independent feed and the disagreement is outside its own trailing
-    # 99.9% envelope. No outcome, campaign, P&L or champion information is used.
     if mode=='high': more_extreme=p>q
     elif mode=='low': more_extreme=p<q
     else: more_extreme=p.abs()>q.abs()
@@ -52,22 +49,18 @@ def causal_clip(p: pd.Series, q: pd.Series, mode: str):
 
 def build_dual(asset: str,p: pd.DataFrame,q: pd.DataFrame):
     a=comps(p,'p'); b=comps(q,'q')
-    # Reference grid is the more complete official primary acquisition estate.
-    # Independent data is evidence/correction, never allowed to create extra bars.
     z=a.merge(b,on='timestamp',how='left',sort=False)
     cc,fc,tc=causal_clip(z.p_c,z.q_c,'return')
     hh,fh,th=causal_clip(z.p_h,z.q_h,'high')
     ll,fl,tl=causal_clip(z.p_l,z.q_l,'low')
     gg,fg,tg=causal_clip(z.p_gap,z.q_gap,'return')
-    # First bar has no causal gap. Missing primary gaps are zero only when no previous
-    # bar exists; normal session/weekend primary gaps remain exactly as acquired.
     gg=gg.fillna(0.0); cc=cc.fillna(0.0); hh=hh.fillna(0.0); ll=ll.fillna(0.0)
     anchor=float(z.p_open.iloc[0])
-    steps=(gg+cc).to_numpy(float); steps[0]=float(cc.iloc[0])
+    steps=(gg+cc).to_numpy(dtype=float,copy=True); steps[0]=float(cc.iloc[0])
     logclose=np.log(anchor)+np.cumsum(steps)
-    logopen=logclose-cc.to_numpy(float)
+    logopen=logclose-cc.to_numpy(dtype=float,copy=True)
     op=np.exp(logopen); cl=np.exp(logclose)
-    hi=op*np.exp(hh.to_numpy(float)); lo=op*np.exp(ll.to_numpy(float))
+    hi=op*np.exp(hh.to_numpy(dtype=float,copy=True)); lo=op*np.exp(ll.to_numpy(dtype=float,copy=True))
     hi=np.maximum.reduce([hi,op,cl]); lo=np.minimum.reduce([lo,op,cl])
     out=pd.DataFrame({'timestamp':z.timestamp,'open':op,'high':hi,'low':lo,'close':cl,'bid':cl,'ask':'','spread':'','volume':z.p_volume.fillna(0.0),'source':'CANONICAL_REFERENCE_FEED_CAUSAL_TAIL_CLIP_R2','asset':asset})[COLS]
     overlap=int(z.q_close.notna().sum())
