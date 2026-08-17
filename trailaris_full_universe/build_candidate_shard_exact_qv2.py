@@ -3,19 +3,20 @@ from __future__ import annotations
 import argparse, json
 from pathlib import Path
 import pandas as pd
-from qv2_asset_universe_adapter import install_asset
+from qv2_asset_universe_adapter import install_universe, anchor_for
 
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--rawdir',type=Path,required=True);ap.add_argument('--outdir',type=Path,required=True);a=ap.parse_args();a.outdir.mkdir(parents=True,exist_ok=True)
     import trailaris_r4_full_universe_loop as r4
     ev=json.loads((a.rawdir/'ACQUISITION_EVIDENCE.json').read_text())
+    meta=pd.DataFrame([{'asset':str(e['canonical_instrument']),'discovery_provider_name':str(e.get('provider_name',''))} for e in ev.get('evidence',[]) if e.get('status')=='PASS' and e.get('file')])
+    if len(meta):install_universe(r4,meta)
     cand=[];accepted=[];rejected=[]
     for e in ev.get('evidence',[]):
         if e.get('status')!='PASS' or not e.get('file'):
             rejected.append({**e,'candidate_state':'ACQUISITION_REJECT'});continue
-        asset=str(e['canonical_instrument']); provider=str(e.get('provider_name','')); f=Path(e['file'])
+        asset=str(e['canonical_instrument']);provider=str(e.get('provider_name',''));f=Path(e['file']);anchor=anchor_for(asset,provider)
         try:
-            anchor=install_asset(r4,asset,provider)
             a0,c,xf,o=r4.build_asset_components((asset,str(f)))
             if c is not None and len(c):
                 z=c.copy();z['discovery_provider_id']=e['instrument_id'];z['discovery_provider_name']=provider;z['universe_adapter_anchor']=anchor;cand.append(z)
@@ -25,8 +26,8 @@ def main():
         finally:
             try:f.unlink()
             except Exception:pass
-    if cand: pd.concat(cand,ignore_index=True).to_csv(a.outdir/'CANDIDATES.csv.gz',index=False,compression='gzip')
-    else: pd.DataFrame().to_csv(a.outdir/'CANDIDATES.csv.gz',index=False,compression='gzip')
+    if cand:pd.concat(cand,ignore_index=True).to_csv(a.outdir/'CANDIDATES.csv.gz',index=False,compression='gzip')
+    else:pd.DataFrame().to_csv(a.outdir/'CANDIDATES.csv.gz',index=False,compression='gzip')
     pd.DataFrame(accepted).to_csv(a.outdir/'ACCEPTED_ASSETS.csv',index=False);pd.DataFrame(rejected).to_csv(a.outdir/'REJECTED_ASSETS.csv',index=False)
     out={'state':'EXACT_QV2_EXPANDED_CANDIDATE_SHARD_COMPLETE','acquisition_scheduled':ev.get('assets_scheduled',0),'acquisition_pass':ev.get('assets_pass',0),'r4_extended_accepted_assets':len(accepted),'rejected_assets':len(rejected),'candidate_rows':sum(len(x) for x in cand),'quant_v2_modified':False,'normalized_r_used':False}
     (a.outdir/'CANDIDATE_SHARD_SUMMARY.json').write_text(json.dumps(out,indent=2));print(json.dumps(out,indent=2))
