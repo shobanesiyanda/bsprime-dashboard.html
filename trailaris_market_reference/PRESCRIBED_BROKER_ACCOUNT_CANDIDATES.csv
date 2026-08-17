@@ -1,0 +1,8 @@
+priority,broker_brand,target_account,platform,execution_domain,legal_entity_state,server_state,qualification_state,notes
+A,Pepperstone,Razor,MT5,CORE,RESOLVE_PER_CLIENT_JURISDICTION,EXACT_SERVER_REQUIRED,CANDIDATE,Raw-spread conventional-market qualification target
+A,IC Markets,Raw Spread,MT5,CORE,RESOLVE_PER_CLIENT_JURISDICTION,EXACT_SERVER_REQUIRED,CANDIDATE,Primary conventional-market qualification target
+A,FP Markets,Raw,MT5,CORE,RESOLVE_PER_CLIENT_JURISDICTION,EXACT_SERVER_REQUIRED,CANDIDATE,Primary conventional-market qualification target
+A,Tickmill,Raw,MT5,CORE,RESOLVE_PER_CLIENT_JURISDICTION,EXACT_SERVER_REQUIRED,CANDIDATE,Primary conventional-market qualification target
+B,Eightcap,Raw,MT5,CORE,RESOLVE_PER_CLIENT_JURISDICTION,EXACT_SERVER_REQUIRED,CANDIDATE,Secondary conventional-market qualification target
+S,Deriv,Standard,MT5,DERIV_OPTIONAL,RESOLVE_PER_CLIENT_JURISDICTION,EXACT_SERVER_REQUIRED,CANDIDATE,Optional specialist Derived Indices domain; not core dependency
+S,Deriv,Zero Spread,MT5,DERIV_OPTIONAL,RESOLVE_PER_CLIENT_JURISDICTION,EXACT_SERVER_REQUIRED,CANDIDATE,Optional specialist Derived Indices domain; not core dependency
