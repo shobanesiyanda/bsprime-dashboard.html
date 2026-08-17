@@ -1,0 +1,26 @@
+{
+  "state": "QUANTITATIVE_V1_26W_AUDIT_COMPLETE",
+  "baseline_id": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
+  "promoted_candidates": 3159,
+  "executed_trades": 2130,
+  "selected_decisions": 2130,
+  "mean_posterior_win_probability": 0.5675896585784657,
+  "mean_regularised_expected_r": 0.1395309957144024,
+  "mean_conservative_expected_r": 0.0510393811575681,
+  "mean_quant_confidence": 0.9999998857530724,
+  "mean_fractional_kelly": 0.18698229459739796,
+  "mean_quant_score": 0.1861188426189816,
+  "mean_factor_support": 0.08147457157625115,
+  "mean_risk_scale": 0.6759386118426118,
+  "mean_final_risk_fraction": 0.0031952374694938046,
+  "assets_promoted": 33,
+  "strategies_promoted": 8,
+  "causality": "ALL_MODEL_INPUTS_EXITED_BEFORE_EVALUATED_WEEK; SAME_TIMESTAMP_FACTOR_SIGNALS_DO_NOT_INFLUENCE_ONE_ANOTHER",
+  "scope_preserved": {
+    "weeks": 26,
+    "routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510
+  },
+  "evidence_class": "FULL_26_WEEK_CAUSAL_WALK_FORWARD_RESEARCH_PROXY; BROKER_PRODUCTION_CERTIFICATION_SEPARATE"
+}
