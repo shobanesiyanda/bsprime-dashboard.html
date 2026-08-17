@@ -1,0 +1,17 @@
+{
+  "lock_id": "TRAILARIS_STANDALONE_CAPITAL_BOUNDARY_20260817",
+  "state": "HARD_LOCK",
+  "trailaris_role": "MARKET_EXECUTION_ENGINE",
+  "bs_prime_integration": "DEFERRED",
+  "rule": "TrailAris must remain operationally standalone and must not depend on BS PRIME for current product operation, validation, licensing, customer deployment, capital control or performance-preservation logic.",
+  "current_internal_layers_allowed": [
+    "performance_preservation_layer",
+    "provider_invariance_layer",
+    "confidence_weighted_opportunity_allocator",
+    "equity_and_drawdown_risk_governor",
+    "champion_challenger_validation_layer"
+  ],
+  "future_integration_condition": "BS PRIME may be connected internally only later, when the companies and internal capital-management requirements are sufficiently large to justify the governed Capital-Market Bridge.",
+  "current_quant_v2_core": "FROZEN",
+  "production_promotion_allowed_by_this_lock": false
+}
