@@ -60,10 +60,12 @@ jobs:
           python trailaris_r5_5/build_provider_invariant_canonical_m1_r2.py --primary primary/trailaris_longcycle/raw_m1 --independent independent/trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1 --audit provider_invariance_r2/CANONICALIZATION_AUDIT.json
       - name: Enforce frozen Quant V2 hash and 34-route gate
         working-directory: source
+        env: {PYTHONPATH: 'trailaris_r4'}
         run: |
           python - <<'PY'
           import json,subprocess,pandas as pd
           from pathlib import Path
+          import trailaris_r4_full_universe_loop as r4
           expected='120390ab52e80f51bafedc42389ceb7420a410f2'
           actual=subprocess.check_output(['git','rev-parse','HEAD:trailaris_r5_5/quantitative_integrated_v2.py'],text=True).strip(); assert actual==expected,(actual,expected)
           routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
@@ -73,7 +75,14 @@ jobs:
             d=pd.read_csv(f,usecols=['timestamp','source']); t=pd.to_datetime(d.timestamp,utc=True,errors='coerce').dropna(); assert len(d)>=1000,a
             rows.append({'asset':a,'rows':len(d),'first':str(t.min()),'last':str(t.max()),'source':'|'.join(sorted(map(str,d.source.dropna().unique())))})
           pd.DataFrame(rows).to_csv('provider_invariance_r2/CANONICAL_ROUTE_GATE.csv',index=False)
-          Path('provider_invariance_r2/FROZEN_RULE_GATE.json').write_text(json.dumps({'state':'PASS','quant_v2_git_blob_sha1':actual,'routes':34,'quant_v2_modified':False},indent=2))
+          data,v=r4.validate_34(Path('trailaris_longcycle/raw_m1'),'research-proxy')
+          accepted=sorted(list(data.keys())) if hasattr(data,'keys') else []
+          missing=[a for a in routes if a not in set(accepted)]
+          diag={'state':'PASS' if len(data)==34 else 'FAIL','accepted_count':len(data),'accepted_routes':accepted,'missing_routes':missing,'validator_evidence_repr':repr(v)}
+          Path('provider_invariance_r2/R4_VALIDATE_34_DIAGNOSTIC.json').write_text(json.dumps(diag,indent=2,default=str))
+          print(json.dumps(diag,indent=2,default=str))
+          Path('provider_invariance_r2/FROZEN_RULE_GATE.json').write_text(json.dumps({'state':'PASS' if len(data)==34 else 'FAIL','quant_v2_git_blob_sha1':actual,'filesystem_routes':34,'r4_accepted_routes':len(data),'missing_routes':missing,'quant_v2_modified':False},indent=2))
+          if len(data)!=34: raise RuntimeError(f'R4 validate_34 rejected {len(missing)} routes: {missing}')
           PY
       - name: Restore immutable 510-cell factory
         working-directory: source
@@ -128,5 +137,3 @@ jobs:
           name: trailaris-r5-5-quant-v2-provider-invariance-r2-26w
           path: source/provider_invariance_r2/
           retention-days: 30
-
-# harness-fix trigger: writable NumPy arrays only; no Quant V2 change
