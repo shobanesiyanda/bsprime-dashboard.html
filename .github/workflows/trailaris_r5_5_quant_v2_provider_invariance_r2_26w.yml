@@ -116,8 +116,6 @@ jobs:
           substantial=cj>=0.30 and cj>=2*bj
           toward=abs(math.log(ce/champion_eq))<abs(math.log(be/champion_eq))
           ddw=abs(float(cs['max_weekly_drawdown_pct'])); dde=abs(float(cs['max_event_equity_drawdown_pct'])); bddw=abs(float(bs['max_weekly_drawdown_pct'])); bdde=abs(float(bs['max_event_equity_drawdown_pct']))
-          risk_no_increase=True
-          # Quant V2 is frozen and its risk fractions are unchanged by construction; verify max projected open risk too.
           max_base=float(pd.to_numeric(base.loc[base.selected.astype(bool),'projected_open_risk_pct'],errors='coerce').max()); max_cand=float(pd.to_numeric(cand.loc[cand.selected.astype(bool),'projected_open_risk_pct'],errors='coerce').max()); risk_no_increase=max_cand<=max_base+1e-12
           out={'state':'PROVIDER_INVARIANCE_R2_EVALUATED','campaign_identity':{'provider_diverse_baseline_jaccard':bj,'r1_jaccard':rj,'r2_jaccard':cj,'multiple_vs_baseline':cj/bj,'required_jaccard':0.30,'substantial_pass':substantial},'equity':{'champion':champion_eq,'provider_diverse_baseline':be,'r1':float(rs['end_equity']),'r2':ce,'moved_toward_champion':toward},'drawdown':{'baseline_weekly_abs_pct':bddw,'r2_weekly_abs_pct':ddw,'baseline_event_abs_pct':bdde,'r2_event_abs_pct':dde,'no_increase_pass':ddw<=bddw+1e-12 and dde<=bdde+1e-12},'risk':{'baseline_max_projected_open_risk_pct':max_base,'r2_max_projected_open_risk_pct':max_cand,'no_increase_pass':risk_no_increase},'quant_v2_modified':False,'promotion_allowed':False}
           out['acceptance_pass']=bool(substantial and toward and out['drawdown']['no_increase_pass'] and risk_no_increase)
@@ -130,3 +128,5 @@ jobs:
           name: trailaris-r5-5-quant-v2-provider-invariance-r2-26w
           path: source/provider_invariance_r2/
           retention-days: 30
+
+# harness-fix trigger: writable NumPy arrays only; no Quant V2 change
