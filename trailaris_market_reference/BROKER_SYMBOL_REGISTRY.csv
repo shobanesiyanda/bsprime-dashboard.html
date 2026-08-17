@@ -1,0 +1,1 @@
+broker_legal_entity,jurisdiction,server,account_type,raw_symbol,canonical_instrument,asset_class,description,currency_base,currency_profit,trade_mode,digits,point,tick_size,tick_value,contract_size,volume_min,volume_step,volume_max,stops_level,freeze_level,margin_initial,swap_long,swap_short,mapping_state,certification_state,evidence_ref
