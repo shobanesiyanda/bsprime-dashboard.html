@@ -8,7 +8,8 @@ on:
 
 permissions:
   contents: read
-\jobs:
+
+jobs:
   quantitative-cache-bridge:
     runs-on: ubuntu-latest
     timeout-minutes: 180
