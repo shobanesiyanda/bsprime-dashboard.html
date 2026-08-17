@@ -1,0 +1,52 @@
+{
+  "evidence_id": "R5_5_QUANT_V2_FRESH_SNAPSHOT_DETERMINISM_R2_SEMANTIC_PASS_20260817",
+  "state": "FRESH_SNAPSHOT_DETERMINISM_PASS__CANONICAL_ROW_ORDER__NUMERIC_TOLERANCE_1E_MINUS_12",
+  "candidate_rules_commit": "194031e05594e6921b5410e3eb328a5fb53fde94",
+  "workflow_run_id": 32032909765,
+  "workflow_attempt": 2,
+  "artifact_id": 9291023338,
+  "artifact_digest": "sha256:38f171f77c275c8b5b52ceb583590f4319cadc152d4393524090c2b2774930d8",
+  "same_raw_snapshot_for_both_runs": true,
+  "headline_metric_differences": {},
+  "original_byte_gate_state": "FAIL",
+  "original_byte_gate_failure_reason": "EVENTS, DECISIONS and PROMOTED CSVs differed only by machine-epsilon floating representation and/or non-semantic output ordering; headline metrics were exactly equal.",
+  "semantic_comparison": {
+    "method": "stable-key canonical row sorting plus numeric comparison tolerance <=1e-12; canonical evidence hashes use numeric rounding to 12 decimal places",
+    "weekly_identical": true,
+    "rolling_11w_identical": true,
+    "events_semantically_identical": true,
+    "decisions_semantically_identical": true,
+    "promoted_semantically_identical": true,
+    "canonical_hashes_rounded_12dp": {
+      "WEEKLY": "7533c7f14ea51bbbef5c8718eed4776d920d1546ccc248496a38b779d360e2ed",
+      "ROLLING_11W": "74733eb0208357529f6b6fc8c9afc073d572334d6bf47151d300245f3f66f382",
+      "EVENTS": "1aa59231666210d1b700e256fd05969e2f90ef6ab9ddbc6b2d392ec94cedeb0b",
+      "DECISIONS": "f274c54383534256d20977735dd84d99db9a150c3626e7aefe805a0944685904",
+      "PROMOTED": "fd552d3d7d64b2a835648361e69c91d281679377c01ce5ae00181712b62fa0aa"
+    }
+  },
+  "candidate": {
+    "starting_equity_usd": 100.0,
+    "ending_equity_usd": 1468.7743801597724,
+    "compounded_return_pct": 1368.7743801597724,
+    "evaluated_weeks": 26,
+    "positive_weeks": 26,
+    "negative_weeks": 0,
+    "mean_week_pct": 10.955029168198225,
+    "median_week_pct": 11.31490990988413,
+    "weeks_ge_5_pct": 23,
+    "weeks_ge_10_pct": 18,
+    "executed_trades": 2049,
+    "wins": 1182,
+    "losses": 450,
+    "flats": 417,
+    "nonflat_win_rate": 0.7242647058823529,
+    "profit_factor": 3.0330175556874894,
+    "max_weekly_drawdown_pct": -2.7349101913157647,
+    "max_event_equity_drawdown_pct": -4.323436634321043,
+    "assets_with_selected": 32
+  },
+  "interpretation": "Engine decision/output semantics are reproducible on an identical frozen raw snapshot. The original byte-level gate was over-strict and treated machine-epsilon representation as a failure. This correction does not change Quant V2 rules or replay results.",
+  "promotion_allowed": false,
+  "next_gate": "INDEPENDENT_PROVIDER_OR_BROKER_DATA_REPRODUCTION"
+}
