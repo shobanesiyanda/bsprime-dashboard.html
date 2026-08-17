@@ -1,0 +1,132 @@
+name: Trailaris R5.5 — Quant V2 Provider Invariance R2 26W
+
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_5_quant_v2_provider_invariance_r2_26w.yml']
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: read
+concurrency:
+  group: trailaris-r5-5-quant-v2-provider-invariance-r2
+  cancel-in-progress: false
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: 194031e05594e6921b5410e3eb328a5fb53fde94, path: source}
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-ephemeral-research-20260815, path: validation}
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-r5-4-26week-validation-20260816, path: engine}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Prepare immutable engine and acquisition estates
+        run: |
+          mkdir -p source/primary/trailaris_longcycle source/independent/trailaris_longcycle source/trailaris_longcycle source/provider_invariance_r2
+          cp engine/trailaris_longcycle/acquire_m1_26w.js source/primary/trailaris_longcycle/
+          cp engine/trailaris_longcycle/acquire_binance_m1_26w.py source/primary/trailaris_longcycle/
+          cp engine/trailaris_longcycle/build_longcycle_factors.py source/trailaris_longcycle/
+          cp validation/trailaris_r5_5/acquire_provider_diverse_m1_r3.py source/trailaris_r5_5/
+          cp validation/trailaris_r5_5/build_provider_invariant_canonical_m1_r2.py source/trailaris_r5_5/
+      - name: Install exact dependencies and reconstruct frozen R4
+        working-directory: source
+        run: |
+          python -m pip install --quiet pandas numpy requests beautifulsoup4
+          npm install --no-save --silent dukascopy-node@1.50.0 ws
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+      - name: Acquire primary and independent histories concurrently
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p primary/trailaris_longcycle/raw_m1 independent/trailaris_longcycle/raw_m1 provider_invariance_r2/acquisition
+          (cd primary && node trailaris_longcycle/acquire_m1_26w.js > ../provider_invariance_r2/acquisition/primary_node.log 2>&1) & P1=$!
+          (cd primary && python trailaris_longcycle/acquire_binance_m1_26w.py > ../provider_invariance_r2/acquisition/primary_binance.log 2>&1) & P2=$!
+          python trailaris_r5_5/acquire_provider_diverse_m1_r3.py --rawdir independent/trailaris_longcycle/raw_m1 --evidence provider_invariance_r2/acquisition > provider_invariance_r2/acquisition/independent.log 2>&1 & P3=$!
+          set +e; wait $P1; E1=$?; wait $P2; E2=$?; wait $P3; E3=$?; set -e
+          printf '{"primary_node":%d,"primary_binance":%d,"independent":%d}\n' "$E1" "$E2" "$E3" > provider_invariance_r2/acquisition/EXIT.json
+          test "$E1" -eq 0 && test "$E2" -eq 0 && test "$E3" -eq 0
+      - name: Build quality-ranked canonical provider-invariant R2 estate
+        working-directory: source
+        run: |
+          rm -rf trailaris_longcycle/raw_m1 && mkdir -p trailaris_longcycle/raw_m1
+          python trailaris_r5_5/build_provider_invariant_canonical_m1_r2.py --primary primary/trailaris_longcycle/raw_m1 --independent independent/trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1 --audit provider_invariance_r2/CANONICALIZATION_AUDIT.json
+      - name: Enforce frozen Quant V2 hash and 34-route gate
+        working-directory: source
+        run: |
+          python - <<'PY'
+          import json,subprocess,pandas as pd
+          from pathlib import Path
+          expected='120390ab52e80f51bafedc42389ceb7420a410f2'
+          actual=subprocess.check_output(['git','rev-parse','HEAD:trailaris_r5_5/quantitative_integrated_v2.py'],text=True).strip(); assert actual==expected,(actual,expected)
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          rows=[]
+          for a in routes:
+            f=Path('trailaris_longcycle/raw_m1')/f'{a}_M1_normalized.csv'; assert f.exists(),a
+            d=pd.read_csv(f,usecols=['timestamp','source']); t=pd.to_datetime(d.timestamp,utc=True,errors='coerce').dropna(); assert len(d)>=1000,a
+            rows.append({'asset':a,'rows':len(d),'first':str(t.min()),'last':str(t.max()),'source':'|'.join(sorted(map(str,d.source.dropna().unique())))})
+          pd.DataFrame(rows).to_csv('provider_invariance_r2/CANONICAL_ROUTE_GATE.csv',index=False)
+          Path('provider_invariance_r2/FROZEN_RULE_GATE.json').write_text(json.dumps({'state':'PASS','quant_v2_git_blob_sha1':actual,'routes':34,'quant_v2_modified':False},indent=2))
+          PY
+      - name: Restore immutable 510-cell factory
+        working-directory: source
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          mkdir -p /tmp/factory trailaris_longcycle/results
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/9268762003/zip > /tmp/factory.zip
+          echo '3e5258cba30bc0d2d034e6cb9ae62c5520d04bda69ca4dc45183e7b861dcf86d  /tmp/factory.zip' | sha256sum -c -
+          unzip -q /tmp/factory.zip -d /tmp/factory
+          cp /tmp/factory/results/R4_FACTORY_AUDIT.csv trailaris_longcycle/results/R4_FACTORY_AUDIT.csv
+      - name: Rebuild factors and specs
+        working-directory: source
+        run: |
+          python trailaris_longcycle/build_longcycle_factors.py --rawdir trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv --audit provider_invariance_r2/FACTOR_EVIDENCE.json
+          python trailaris_r4/build_research_specs.py
+      - name: Execute frozen Quant V2 on provider-invariant R2 estate
+        working-directory: source
+        env: {PYTHONPATH: 'trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5'}
+        run: |
+          mkdir -p provider_invariance_r2/results
+          python trailaris_r5_5/run_longcycle_variant_accelerated.py --rawdir trailaris_longcycle/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --variant trailaris_r5_5/quantitative_integrated_v2.py --name R5_5_QUANTITATIVE_V2_PROVIDER_INVARIANCE_R2 --outdir provider_invariance_r2/results
+      - name: Evaluate locked acceptance criteria
+        working-directory: source
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          rm -rf /tmp/champ /tmp/pd4 /tmp/r1 && mkdir -p /tmp/champ /tmp/pd4 /tmp/r1
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/9284801783/zip > /tmp/champ.zip
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/9291860056/zip > /tmp/pd4.zip
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/9293703692/zip > /tmp/r1.zip
+          unzip -q /tmp/champ.zip -d /tmp/champ; unzip -q /tmp/pd4.zip -d /tmp/pd4; unzip -q /tmp/r1.zip -d /tmp/r1
+          python - <<'PY'
+          import json,math,pandas as pd
+          from pathlib import Path
+          champ=pd.read_csv('/tmp/champ/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_DECISIONS.csv'); base=pd.read_csv('/tmp/pd4/results/R5_5_QUANTITATIVE_V2_PROVIDER_DIVERSE_HYBRID_R4_DECISIONS.csv'); r1=pd.read_csv('/tmp/r1/results/R5_5_QUANTITATIVE_V2_PROVIDER_INVARIANCE_R1_DECISIONS.csv'); cand=pd.read_csv('provider_invariance_r2/results/R5_5_QUANTITATIVE_V2_PROVIDER_INVARIANCE_R2_DECISIONS.csv')
+          bs=json.loads(Path('/tmp/pd4/results/R5_5_QUANTITATIVE_V2_PROVIDER_DIVERSE_HYBRID_R4_STATUS.json').read_text())['candidate']; rs=json.loads(Path('/tmp/r1/results/R5_5_QUANTITATIVE_V2_PROVIDER_INVARIANCE_R1_STATUS.json').read_text())['candidate']; cs=json.loads(Path('provider_invariance_r2/results/R5_5_QUANTITATIVE_V2_PROVIDER_INVARIANCE_R2_STATUS.json').read_text())['candidate']
+          def S(d): return set(d.loc[d.selected.astype(bool),'campaign_id'])
+          def J(a,b): return len(a&b)/len(a|b)
+          A,B,R,C=map(S,[champ,base,r1,cand]); bj,rj,cj=J(A,B),J(A,R),J(A,C)
+          champion_eq=1389.6425169269207; be=float(bs['end_equity']); ce=float(cs['end_equity'])
+          substantial=cj>=0.30 and cj>=2*bj
+          toward=abs(math.log(ce/champion_eq))<abs(math.log(be/champion_eq))
+          ddw=abs(float(cs['max_weekly_drawdown_pct'])); dde=abs(float(cs['max_event_equity_drawdown_pct'])); bddw=abs(float(bs['max_weekly_drawdown_pct'])); bdde=abs(float(bs['max_event_equity_drawdown_pct']))
+          risk_no_increase=True
+          # Quant V2 is frozen and its risk fractions are unchanged by construction; verify max projected open risk too.
+          max_base=float(pd.to_numeric(base.loc[base.selected.astype(bool),'projected_open_risk_pct'],errors='coerce').max()); max_cand=float(pd.to_numeric(cand.loc[cand.selected.astype(bool),'projected_open_risk_pct'],errors='coerce').max()); risk_no_increase=max_cand<=max_base+1e-12
+          out={'state':'PROVIDER_INVARIANCE_R2_EVALUATED','campaign_identity':{'provider_diverse_baseline_jaccard':bj,'r1_jaccard':rj,'r2_jaccard':cj,'multiple_vs_baseline':cj/bj,'required_jaccard':0.30,'substantial_pass':substantial},'equity':{'champion':champion_eq,'provider_diverse_baseline':be,'r1':float(rs['end_equity']),'r2':ce,'moved_toward_champion':toward},'drawdown':{'baseline_weekly_abs_pct':bddw,'r2_weekly_abs_pct':ddw,'baseline_event_abs_pct':bdde,'r2_event_abs_pct':dde,'no_increase_pass':ddw<=bddw+1e-12 and dde<=bdde+1e-12},'risk':{'baseline_max_projected_open_risk_pct':max_base,'r2_max_projected_open_risk_pct':max_cand,'no_increase_pass':risk_no_increase},'quant_v2_modified':False,'promotion_allowed':False}
+          out['acceptance_pass']=bool(substantial and toward and out['drawdown']['no_increase_pass'] and risk_no_increase)
+          Path('provider_invariance_r2/PROVIDER_INVARIANCE_R2_EVALUATION.json').write_text(json.dumps(out,indent=2)); print(json.dumps(out,indent=2))
+          PY
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-r5-5-quant-v2-provider-invariance-r2-26w
+          path: source/provider_invariance_r2/
+          retention-days: 30
