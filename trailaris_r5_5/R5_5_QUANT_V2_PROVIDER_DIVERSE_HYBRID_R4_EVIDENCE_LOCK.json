@@ -1,0 +1,60 @@
+{
+  "lock_id": "TRAILARIS_R5_5_QUANT_V2_PROVIDER_DIVERSE_HYBRID_R4_20260817",
+  "state": "PROVIDER_DIVERSE_HYBRID_26_OF_34_REPLAY_COMPLETE__NON_PROMOTIONAL",
+  "run_id": 32038371663,
+  "artifact_id": 9291860056,
+  "artifact_name": "trailaris-r5-5-quant-v2-provider-diverse-hybrid-r4-26w",
+  "artifact_sha256": "5d0632f07d15f2163648fd33c4804875223e0930e358eae38a6c1e753b9eec81",
+  "candidate_rules_commit": "194031e05594e6921b5410e3eb328a5fb53fde94",
+  "historical_window": {
+    "acquisition_start": "2026-01-19T00:00:00Z",
+    "acquisition_end": "2026-08-14T23:59:59Z",
+    "evaluated_weeks": 26
+  },
+  "source_gate": {
+    "routes": 34,
+    "independent_provider_routes": 26,
+    "primary_source_routes": 8,
+    "primary_source_assets": ["US30", "WTI", "NATGAS", "V75", "V50", "V100", "V25", "V10"],
+    "full_independent_provider_claim": false
+  },
+  "candidate": {
+    "start_equity": 100.0,
+    "end_equity": 903.1286538367983,
+    "compounded_return_pct": 803.1286538367983,
+    "positive_weeks": 26,
+    "negative_weeks": 0,
+    "mean_week_pct": 8.897271301432633,
+    "median_week_pct": 10.196138090706398,
+    "weeks_ge5": 20,
+    "weeks_ge10": 14,
+    "executed_trades": 2051,
+    "wins": 1116,
+    "losses": 447,
+    "flats": 488,
+    "nonflat_win_rate": 0.7140115163147792,
+    "profit_factor": 2.4743106440169393,
+    "max_weekly_drawdown_pct": -3.0613232031481474,
+    "max_event_equity_drawdown_pct": -3.0613232031481363,
+    "assets_with_selected": 32,
+    "rolling_11w_min_return_pct": 120.13520912997046,
+    "rolling_11w_median_return_pct": 152.5707086206989,
+    "rolling_11w_mean_return_pct": 154.85001259727133,
+    "rolling_11w_max_return_pct": 193.9113998077087
+  },
+  "fresh_control_same_engine_estate": {
+    "end_equity": 1136.4556497760627,
+    "compounded_return_pct": 1036.4556497760627,
+    "executed_trades": 2152,
+    "wins": 856,
+    "losses": 505,
+    "flats": 791,
+    "nonflat_win_rate": 0.6289493019838354,
+    "profit_factor": 2.791840637059962,
+    "max_weekly_drawdown_pct": -2.9475910077805922,
+    "max_event_equity_drawdown_pct": -3.1202037867421484,
+    "positive_weeks": 26
+  },
+  "promotion_allowed": false,
+  "qualification": "Supporting provider-diverse historical reproduction evidence only. It is not a full 34-of-34 independent-provider certification and is not broker-production certification. Quant V2 remains frozen."
+}
