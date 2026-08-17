@@ -1,0 +1,15 @@
+broker_brand,legal_entity,jurisdiction,regulator,licence,account_evidence,platform_evidence,state
+Pepperstone,Pepperstone Markets Limited,Bahamas,Securities Commission of The Bahamas,SIA-F217,Razor and Standard documented,MT5 documented,ENTITY_OPTION_NOT_YET_CERTIFIED
+Pepperstone,Pepperstone International Markets Limited,Seychelles,Financial Services Authority,SD108,Entity documented,Account/server tuple requires live-account resolution,ENTITY_OPTION_NOT_YET_CERTIFIED
+IC Markets,Raw Trading Ltd,Seychelles,Financial Services Authority,SD018,Raw Spread and Standard documented,MetaTrader documented,ENTITY_OPTION_NOT_YET_CERTIFIED
+FP Markets,First Prudential Markets Limited,Seychelles,Financial Services Authority,SD130,Raw and Standard documented,MT5 documented,ENTITY_OPTION_NOT_YET_CERTIFIED
+FP Markets,FP Markets (Pty) Ltd,South Africa,Financial Sector Conduct Authority,FSP 50926,Group entity documented,Exact account/server contracting tuple requires live-account resolution,ENTITY_OPTION_NOT_YET_CERTIFIED
+Tickmill,Tickmill South Africa (Pty) Ltd,South Africa,Financial Sector Conduct Authority,FSP 49464,Raw and Classic documented,MT5 documented,ENTITY_OPTION_NOT_YET_CERTIFIED
+Tickmill,Tickmill Ltd,Seychelles,Financial Services Authority,SD008,Raw and Classic documented,MT5 documented,ENTITY_OPTION_NOT_YET_CERTIFIED
+Eightcap,Eightcap Global Limited,Bahamas,Securities Commission of The Bahamas,SIA-F220,Raw and Standard documented,MT5 documented,ENTITY_OPTION_NOT_YET_CERTIFIED
+Eightcap,Eightcap International Ltd,Seychelles,Financial Services Authority,SD100,Entity documented,Exact account/server tuple requires live-account resolution,ENTITY_OPTION_NOT_YET_CERTIFIED
+Eightcap,Eightcap International Trading,Mauritius,Financial Services Commission,GB25204603,Entity documented,Exact account/server tuple requires live-account resolution,ENTITY_OPTION_NOT_YET_CERTIFIED
+Deriv,Deriv (BVI) Ltd,British Virgin Islands,British Virgin Islands Financial Services Commission,,Standard and Zero Spread CFDs documented,Deriv MT5 documented,DERIV_OPTIONAL_ENTITY_NOT_YET_CERTIFIED
+Deriv,Deriv Investments (Cayman) Limited,Cayman Islands,Cayman Islands Monetary Authority,,CFDs on financial instruments and Derived Indices documented,Deriv MT5 documented,DERIV_OPTIONAL_ENTITY_NOT_YET_CERTIFIED
+Deriv,Deriv (Mauritius) Ltd,Mauritius,Financial Services Commission,,CFDs on financial instruments and Derived Indices documented,Deriv MT5 documented,DERIV_OPTIONAL_ENTITY_NOT_YET_CERTIFIED
+Deriv,Deriv (V) Ltd,Vanuatu,Vanuatu Financial Services Commission,,CFDs on financial instruments and Derived Indices documented,Deriv MT5 documented,DERIV_OPTIONAL_ENTITY_NOT_YET_CERTIFIED
