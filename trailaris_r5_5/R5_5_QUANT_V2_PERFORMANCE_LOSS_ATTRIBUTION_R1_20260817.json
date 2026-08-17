@@ -1,0 +1,105 @@
+{
+  "lock_id": "TRAILARIS_R5_5_QUANT_V2_PERFORMANCE_LOSS_ATTRIBUTION_R1_20260817",
+  "state": "ATTRIBUTION_COMPLETE__CORE_UNCHANGED",
+  "candidate_rules_commit": "194031e05594e6921b5410e3eb328a5fb53fde94",
+  "locked_run": {
+    "artifact_id": 9284801783,
+    "end_equity": 1389.6425169269207,
+    "return_pct": 1289.6425169269207,
+    "trades": 2119
+  },
+  "provider_diverse_run": {
+    "run_id": 32038371663,
+    "artifact_id": 9291860056,
+    "end_equity": 903.1286538367983,
+    "return_pct": 803.1286538367983,
+    "trades": 2051,
+    "independent_provider_routes": 26,
+    "primary_routes": 8
+  },
+  "headline": {
+    "end_equity_shortfall_usd": 486.5138630901224,
+    "provider_diverse_end_equity_vs_locked_pct": 64.98999587900757,
+    "log_growth_delta": -0.42585830926647805,
+    "relative_growth_factor": 0.6532088892106436
+  },
+  "opportunity_set_turnover": {
+    "exact_selected_campaigns_common": 498,
+    "locked_only_selected_campaigns": 1621,
+    "provider_diverse_only_selected_campaigns": 1553,
+    "selected_jaccard": 0.13562091503267973,
+    "common_promoted_campaigns": 836,
+    "locked_only_promoted_campaigns": 2315,
+    "provider_diverse_only_promoted_campaigns": 1822,
+    "promoted_jaccard": 0.16810778202292379,
+    "interpretation": "Most degradation comes from provider-sensitive opportunity generation/ranking/selection turnover, not from the same campaigns suddenly failing."
+  },
+  "common_campaign_stability": {
+    "common_selected_campaigns": 498,
+    "identical_net_r_campaigns": 435,
+    "identical_net_r_fraction": 0.8734939759036144,
+    "changed_net_r_campaigns": 63,
+    "direction_flips": 32,
+    "common_campaign_log_growth_delta": -0.03223336763894516
+  },
+  "exact_log_growth_decomposition": {
+    "lost_locked_campaigns_effect": -2.074659412016625,
+    "new_provider_diverse_campaigns_effect": 1.6810344703890916,
+    "common_campaign_outcome_effect": -0.03223336763894516,
+    "net": -0.4258583092664785,
+    "interpretation": "The dominant mechanism is replacement of the locked opportunity set by a different provider-diverse opportunity set."
+  },
+  "provider_class_attribution": {
+    "independent_routes": {
+      "locked_log_growth": 2.527316,
+      "provider_diverse_log_growth": 1.951105,
+      "delta_log_growth": -0.5762112797336341,
+      "relative_growth_factor": 0.562024
+    },
+    "primary_routes": {
+      "locked_log_growth": 0.104799,
+      "provider_diverse_log_growth": 0.255152,
+      "delta_log_growth": 0.15035297046715584,
+      "relative_growth_factor": 1.162244
+    },
+    "interpretation": "The net shortfall is attributable to the routes whose price histories changed provider. Primary-source routes improved and partially offset the degradation."
+  },
+  "largest_negative_asset_attribution": [
+    {"asset":"USDCHF","delta_log_growth":-0.248903,"locked_trades":154,"provider_diverse_trades":115},
+    {"asset":"EURGBP","delta_log_growth":-0.226141,"locked_trades":95,"provider_diverse_trades":28},
+    {"asset":"GBPCHF","delta_log_growth":-0.086755,"locked_trades":188,"provider_diverse_trades":111},
+    {"asset":"AUDJPY","delta_log_growth":-0.075144,"locked_trades":78,"provider_diverse_trades":29},
+    {"asset":"CADJPY","delta_log_growth":-0.071818,"locked_trades":142,"provider_diverse_trades":127},
+    {"asset":"AUDUSD","delta_log_growth":-0.059366,"locked_trades":124,"provider_diverse_trades":82}
+  ],
+  "largest_positive_asset_attribution": [
+    {"asset":"NATGAS","delta_log_growth":0.109070},
+    {"asset":"NZDUSD","delta_log_growth":0.090878},
+    {"asset":"USDJPY","delta_log_growth":0.088297},
+    {"asset":"ETHUSD","delta_log_growth":0.086946},
+    {"asset":"WTI","delta_log_growth":0.054875},
+    {"asset":"EURUSD","delta_log_growth":0.050238}
+  ],
+  "strategy_attribution": [
+    {"strategy":"CLOSE_SESSION_FADE","delta_log_growth":-0.263512,"locked_trades":295,"provider_diverse_trades":125},
+    {"strategy":"RELATIVE_VALUE_ROTATION","delta_log_growth":-0.099451,"locked_trades":806,"provider_diverse_trades":826},
+    {"strategy":"CLOSE_SESSION_CONTINUATION","delta_log_growth":-0.053813,"locked_trades":28,"provider_diverse_trades":8},
+    {"strategy":"INTERMARKET_LEAD_LAG","delta_log_growth":-0.038197,"locked_trades":57,"provider_diverse_trades":76},
+    {"strategy":"ENSEMBLE_CONFLUENCE","delta_log_growth":0.018516,"locked_trades":913,"provider_diverse_trades":977}
+  ],
+  "week_attribution_worst": [
+    {"week":"2026-06-29","locked_return_pct":11.786686,"provider_diverse_return_pct":0.462192,"delta_pp":-11.324494},
+    {"week":"2026-06-22","locked_return_pct":12.898017,"provider_diverse_return_pct":2.235382,"delta_pp":-10.662635},
+    {"week":"2026-05-25","locked_return_pct":12.286425,"provider_diverse_return_pct":4.256620,"delta_pp":-8.029805},
+    {"week":"2026-08-03","locked_return_pct":11.526903,"provider_diverse_return_pct":4.434050,"delta_pp":-7.092853},
+    {"week":"2026-04-27","locked_return_pct":12.881887,"provider_diverse_return_pct":5.992810,"delta_pp":-6.889077},
+    {"week":"2026-04-06","locked_return_pct":11.514844,"provider_diverse_return_pct":6.533843,"delta_pp":-4.981001}
+  ],
+  "conclusion": {
+    "core_edge_destroyed": false,
+    "core_retuning_authorized": false,
+    "primary_failure_mode": "PROVIDER_SENSITIVITY_IN_OPPORTUNITY_GENERATION_RANKING_AND_SELECTION",
+    "recovery_direction": "BUILD_PROVIDER_INVARIANCE_AND_PERFORMANCE_PRESERVATION_OVERLAY_AROUND_FROZEN_QUANT_V2",
+    "production_promotion_allowed": false
+  }
+}
