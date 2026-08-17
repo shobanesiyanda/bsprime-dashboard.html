@@ -1,0 +1,149 @@
+name: Trailaris R5.5 — Quant V2 Frozen Rules Fresh Estate R1 26W
+
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_5_quant_v2_fresh_rules_replay_r1_26w.yml']
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: trailaris-r5-5-quant-v2-frozen-rules-fresh-estate-r1
+  cancel-in-progress: false
+
+jobs:
+  fresh-quant-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout frozen Quant V2 rules commit
+        uses: actions/checkout@v4
+        with:
+          ref: 194031e05594e6921b5410e3eb328a5fb53fde94
+          path: source
+
+      - name: Checkout immutable acquisition and R4 engine estate
+        uses: actions/checkout@v4
+        with:
+          ref: trailaris-r5-4-26week-validation-20260816
+          path: engine
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build fresh replay workspace
+        run: |
+          mkdir -p source/trailaris_longcycle source/trailaris_quant_v2_fresh_r1
+          cp engine/trailaris_longcycle/acquire_m1_26w.js source/trailaris_longcycle/
+          cp engine/trailaris_longcycle/acquire_binance_m1_26w.py source/trailaris_longcycle/
+          cp engine/trailaris_longcycle/build_longcycle_factors.py source/trailaris_longcycle/
+
+      - name: Install exact dependencies and reconstruct frozen R4
+        working-directory: source
+        run: |
+          python -m pip install --quiet pandas numpy
+          npm install --no-save --silent dukascopy-node@1.50.0 ws
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          python -m py_compile trailaris_r5_5/quantitative_integrated_v2.py trailaris_r5_5/run_longcycle_variant_accelerated.py
+
+      - name: Freshly reacquire all 34 M1 histories with no cache reuse
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf trailaris_longcycle/raw_m1 && mkdir -p trailaris_longcycle/raw_m1
+          node trailaris_longcycle/acquire_m1_26w.js > trailaris_quant_v2_fresh_r1/acquire_node.log 2>&1 & P1=$!
+          python trailaris_longcycle/acquire_binance_m1_26w.py > trailaris_quant_v2_fresh_r1/acquire_binance.log 2>&1 & P2=$!
+          set +e; wait $P1; E1=$?; wait $P2; E2=$?; set -e
+          printf '{"node_exit":%d,"binance_exit":%d}\n' "$E1" "$E2" > trailaris_quant_v2_fresh_r1/ACQUISITION_EXIT.json
+          test "$E1" -eq 0 && test "$E2" -eq 0
+
+      - name: Validate fresh estate and compare stability to R3 fresh hashes
+        working-directory: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rm -rf /tmp/r3e && mkdir -p /tmp/r3e
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/9287222399/zip > /tmp/r3e.zip
+          unzip -q /tmp/r3e.zip -d /tmp/r3e
+          python - <<'PY'
+          import hashlib,json
+          import pandas as pd
+          from pathlib import Path
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          start=pd.Timestamp('2026-01-19T00:00:00Z'); end=pd.Timestamp('2026-08-14T23:59:59Z'); r3=pd.read_csv('/tmp/r3e/INDEPENDENT_RAW_M1_SHA256.csv').set_index('asset'); rows=[]
+          for a in routes:
+              p=Path('trailaris_longcycle/raw_m1')/f'{a}_M1_normalized.csv'; d=pd.read_csv(p,usecols=['timestamp','source']); ts=pd.to_datetime(d.timestamp,utc=True,errors='coerce').sort_values(); med=ts.diff().dropna().dt.total_seconds().median()
+              assert not ts.isna().any() and len(d)>=1000 and (pd.isna(med) or med<=75),a
+              if a=='JP225': assert ts.min()==pd.Timestamp('2026-01-21T00:00:00Z'),(a,ts.min())
+              else: assert ts.min()<=start+pd.Timedelta(days=1),(a,ts.min())
+              assert ts.max()>=end-pd.Timedelta(days=2),(a,ts.max())
+              sha=hashlib.sha256(p.read_bytes()).hexdigest(); rr=r3.loc[a]
+              rows.append({'asset':a,'sha256':sha,'rows':len(d),'first':str(ts.min()),'last':str(ts.max()),'sources':'|'.join(sorted(map(str,d.source.dropna().unique()))),'same_sha_as_r3':sha==rr.sha256,'row_delta_vs_r3':len(d)-int(rr.rows)})
+          out=pd.DataFrame(rows); out.to_csv('trailaris_quant_v2_fresh_r1/FRESH_R1_RAW_SHA256.csv',index=False)
+          s={'state':'FRESH_R1_34_ROUTE_GATE_PASS','routes':34,'raw_market_cache_reused':False,'same_sha_as_r3_routes':int(out.same_sha_as_r3.sum()),'different_sha_vs_r3_routes':int((~out.same_sha_as_r3).sum()),'different_assets_vs_r3':out.loc[~out.same_sha_as_r3,'asset'].tolist(),'row_delta_total_vs_r3':int(out.row_delta_vs_r3.sum()),'promotion_allowed':False}
+          Path('trailaris_quant_v2_fresh_r1/FRESH_R1_DATA_STABILITY.json').write_text(json.dumps(s,indent=2)); print(json.dumps(s,indent=2))
+          PY
+
+      - name: Restore immutable 510-cell factory audit
+        working-directory: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rm -rf /tmp/factory && mkdir -p /tmp/factory trailaris_longcycle/results
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/9268762003/zip > /tmp/factory.zip
+          echo '3e5258cba30bc0d2d034e6cb9ae62c5520d04bda69ca4dc45183e7b861dcf86d  /tmp/factory.zip' | sha256sum -c -
+          unzip -q /tmp/factory.zip -d /tmp/factory
+          cp /tmp/factory/results/R4_FACTORY_AUDIT.csv trailaris_longcycle/results/R4_FACTORY_AUDIT.csv
+          python - <<'PY'
+          import pandas as pd
+          a=pd.read_csv('trailaris_longcycle/results/R4_FACTORY_AUDIT.csv'); assert len(a)==510 and a.strategy_family.nunique()==15
+          print('IMMUTABLE_510_CELL_FACTORY_GATE PASS')
+          PY
+
+      - name: Rebuild causal factors and specs from fresh estate
+        working-directory: source
+        run: |
+          python trailaris_longcycle/build_longcycle_factors.py --rawdir trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_quant_v2_fresh_r1/FRESH_R1_FACTOR_EVIDENCE.json
+          python trailaris_r4/build_research_specs.py
+
+      - name: Execute frozen Quant V2 rules directly on fresh 26-week estate
+        working-directory: source
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          rm -rf trailaris_quant_v2_fresh_r1/results && mkdir -p trailaris_quant_v2_fresh_r1/results
+          python trailaris_r5_5/run_longcycle_variant_accelerated.py --rawdir trailaris_longcycle/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --variant trailaris_r5_5/quantitative_integrated_v2.py --name R5_5_QUANTITATIVE_V2_FROZEN_RULES_FRESH_R1 --outdir trailaris_quant_v2_fresh_r1/results
+
+      - name: Build non-promotion fresh replay audit
+        if: always()
+        working-directory: source
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          out=Path('trailaris_quant_v2_fresh_r1'); s={'state':'FROZEN_QUANT_V2_RULES_FRESH_ESTATE_REPLAY_AUDIT','candidate_rules_commit':'194031e05594e6921b5410e3eb328a5fb53fde94','historical_window':{'start':'2026-01-19T00:00:00Z','end':'2026-08-14T23:59:59Z'},'raw_market_cache_reused':False,'old_control_identity_gate':'FAIL__FRESH_MEMORY112_3326_VS_FROZEN_3417','promotion_allowed':False,'reason':'Frozen rules executed for fresh-data evidence only; old cached control estate is not identical to independently reacquired market data.'}
+          ds=out/'FRESH_R1_DATA_STABILITY.json'
+          if ds.exists(): s['data_stability']=json.loads(ds.read_text())
+          statuses=list((out/'results').glob('*_STATUS.json')) if (out/'results').exists() else []
+          if statuses:
+              q=json.loads(statuses[0].read_text()); s['fresh_quant_v2']=q.get('candidate',q); s['result_status_file']=statuses[0].name
+          Path('trailaris_quant_v2_fresh_r1/FRESH_R1_AUDIT.json').write_text(json.dumps(s,indent=2)); print(json.dumps(s,indent=2))
+          PY
+
+      - name: Upload complete fresh Quant V2 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-r5-5-quant-v2-frozen-rules-fresh-r1-26w
+          path: source/trailaris_quant_v2_fresh_r1/
+          retention-days: 30
