@@ -1,0 +1,64 @@
+{
+  "sequence_id": "TRAILARIS_R5_5_QUANT_V2_POST_MILESTONE_VALIDATION_20260817",
+  "candidate_rules_commit": "194031e05594e6921b5410e3eb328a5fb53fde94",
+  "architectural_milestone_lock_commit": "74209344abd7f51b961541ac521df54d9e9d750a",
+  "immutability": {
+    "quant_v2_rules": "FROZEN",
+    "retuning": "PROHIBITED",
+    "threshold_changes": "PROHIBITED",
+    "ranking_changes": "PROHIBITED",
+    "risk_fraction_changes": "PROHIBITED",
+    "execution_management_changes": "PROHIBITED"
+  },
+  "gates": [
+    {
+      "order": 1,
+      "id": "FRESH_SNAPSHOT_ENGINE_DETERMINISM_26W",
+      "run_id": 32032909765,
+      "requirement": "One complete fresh 34-route snapshot; two executions of the frozen Quant V2 rules on the identical snapshot must reproduce identical substantive ledgers and metrics.",
+      "promotion_effect": "Necessary evidence only; no production promotion by itself."
+    },
+    {
+      "order": 2,
+      "id": "INDEPENDENT_PROVIDER_OR_BROKER_DATA_26W_REPRODUCTION",
+      "requirement": "Reproduce the fixed 26-week evaluation with independently sourced historical data wherever a genuinely separate market-data source exists, preserving the frozen Quant V2 rules and documenting every route's source, timestamp basis, price basis and coverage.",
+      "provider_diverse_probe": {
+        "implementation_commit": "3796d08d2bfad125d5cd5b937e662c00aa63747d",
+        "histdata_independent_routes_targeted": 22,
+        "coinbase_exchange_independent_crypto_routes_targeted": 5,
+        "routes_not_claimed_independent_in_probe": ["US30", "NATGAS", "V75", "V50", "V100", "V25", "V10"],
+        "full_independent_provider_claim": false
+      },
+      "truth_rule": "A hybrid provider-diverse replay may be retained as supporting evidence but cannot be called full independent-provider reproduction while any route remains on its primary source.",
+      "synthetic_route_rule": "V10/V25/V50/V75/V100 are proprietary Deriv markets; provider diversity is not represented as possible. Their independent-evidence path is a separate target-server/broker extraction and reconciliation, not a fictitious second market source.",
+      "promotion_effect": "Full gate remains fail-closed until the evidence scope is sufficient and explicitly classified."
+    },
+    {
+      "order": 3,
+      "id": "EXECUTION_COST_SLIPPAGE_LATENCY_CERTIFICATION",
+      "requirement": "Populate target-server evidence for spread cost median/P95, round-turn commission, slippage mean/P95, financing, contract size, tick size/value, min/step/max lot, margin/leverage, stop/freeze levels, execution mode, fill/reject rate, latency median/P95, session/weekend rules and immutable spec hash.",
+      "existing_foundation": "trailaris_r5_4/R5_4_BROKER_ROUTE_CERTIFICATION_238.csv",
+      "existing_state": "FAIL_CLOSED_UNTIL_TARGET_SERVER_EVIDENCE",
+      "advertised_spread_is_certification": false,
+      "promotion_effect": "No production promotion without measured target-server execution provenance."
+    },
+    {
+      "order": 4,
+      "id": "BROKER_SHADOW_EXECUTION_CERTIFICATION",
+      "requirement": "Run frozen Quant V2 in non-discretionary shadow mode against certified target broker/server routes and reconcile signal -> requested order -> broker acknowledgement -> fill/reject/partial fill -> management -> exit -> realised/marked P&L, with timestamps and immutable event identifiers.",
+      "capital_mode": "DEMO_OR_NON_RISK_SHADOW_UNTIL_CERTIFIED",
+      "required_outputs": [
+        "signal_ledger",
+        "order_request_ledger",
+        "broker_acknowledgement_ledger",
+        "fill_and_reject_ledger",
+        "slippage_and_latency_ledger",
+        "management_and_exit_ledger",
+        "pnl_reconciliation",
+        "route_level_certification_status"
+      ],
+      "promotion_effect": "Only after this gate and all previous gates pass may Quant V2 be considered for production promotion."
+    }
+  ],
+  "production_promotion": "NOT_ALLOWED_UNTIL_ALL_REQUIRED_GATES_PASS"
+}
