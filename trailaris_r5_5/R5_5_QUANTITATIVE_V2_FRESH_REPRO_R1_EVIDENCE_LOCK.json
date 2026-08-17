@@ -1,0 +1,68 @@
+{
+  "evidence_id": "R5_5_QUANTITATIVE_V2_FROZEN_RULES_FRESH_R1_26W_20260817",
+  "state": "FRESH_REACQUISITION_REPLAY_COMPLETE__NON_PROMOTIONAL_EVIDENCE",
+  "candidate_rules_commit": "194031e05594e6921b5410e3eb328a5fb53fde94",
+  "architectural_milestone_lock_commit": "74209344abd7f51b961541ac521df54d9e9d750a",
+  "workflow_run_id": 32029148532,
+  "artifact_id": 9288890701,
+  "artifact_digest": "sha256:d531f9fece9d25f820130f463b3fa381697efb5b3c17bf566365bc0e00409acb",
+  "historical_request_window": {
+    "start": "2026-01-19T00:00:00Z",
+    "end": "2026-08-14T23:59:59Z",
+    "evaluated_weeks": 26
+  },
+  "data": {
+    "routes": 34,
+    "raw_market_cache_reused": false,
+    "fresh_r1_34_route_gate": "PASS",
+    "same_sha_as_prior_fresh_r3_routes": 21,
+    "different_sha_vs_prior_fresh_r3_routes": 13,
+    "row_delta_total_vs_prior_fresh_r3": -1993,
+    "different_assets_vs_prior_fresh_r3": ["EURUSD","GBPUSD","USDJPY","USDCHF","EURJPY","EURGBP","XAUUSD","XAGUSD","US100","US500","US30","UK100","JP225"],
+    "provider_diversity": false
+  },
+  "fresh_frozen_rules_result": {
+    "starting_equity_usd": 100.0,
+    "ending_equity_usd": 1465.6098243366496,
+    "compounded_return_pct": 1365.6098243366496,
+    "positive_weeks": 26,
+    "negative_weeks": 0,
+    "mean_week_pct": 10.946321883824275,
+    "median_week_pct": 11.668388490383819,
+    "weeks_ge_5_pct": 22,
+    "weeks_ge_10_pct": 17,
+    "executed_trades": 2051,
+    "wins": 1179,
+    "losses": 454,
+    "flats": 418,
+    "nonflat_win_rate": 0.7219840783833436,
+    "profit_factor": 2.979598218111029,
+    "max_weekly_drawdown_pct": -4.033927580446406,
+    "max_event_equity_drawdown_pct": -4.572053335971848,
+    "assets_with_selected": 32
+  },
+  "comparison_to_locked_internal_milestone": {
+    "locked_end_equity_usd": 1389.6425169269207,
+    "end_equity_delta_usd": 75.9673074097289,
+    "locked_profit_factor": 2.9703730692297037,
+    "profit_factor_delta": 0.00922514888132517,
+    "locked_max_weekly_drawdown_pct": -3.7440606836682933,
+    "weekly_drawdown_worsening_percentage_points": -0.2898668967781127,
+    "locked_max_event_equity_drawdown_pct": -2.7023988320913572,
+    "event_drawdown_worsening_percentage_points": -1.8696555038804908
+  },
+  "gate_interpretation": {
+    "rules_frozen": true,
+    "26_of_26_positive_weeks": true,
+    "strong_return_reproduction": true,
+    "drawdown_profile_reproduced": false,
+    "raw_provider_snapshot_stable_across_fresh_pulls": false,
+    "independent_provider_reproduction": false,
+    "production_promotion_allowed": false
+  },
+  "next_test": {
+    "name": "FRESH_SNAPSHOT_DETERMINISM_R2_26W",
+    "workflow_run_id": 32032909765,
+    "purpose": "Acquire one fresh 34-route snapshot once and require two frozen Quant V2 executions on that identical snapshot to produce identical metrics and ledgers, separating engine determinism from upstream provider-file instability."
+  }
+}
