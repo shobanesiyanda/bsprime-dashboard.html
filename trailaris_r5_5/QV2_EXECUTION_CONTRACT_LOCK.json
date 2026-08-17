@@ -1,0 +1,52 @@
+{
+  "contract_id": "TRAILARIS_QV2_EXECUTION_CONTRACT_LOCK_20260818",
+  "state": "HARD_LOCK_FAIL_CLOSED",
+  "baseline_id": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
+  "currency": "USD",
+  "start_equity": 100.0,
+  "declared_experiment_delta": "ASSET_UNIVERSE_ONLY",
+  "rule": "A frozen Quant V2 comparison is valid only if every output-affecting execution semantic remains identical to the canonical baseline. The only permitted experimental delta is the asset universe. Any other change requires explicit Founder approval and a successor quantitative version.",
+  "canonical_identity": {
+    "end_equity": 1366.8938578865148,
+    "compounded_return_pct": 1266.8938578865148,
+    "positive_weeks": 26,
+    "executed_trades": 2136,
+    "wins": 1221,
+    "losses": 478,
+    "flats": 437,
+    "profit_factor": 2.9195127192871873,
+    "max_weekly_drawdown_pct": -3.7440606836682933,
+    "max_event_equity_drawdown_pct": -2.7023988320913572
+  },
+  "protected_git_blobs": {
+    "trailaris_r5_5/quantitative_integrated_v2.py": "120390ab52e80f51bafedc42389ceb7420a410f2",
+    "trailaris_r5_5/longcycle_integrated_negative_refinement.py": "a6f6fcc8dfc1d265c5917dc9df3f3c73eb08d6cb",
+    "trailaris_r5_5/quantitative_integrated_v1.py": "c3debf8da3f184d86c59a287b25a58ebe105bd03",
+    "trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py": "7bdd29922829a3ac53c110dd91a7d5f14201cc34",
+    "trailaris_r5_5/R5_5_V2_26W_CANONICAL_BASELINE.json": "d0a260daf3c59c646e91a10f190aa806937bf165",
+    "trailaris_r5_5/R5_5_QUANTITATIVE_INTEGRATED_V2_RELEASE_CANDIDATE_LOCK.json": "3ecb5514ca4d4ed95c91b2e012ce75128d1a0389",
+    "trailaris_r5_5/R5_5_QUANTITATIVE_INTEGRATED_V2_SPEC.json": "cb3c0532bde8b1cfe60ca33866b8043d570785ed",
+    "trailaris_r5_5/R5_5_PRODUCTION_SAFETY_CONTRACT.json": "b50257e20335d4e7900f70a7571032a8ae986d3d",
+    "trailaris_r5_5/R5_5_PROMOTION_CONTRACT.json": "e90382bdc58c157500d9647246a565dbe2864ed7",
+    "trailaris_r5_5/R5_5_ASSET_NATIVE_FACTOR_CONTRACT.json": "3df60ed9825ffcf8c7d7a9edf38f25c37ca05191",
+    "trailaris_r5_5/R5_5_BROKER_AUTHORIZATION_CONTRACT.json": "5d6c1f29efee3fbafc1ad1fe47a8091b19a5c3a5",
+    "trailaris_r5_5/R5_5_FINAL_RELEASE_LOCK.json": "f22b619c9d670bd068a203185f1f1c0df13efc43",
+    "trailaris_r5_5/R5_5_FINAL_RELEASE_CHECKSUM.json": "8d5661c7f4d7a1facdf99e5c7095272b139494a7"
+  },
+  "forbidden_comparison_harness_behaviors": [
+    "runtime replacement or monkey-patching of size_trade",
+    "normalized-R substitution for canonical broker/spec sizing",
+    "replacement of canonical promotion, ranking, risk, execution or management semantics",
+    "different compounding semantics",
+    "different starting currency or starting-equity convention",
+    "silent narrowing to assets supported by an adapter while calling the result full-universe",
+    "new outcome-driven selection or changed validation gates"
+  ],
+  "mandatory_preconditions": [
+    "protected blob identity passes",
+    "canonical $100 26-week golden replay identity passes before expanded-universe replay",
+    "comparison harness contains no prohibited runtime overrides",
+    "experiment declares ASSET_UNIVERSE_ONLY",
+    "any inability to process the expanded universe fails closed rather than changing strategy semantics"
+  ]
+}
