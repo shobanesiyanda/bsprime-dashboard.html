@@ -1,0 +1,116 @@
+name: Trailaris R5.5 — Quant V2 Provider-Diverse Hybrid R4 26W
+
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_5_quant_v2_provider_diverse_hybrid_r4_26w.yml']
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: read
+concurrency:
+  group: trailaris-r5-5-quant-v2-provider-diverse-hybrid-r4
+  cancel-in-progress: false
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: 194031e05594e6921b5410e3eb328a5fb53fde94, path: source}
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-ephemeral-research-20260815, path: validation}
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-r5-4-26week-validation-20260816, path: engine}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Prepare engine and acquisition estates
+        run: |
+          mkdir -p source/trailaris_longcycle source/primary/trailaris_longcycle source/trailaris_quant_v2_provider_diverse_r4
+          cp engine/trailaris_longcycle/acquire_m1_26w.js source/primary/trailaris_longcycle/
+          cp engine/trailaris_longcycle/build_longcycle_factors.py source/trailaris_longcycle/
+          cp validation/trailaris_r5_5/acquire_provider_diverse_m1_r3.py source/trailaris_r5_5/
+      - name: Install exact dependencies and reconstruct R4
+        working-directory: source
+        run: |
+          python -m pip install --quiet pandas numpy requests beautifulsoup4
+          npm install --no-save --silent dukascopy-node@1.50.0 ws
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+      - name: Acquire independent and primary histories concurrently
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf trailaris_longcycle/raw_m1 primary/trailaris_longcycle/raw_m1
+          mkdir -p trailaris_longcycle/raw_m1 primary/trailaris_longcycle/raw_m1
+          (cd primary && node trailaris_longcycle/acquire_m1_26w.js > ../trailaris_quant_v2_provider_diverse_r4/primary.log 2>&1) & P1=$!
+          python trailaris_r5_5/acquire_provider_diverse_m1_r3.py --rawdir trailaris_longcycle/raw_m1 --evidence trailaris_quant_v2_provider_diverse_r4 > trailaris_quant_v2_provider_diverse_r4/independent.log 2>&1 & P2=$!
+          set +e; wait $P1; E1=$?; wait $P2; E2=$?; set -e
+          printf '{"primary_exit":%d,"independent_exit":%d}\n' "$E1" "$E2" > trailaris_quant_v2_provider_diverse_r4/ACQUISITION_EXIT.json
+          test "$E1" -eq 0 && test "$E2" -eq 0
+          for a in US30 NATGAS WTI V75 V50 V100 V25 V10; do cp "primary/trailaris_longcycle/raw_m1/${a}_M1_normalized.csv" "trailaris_longcycle/raw_m1/${a}_M1_normalized.csv"; done
+      - name: Enforce 26-independent plus 8-primary source gate
+        working-directory: source
+        run: |
+          python - <<'PY'
+          import json,hashlib,pandas as pd
+          from pathlib import Path
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          crypto={'BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD'}; independent=set(routes)-{'US30','NATGAS','WTI','V75','V50','V100','V25','V10'}; hist=independent-crypto
+          s=pd.Timestamp('2026-01-19T00:00:00Z'); e=pd.Timestamp('2026-08-14T23:59:59Z'); rows=[]
+          for a in routes:
+              p=Path('trailaris_longcycle/raw_m1')/f'{a}_M1_normalized.csv'; assert p.exists(),a
+              d=pd.read_csv(p,usecols=['timestamp','source']); t=pd.to_datetime(d.timestamp,utc=True,errors='coerce').dropna().sort_values(); src=sorted(map(str,d.source.dropna().unique())); assert len(t)>=1000,a; assert t.min()<=s+pd.Timedelta(days=1),(a,t.min()); assert t.max()>=e-pd.Timedelta(days=2),(a,t.max())
+              if a in hist: assert src==['HISTDATA_GENERIC_ASCII_M1_BID_INDEPENDENT_PROVIDER'],(a,src)
+              if a in crypto: assert src==['COINBASE_EXCHANGE_OFFICIAL_M1_INDEPENDENT_PROVIDER'],(a,src)
+              rows.append({'asset':a,'rows':len(d),'first':str(t.min()),'last':str(t.max()),'source':'|'.join(src),'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'independent_provider_route':a in independent})
+          out=pd.DataFrame(rows); out.to_csv('trailaris_quant_v2_provider_diverse_r4/PROVIDER_ROUTE_PROVENANCE.csv',index=False); x={'state':'PROVIDER_DIVERSE_34_ROUTE_NORMALIZATION_PASS','routes':34,'independent_provider_routes':int(out.independent_provider_route.sum()),'primary_source_routes':int((~out.independent_provider_route).sum()),'primary_source_assets':out.loc[~out.independent_provider_route,'asset'].tolist(),'full_independent_provider_claim':False,'promotion_allowed':False}; Path('trailaris_quant_v2_provider_diverse_r4/PROVIDER_DIVERSE_SOURCE_GATE.json').write_text(json.dumps(x,indent=2)); assert x['independent_provider_routes']==26 and x['primary_source_routes']==8
+          PY
+      - name: Restore immutable 510-cell factory
+        working-directory: source
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          mkdir -p /tmp/factory trailaris_longcycle/results
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/9268762003/zip > /tmp/factory.zip
+          echo '3e5258cba30bc0d2d034e6cb9ae62c5520d04bda69ca4dc45183e7b861dcf86d  /tmp/factory.zip' | sha256sum -c -
+          unzip -q /tmp/factory.zip -d /tmp/factory
+          cp /tmp/factory/results/R4_FACTORY_AUDIT.csv trailaris_longcycle/results/R4_FACTORY_AUDIT.csv
+          python - <<'PY'
+          import pandas as pd
+          a=pd.read_csv('trailaris_longcycle/results/R4_FACTORY_AUDIT.csv'); assert len(a)==510 and a.strategy_family.nunique()==15
+          PY
+      - name: Rebuild factors and specs
+        working-directory: source
+        run: |
+          python trailaris_longcycle/build_longcycle_factors.py --rawdir trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_quant_v2_provider_diverse_r4/PROVIDER_DIVERSE_FACTOR_EVIDENCE.json
+          python trailaris_r4/build_research_specs.py
+      - name: Execute frozen Quant V2 provider-diverse replay
+        working-directory: source
+        env: {PYTHONPATH: 'trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5'}
+        run: |
+          mkdir -p trailaris_quant_v2_provider_diverse_r4/results
+          python trailaris_r5_5/run_longcycle_variant_accelerated.py --rawdir trailaris_longcycle/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --variant trailaris_r5_5/quantitative_integrated_v2.py --name R5_5_QUANTITATIVE_V2_PROVIDER_DIVERSE_HYBRID_R4 --outdir trailaris_quant_v2_provider_diverse_r4/results
+      - name: Build audit
+        if: always()
+        working-directory: source
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=Path('trailaris_quant_v2_provider_diverse_r4'); a={'state':'PROVIDER_DIVERSE_HYBRID_REPLAY_INCOMPLETE','candidate_rules_commit':'194031e05594e6921b5410e3eb328a5fb53fde94','historical_window':{'start':'2026-01-19T00:00:00Z','end':'2026-08-14T23:59:59Z','evaluated_weeks':26},'full_independent_provider_claim':False,'promotion_allowed':False}
+          sg=r/'PROVIDER_DIVERSE_SOURCE_GATE.json'
+          if sg.exists(): a['source_gate']=json.loads(sg.read_text())
+          st=list((r/'results').glob('*_STATUS.json')) if (r/'results').exists() else []
+          if st: q=json.loads(st[0].read_text()); a['candidate']=q.get('candidate',q); a['state']='PROVIDER_DIVERSE_HYBRID_26_OF_34_REPLAY_COMPLETE__NON_PROMOTIONAL'; a['result_status_file']=st[0].name
+          (r/'PROVIDER_DIVERSE_REPLAY_AUDIT.json').write_text(json.dumps(a,indent=2)); print(json.dumps(a,indent=2))
+          PY
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-r5-5-quant-v2-provider-diverse-hybrid-r4-26w
+          path: source/trailaris_quant_v2_provider_diverse_r4/
+          retention-days: 30
