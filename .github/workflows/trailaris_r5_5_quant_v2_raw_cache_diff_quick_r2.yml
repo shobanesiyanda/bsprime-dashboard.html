@@ -1,0 +1,69 @@
+name: Trailaris R5.5 — Quant V2 Raw Cache Diff Quick R2
+
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_5_quant_v2_raw_cache_diff_quick_r2.yml']
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  raw-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact frozen replay estate
+        uses: actions/checkout@v4
+        with:
+          ref: trailaris-r5-4-26week-validation-20260816
+          path: frozen
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: python -m pip install --quiet pandas
+
+      - name: Restore historical cached estate at exact original path
+        uses: actions/cache/restore@v4
+        with:
+          path: frozen/trailaris_longcycle/raw_m1
+          key: trailaris-r5-5-active-m1-34-20260119-20260814-v1
+          fail-on-cache-miss: true
+
+      - name: Download fresh R3 hashes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/r3e frozen/trailaris_raw_cache_diff
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/9287222399/zip > /tmp/r3e.zip
+          unzip -q /tmp/r3e.zip -d /tmp/r3e
+          test -f /tmp/r3e/INDEPENDENT_RAW_M1_SHA256.csv
+
+      - name: Compare cached raw estate with fresh reacquisition
+        working-directory: frozen
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          import pandas as pd
+          from pathlib import Path
+          fresh=pd.read_csv('/tmp/r3e/INDEPENDENT_RAW_M1_SHA256.csv').set_index('asset')
+          rows=[]
+          for a in fresh.index:
+              p=Path('trailaris_longcycle/raw_m1')/f'{a}_M1_normalized.csv'
+              d=pd.read_csv(p,usecols=['timestamp','source']); ts=pd.to_datetime(d.timestamp,utc=True,errors='coerce').sort_values(); fr=fresh.loc[a]; sha=hashlib.sha256(p.read_bytes()).hexdigest()
+              rows.append({'asset':a,'same_sha256':sha==fr.sha256,'cached_sha256':sha,'fresh_sha256':fr.sha256,'cached_rows':len(d),'fresh_rows':int(fr.rows),'row_delta_cached_minus_fresh':len(d)-int(fr.rows),'cached_first':str(ts.min()),'fresh_first':str(fr['first']),'cached_last':str(ts.max()),'fresh_last':str(fr['last']),'cached_sources':'|'.join(sorted(map(str,d.source.dropna().unique()))),'fresh_sources':str(fr.sources)})
+          out=pd.DataFrame(rows).sort_values('asset'); out.to_csv('trailaris_raw_cache_diff/RAW_CACHE_DIFF.csv',index=False)
+          bad=out[~out.same_sha256]
+          s={'state':'RAW_CACHE_DIFF_COMPLETE','routes':len(out),'identical_sha_routes':int(out.same_sha256.sum()),'different_sha_routes':len(bad),'different_assets':bad.asset.tolist(),'row_delta_total_cached_minus_fresh':int(out.row_delta_cached_minus_fresh.sum()),'row_deltas':{r.asset:int(r.row_delta_cached_minus_fresh) for _,r in out.iterrows() if r.row_delta_cached_minus_fresh!=0},'boundary_differences':{r.asset:{'cached_first':r.cached_first,'fresh_first':r.fresh_first,'cached_last':r.cached_last,'fresh_last':r.fresh_last} for _,r in bad.iterrows() if r.cached_first!=r.fresh_first or r.cached_last!=r.fresh_last}}
+          Path('trailaris_raw_cache_diff/RAW_CACHE_DIFF_SUMMARY.json').write_text(json.dumps(s,indent=2)); print(json.dumps(s,indent=2))
+          PY
+
+      - name: Upload raw diff
+        uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-r5-5-quant-v2-raw-cache-diff-quick-r2
+          path: frozen/trailaris_raw_cache_diff/
+          retention-days: 30
