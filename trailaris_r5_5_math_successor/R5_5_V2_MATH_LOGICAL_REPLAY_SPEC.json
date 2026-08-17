@@ -1,0 +1,69 @@
+{
+  "state": "AUTHORIZED_SEPARATELY_VERSIONED_RESEARCH_REPLAY",
+  "successor_id": "TRAILARIS_R5_5_V2_MATH_LOGICAL_REPLAY_20260817",
+  "source_branch": "trailaris-r5-5-final-20260817",
+  "source_baseline": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
+  "immutability": {
+    "r5_5_final_mutation": "PROHIBITED",
+    "overlay_location": "SEPARATE_SUCCESSOR_BRANCH",
+    "baseline_comparison_required": true
+  },
+  "scope": {
+    "weeks": 26,
+    "routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510
+  },
+  "mathematical_logical_layers": {
+    "probabilistic_decision": {
+      "model": "Dirichlet-smoothed three-state posterior over WIN/LOSS/FLAT",
+      "prior": {"win": 1.0, "loss": 1.0, "flat": 1.0},
+      "expectancy": "posterior_p_win * avg_win_R - posterior_p_loss * avg_loss_R",
+      "history": "only outcomes with exit_time < replay week_start"
+    },
+    "uncertainty_distribution": {
+      "lookback_days": 112,
+      "lower_expectancy": "posterior_expected_R - 1 standard error",
+      "tail_metric": "empirical CVaR at the lower 10% of historical net_R",
+      "sparse_evidence": "risk is reduced, never increased"
+    },
+    "market_state": {
+      "short_window_days": 14,
+      "long_window_days": 112,
+      "strategy_state": "recent mean_R minus long-window mean_R",
+      "price_state": "14d/56d hourly-volatility ratio and signed pre-week trend statistic",
+      "causality": "price history ends strictly before replay week"
+    },
+    "cross_asset": {
+      "window_days": 56,
+      "input": "hourly price returns ending strictly before replay week",
+      "metric": "mean of three largest positive correlations to other promoted assets",
+      "effect": "ranking penalty and bounded risk reduction under high correlation"
+    },
+    "risk_sizing": {
+      "baseline": "R5.5 V2 risk_fraction",
+      "rule": "multipliers can only preserve or reduce baseline risk; never increase it",
+      "sparse_evidence_scale": 0.75,
+      "weak_evidence_scale": 0.50,
+      "stress_scale": 0.75,
+      "volatility_stress_ratio": 1.5,
+      "correlation_stress_level": 0.75,
+      "kelly": "bounded diagnostic only; no leverage permission"
+    },
+    "hard_gate": {
+      "minimum_n": 12,
+      "reject_if": "posterior_expected_R <= -0.05 AND lower_expected_R <= -0.15"
+    }
+  },
+  "replay_acceptance": {
+    "first_gate": "exact R5.5 V2 reproduction must match canonical baseline before overlay replay proceeds",
+    "report": [
+      "starting_equity", "ending_equity", "total_return", "weekly_return_distribution",
+      "weeks_ge_5pct", "weeks_ge_10pct", "max_weekly_drawdown", "max_event_equity_drawdown",
+      "profit_factor", "win_loss_flat_counts", "nonflat_win_rate", "rolling_11w_distribution",
+      "delta_vs_R5_5_V2"
+    ],
+    "automatic_promotion": false
+  },
+  "evidence_class": "FULL_26_WEEK_CAUSAL_WALK_FORWARD_RESEARCH_PROXY; BROKER_PRODUCTION_CERTIFICATION_SEPARATE"
+}
