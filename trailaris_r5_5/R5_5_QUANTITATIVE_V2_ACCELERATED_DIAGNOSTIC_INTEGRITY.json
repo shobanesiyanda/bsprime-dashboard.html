@@ -1,0 +1,49 @@
+{
+  "state": "DIAGNOSTIC_COMPLETE__NOT_ADMISSIBLE_FOR_CANONICAL_PROMOTION",
+  "accelerated_workflow_run_id": 32006768053,
+  "canonical_baseline_id": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
+  "canonical_v2": {
+    "end_equity": 1366.8938578865148,
+    "post_gate_promoted_rows": 3189,
+    "executed_trades": 2136,
+    "wins": 1221,
+    "losses": 478,
+    "flats": 437,
+    "profit_factor": 2.9195127192871873
+  },
+  "accelerated_audit_only_identity_lane": {
+    "end_equity": 1586.6701710218993,
+    "promoted_rows": 3282,
+    "identity_end_equity_delta": 219.7763131353845,
+    "identity_promoted_row_delta": 93
+  },
+  "accelerated_quantitative_v2_lane": {
+    "end_equity": 1553.038519921467,
+    "compounded_return_pct": 1453.038519921467,
+    "positive_weeks": 26,
+    "executed_trades": 2171,
+    "wins": 1231,
+    "losses": 469,
+    "flats": 471,
+    "profit_factor": 3.063777576393533,
+    "max_weekly_drawdown_pct": -2.1238719093944924,
+    "max_event_equity_drawdown_pct": -2.419133316846578
+  },
+  "diagnostic_ablation_end_equity": {
+    "AUDIT_ONLY": 1586.6701710218993,
+    "NO_SIZING": 1330.5292476645106,
+    "NO_FACTOR": 822.2313548567552,
+    "NO_GATING": 844.6488434294323,
+    "NO_RANK": 856.8429476015601,
+    "FULL_QUANT_V1": 864.3665805759937
+  },
+  "diagnostic_interpretation": {
+    "primary_v1_damage_signal": "UNIVERSAL_QUANTITATIVE_SIZING_REDUCTION",
+    "no_sizing_minus_full_v1_end_equity": 466.1626670885169,
+    "strict_v2_veto_cost_vs_audit_only_on_mismatched_harness": -33.63165110043227,
+    "qualification": "These attribution values are diagnostic only because the accelerated harness regenerated the promotion estate rather than consuming the exact canonical 3417-row Memory112 estate."
+  },
+  "integrity_rule": "No accelerated Quantitative V2 result may be represented as beating or replacing frozen R5.5 V2 unless an identity lane first reproduces the exact canonical V2 metrics and estate counts.",
+  "next_valid_evidence_lane": "R5_5_QUANTITATIVE_V2_EXACT_CANONICAL_ESTATE_26W_20260817",
+  "automatic_promotion": false
+}
