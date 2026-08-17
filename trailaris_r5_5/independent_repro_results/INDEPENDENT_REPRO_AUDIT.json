@@ -1,0 +1,36 @@
+{
+  "state": "INDEPENDENT_REPRO_FAIL__QUANT_V2_NOT_REPRODUCED",
+  "candidate_rules_commit": "194031e05594e6921b5410e3eb328a5fb53fde94",
+  "raw_market_cache_reused": false,
+  "fresh_data_gate": "FAIL",
+  "memory112_outcome": "skipped",
+  "v2_control_outcome": "skipped",
+  "quant_v2_outcome": "skipped",
+  "canonical_v2": {
+    "end_equity": 1366.8938578865148,
+    "compounded_return_pct": 1266.8938578865148,
+    "positive_weeks": 26,
+    "executed_trades": 2136,
+    "wins": 1221,
+    "losses": 478,
+    "flats": 437,
+    "profit_factor": 2.9195127192871873,
+    "max_weekly_drawdown_pct": -3.7440606836682933,
+    "max_event_equity_drawdown_pct": -2.7023988320913572
+  },
+  "internal_quant_v2_release_candidate": {
+    "end_equity": 1389.6425169269207,
+    "compounded_return_pct": 1289.6425169269207,
+    "positive_weeks": 26,
+    "executed_trades": 2119,
+    "wins": 1222,
+    "losses": 466,
+    "flats": 431,
+    "profit_factor": 2.9703730692297037,
+    "max_weekly_drawdown_pct": -3.7440606836682933,
+    "max_event_equity_drawdown_pct": -2.7023988320913572
+  },
+  "promotion_allowed": false,
+  "broker_production_certified": false,
+  "evidence_class": "FRESH_REACQUISITION_26_WEEK_CAUSAL_REPRODUCTION; SAME_PRIMARY_PROVIDERS; NO_RAW_M1_CACHE_REUSE; BROKER_PRODUCTION_CERTIFICATION_SEPARATE"
+}
