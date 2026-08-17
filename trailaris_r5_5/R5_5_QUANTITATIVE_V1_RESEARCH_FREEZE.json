@@ -1,0 +1,39 @@
+{
+  "record_id": "R5_5_QUANTITATIVE_INTEGRATED_V1_RESEARCH_FREEZE_20260817",
+  "state": "FROZEN_RESEARCH_CANDIDATE_REJECTED_FOR_PROMOTION",
+  "parent_baseline": "R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816",
+  "candidate": "R5_5_QUANTITATIVE_INTEGRATED_V1",
+  "scope": {
+    "weeks": 26,
+    "routes": 34,
+    "strategy_families": 15,
+    "route_strategy_cells": 510,
+    "starting_equity_usd": 100.0
+  },
+  "candidate_result": {
+    "ending_equity_usd": 864.3665805759937,
+    "compounded_return_pct": 764.3665805759938,
+    "positive_weeks": 26,
+    "negative_weeks": 0,
+    "executed_trades": 2130,
+    "wins": 1090,
+    "losses": 467,
+    "flats": 573,
+    "nonflat_win_rate": 0.7000642260757868,
+    "profit_factor": 2.936655334083861,
+    "max_weekly_drawdown_pct": -2.0917840992832115,
+    "max_event_equity_drawdown_pct": -3.7196889401066024
+  },
+  "frozen_v2_control": {
+    "ending_equity_usd": 1366.8938578865148,
+    "compounded_return_pct": 1266.8938578865148,
+    "positive_weeks": 26,
+    "profit_factor": 2.9195127192871873,
+    "max_weekly_drawdown_pct": -3.7440606836682933,
+    "max_event_equity_drawdown_pct": -2.7023988320913572
+  },
+  "decision": "DO_NOT_PROMOTE",
+  "reason": "V1 improved weekly drawdown and marginally improved profit factor but materially degraded ending equity and rolling compounding versus the frozen V2 control. The V1 files and evidence remain immutable research evidence.",
+  "automatic_baseline_promotion": false,
+  "evidence_class": "FULL_26_WEEK_CAUSAL_WALK_FORWARD_RESEARCH_PROXY; BROKER_PRODUCTION_CERTIFICATION_SEPARATE"
+}
