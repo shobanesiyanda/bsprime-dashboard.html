@@ -1,0 +1,138 @@
+name: Trailaris R5.5 — Quant V2 Provider Invariance R1 26W
+
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_5_quant_v2_provider_invariance_r1_26w.yml']
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: read
+concurrency:
+  group: trailaris-r5-5-quant-v2-provider-invariance-r1
+  cancel-in-progress: false
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: 194031e05594e6921b5410e3eb328a5fb53fde94, path: source}
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-ephemeral-research-20260815, path: validation}
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-r5-4-26week-validation-20260816, path: engine}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Prepare immutable engine and dual-feed workspaces
+        run: |
+          mkdir -p source/primary/trailaris_longcycle source/independent/trailaris_longcycle source/trailaris_longcycle source/provider_invariance_r1
+          cp engine/trailaris_longcycle/acquire_m1_26w.js source/primary/trailaris_longcycle/
+          cp engine/trailaris_longcycle/acquire_binance_m1_26w.py source/primary/trailaris_longcycle/
+          cp engine/trailaris_longcycle/build_longcycle_factors.py source/trailaris_longcycle/
+          cp validation/trailaris_r5_5/acquire_provider_diverse_m1_r3.py source/trailaris_r5_5/
+          cp validation/trailaris_r5_5/build_provider_invariant_canonical_m1_r1.py source/trailaris_r5_5/
+      - name: Install dependencies and reconstruct frozen R4
+        working-directory: source
+        run: |
+          python -m pip install --quiet pandas numpy requests beautifulsoup4
+          npm install --no-save --silent dukascopy-node@1.50.0 ws
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          sha256sum trailaris_r5_5/quantitative_integrated_v2.py > provider_invariance_r1/QUANT_V2_SHA256.txt
+      - name: Acquire primary and independent histories concurrently
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p primary/trailaris_longcycle/raw_m1 independent/trailaris_longcycle/raw_m1 provider_invariance_r1/acquisition
+          (cd primary && node trailaris_longcycle/acquire_m1_26w.js > ../provider_invariance_r1/acquisition/primary_node.log 2>&1) & P1=$!
+          (cd primary && python trailaris_longcycle/acquire_binance_m1_26w.py > ../provider_invariance_r1/acquisition/primary_binance.log 2>&1) & P2=$!
+          python trailaris_r5_5/acquire_provider_diverse_m1_r3.py --rawdir independent/trailaris_longcycle/raw_m1 --evidence provider_invariance_r1/acquisition > provider_invariance_r1/acquisition/independent.log 2>&1 & P3=$!
+          set +e; wait $P1; E1=$?; wait $P2; E2=$?; wait $P3; E3=$?; set -e
+          printf '{"primary_node":%d,"primary_binance":%d,"independent":%d}\n' "$E1" "$E2" "$E3" > provider_invariance_r1/acquisition/EXIT.json
+          test "$E1" -eq 0 && test "$E2" -eq 0 && test "$E3" -eq 0
+      - name: Build canonical provider-invariant M1 estate
+        working-directory: source
+        run: |
+          rm -rf trailaris_longcycle/raw_m1 && mkdir -p trailaris_longcycle/raw_m1
+          python trailaris_r5_5/build_provider_invariant_canonical_m1_r1.py --primary primary/trailaris_longcycle/raw_m1 --independent independent/trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1 --audit provider_invariance_r1/CANONICALIZATION_AUDIT.json
+      - name: Enforce frozen Quant V2 hash and 34-route canonical gate
+        working-directory: source
+        run: |
+          python - <<'PY'
+          import hashlib,json,pandas as pd
+          from pathlib import Path
+          frozen='120390ab52e80f51bafedc42389ceb7420a410f2'
+          p=Path('trailaris_r5_5/quantitative_integrated_v2.py'); assert hashlib.sha1(p.read_bytes()).hexdigest()==frozen
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          rows=[]
+          for a in routes:
+            f=Path('trailaris_longcycle/raw_m1')/f'{a}_M1_normalized.csv'; assert f.exists(),a
+            d=pd.read_csv(f,usecols=['timestamp','source']); t=pd.to_datetime(d.timestamp,utc=True,errors='coerce').dropna(); assert len(d)>=1000,a
+            rows.append({'asset':a,'rows':len(d),'first':str(t.min()),'last':str(t.max()),'source':'|'.join(sorted(map(str,d.source.dropna().unique())))})
+          pd.DataFrame(rows).to_csv('provider_invariance_r1/CANONICAL_ROUTE_GATE.csv',index=False)
+          Path('provider_invariance_r1/FROZEN_RULE_GATE.json').write_text(json.dumps({'state':'PASS','quant_v2_git_blob_sha1':frozen,'routes':34,'quant_v2_modified':False},indent=2))
+          PY
+      - name: Restore immutable 510-cell factory
+        working-directory: source
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          mkdir -p /tmp/factory trailaris_longcycle/results
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/9268762003/zip > /tmp/factory.zip
+          echo '3e5258cba30bc0d2d034e6cb9ae62c5520d04bda69ca4dc45183e7b861dcf86d  /tmp/factory.zip' | sha256sum -c -
+          unzip -q /tmp/factory.zip -d /tmp/factory
+          cp /tmp/factory/results/R4_FACTORY_AUDIT.csv trailaris_longcycle/results/R4_FACTORY_AUDIT.csv
+      - name: Rebuild factors and specs
+        working-directory: source
+        run: |
+          python trailaris_longcycle/build_longcycle_factors.py --rawdir trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv --audit provider_invariance_r1/FACTOR_EVIDENCE.json
+          python trailaris_r4/build_research_specs.py
+      - name: Execute frozen Quant V2 on canonical provider-invariant estate
+        working-directory: source
+        env: {PYTHONPATH: 'trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5'}
+        run: |
+          mkdir -p provider_invariance_r1/results
+          python trailaris_r5_5/run_longcycle_variant_accelerated.py --rawdir trailaris_longcycle/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --variant trailaris_r5_5/quantitative_integrated_v2.py --name R5_5_QUANTITATIVE_V2_PROVIDER_INVARIANCE_R1 --outdir provider_invariance_r1/results
+      - name: Evaluate identity, equity recovery, drawdown and risk
+        working-directory: source
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          rm -rf /tmp/champ /tmp/pd4 && mkdir -p /tmp/champ /tmp/pd4
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/9284801783/zip > /tmp/champ.zip
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/9291860056/zip > /tmp/pd4.zip
+          unzip -q /tmp/champ.zip -d /tmp/champ; unzip -q /tmp/pd4.zip -d /tmp/pd4
+          python - <<'PY'
+          import json,math,pandas as pd
+          from pathlib import Path
+          champ_dec=pd.read_csv('/tmp/champ/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_DECISIONS.csv'); champ_pro=pd.read_csv('/tmp/champ/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_PROMOTED.csv')
+          pd_dec=pd.read_csv('/tmp/pd4/results/R5_5_QUANTITATIVE_V2_PROVIDER_DIVERSE_HYBRID_R4_DECISIONS.csv'); pd_pro=pd.read_csv('/tmp/pd4/results/R5_5_QUANTITATIVE_V2_PROVIDER_DIVERSE_HYBRID_R4_PROMOTED.csv')
+          pd_status=json.loads(Path('/tmp/pd4/results/R5_5_QUANTITATIVE_V2_PROVIDER_DIVERSE_HYBRID_R4_STATUS.json').read_text())['candidate']
+          cdec=pd.read_csv('provider_invariance_r1/results/R5_5_QUANTITATIVE_V2_PROVIDER_INVARIANCE_R1_DECISIONS.csv'); cpro=pd.read_csv('provider_invariance_r1/results/R5_5_QUANTITATIVE_V2_PROVIDER_INVARIANCE_R1_PROMOTED.csv'); cs=json.loads(Path('provider_invariance_r1/results/R5_5_QUANTITATIVE_V2_PROVIDER_INVARIANCE_R1_STATUS.json').read_text())['candidate']
+          def selected(d): return set(d.loc[d.selected.astype(bool),'campaign_id'])
+          A=selected(champ_dec); B=selected(pd_dec); C=selected(cdec)
+          def jac(x,y): return len(x&y)/len(x|y)
+          base=jac(A,B); cand=jac(A,C)
+          def dir_map(dec,pro):
+            s=dec.loc[dec.selected.astype(bool),['campaign_id']].merge(pro[['campaign_id','direction']].drop_duplicates('campaign_id'),on='campaign_id',how='left'); return {(r.campaign_id,int(r.direction)) for r in s.itertuples() if pd.notna(r.direction)}
+          Ad=dir_map(champ_dec,champ_pro); Bd=dir_map(pd_dec,pd_pro); Cd=dir_map(cdec,cpro)
+          champ_eq=1389.6425169269207; base_eq=float(pd_status['end_equity']); cand_eq=float(cs['end_equity'])
+          toward=abs(math.log(cand_eq/champ_eq)) < abs(math.log(base_eq/champ_eq))
+          ddw=abs(float(cs['max_weekly_drawdown_pct'])); dde=abs(float(cs['max_event_equity_drawdown_pct'])); bddw=abs(float(pd_status['max_weekly_drawdown_pct'])); bdde=abs(float(pd_status['max_event_equity_drawdown_pct']))
+          def max_risk(dec,pro):
+            s=dec.loc[dec.selected.astype(bool),['campaign_id','projected_open_risk_pct']].merge(pro[['campaign_id','risk_fraction']].drop_duplicates('campaign_id'),on='campaign_id',how='left'); return float(pd.to_numeric(s.risk_fraction,errors='coerce').max()),float(pd.to_numeric(s.projected_open_risk_pct,errors='coerce').max())
+          brf,bopen=max_risk(pd_dec,pd_pro); crf,copen=max_risk(cdec,cpro)
+          substantial=cand>=0.30 and cand>=2*base
+          out={'state':'PROVIDER_INVARIANCE_R1_EVALUATED','campaign_identity':{'baseline_jaccard':base,'candidate_jaccard':cand,'candidate_vs_baseline_multiple':cand/base if base else None,'baseline_direction_consistent_jaccard':jac(Ad,Bd),'candidate_direction_consistent_jaccard':jac(Ad,Cd),'substantial_threshold':0.30,'substantial_pass':substantial},'equity':{'champion':champ_eq,'provider_diverse_baseline':base_eq,'candidate':cand_eq,'moved_toward_champion':toward},'drawdown':{'baseline_weekly_abs_pct':bddw,'candidate_weekly_abs_pct':ddw,'baseline_event_abs_pct':bdde,'candidate_event_abs_pct':dde,'no_increase_pass':ddw<=bddw+1e-12 and dde<=bdde+1e-12},'risk':{'baseline_max_risk_fraction':brf,'candidate_max_risk_fraction':crf,'baseline_max_projected_open_risk_pct':bopen,'candidate_max_projected_open_risk_pct':copen,'no_increase_pass':crf<=brf+1e-12 and copen<=bopen+1e-12},'quant_v2_modified':False,'promotion_allowed':False}
+          out['acceptance_pass']=bool(substantial and toward and out['drawdown']['no_increase_pass'] and out['risk']['no_increase_pass'])
+          Path('provider_invariance_r1/PROVIDER_INVARIANCE_R1_EVALUATION.json').write_text(json.dumps(out,indent=2)); print(json.dumps(out,indent=2))
+          PY
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-r5-5-quant-v2-provider-invariance-r1-26w
+          path: source/provider_invariance_r1/
+          retention-days: 30
