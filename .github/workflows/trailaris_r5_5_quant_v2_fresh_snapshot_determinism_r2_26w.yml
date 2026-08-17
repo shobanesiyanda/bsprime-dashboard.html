@@ -1,0 +1,169 @@
+name: Trailaris R5.5 — Quant V2 Fresh Snapshot Determinism R2 26W
+
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_5_quant_v2_fresh_snapshot_determinism_r2_26w.yml']
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: trailaris-r5-5-quant-v2-fresh-snapshot-determinism-r2
+  cancel-in-progress: false
+
+jobs:
+  determinism-r2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout frozen Quant V2 rules commit
+        uses: actions/checkout@v4
+        with:
+          ref: 194031e05594e6921b5410e3eb328a5fb53fde94
+          path: source
+
+      - name: Checkout immutable acquisition and R4 engine estate
+        uses: actions/checkout@v4
+        with:
+          ref: trailaris-r5-4-26week-validation-20260816
+          path: engine
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build deterministic replay workspace
+        run: |
+          mkdir -p source/trailaris_longcycle source/trailaris_quant_v2_determinism_r2
+          cp engine/trailaris_longcycle/acquire_m1_26w.js source/trailaris_longcycle/
+          cp engine/trailaris_longcycle/acquire_binance_m1_26w.py source/trailaris_longcycle/
+          cp engine/trailaris_longcycle/build_longcycle_factors.py source/trailaris_longcycle/
+
+      - name: Install exact dependencies and reconstruct frozen R4
+        working-directory: source
+        run: |
+          python -m pip install --quiet pandas numpy
+          npm install --no-save --silent dukascopy-node@1.50.0 ws
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          python -m py_compile trailaris_r5_5/quantitative_integrated_v2.py trailaris_r5_5/run_longcycle_variant_accelerated.py
+
+      - name: Freshly reacquire one 34-route M1 snapshot with no cache reuse
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf trailaris_longcycle/raw_m1 && mkdir -p trailaris_longcycle/raw_m1
+          node trailaris_longcycle/acquire_m1_26w.js > trailaris_quant_v2_determinism_r2/acquire_node.log 2>&1 & P1=$!
+          python trailaris_longcycle/acquire_binance_m1_26w.py > trailaris_quant_v2_determinism_r2/acquire_binance.log 2>&1 & P2=$!
+          set +e; wait $P1; E1=$?; wait $P2; E2=$?; set -e
+          printf '{"node_exit":%d,"binance_exit":%d}\n' "$E1" "$E2" > trailaris_quant_v2_determinism_r2/ACQUISITION_EXIT.json
+          test "$E1" -eq 0 && test "$E2" -eq 0
+
+      - name: Validate snapshot and compare raw stability to fresh R1
+        working-directory: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rm -rf /tmp/r1e && mkdir -p /tmp/r1e
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/9288890701/zip > /tmp/r1e.zip
+          unzip -q /tmp/r1e.zip -d /tmp/r1e
+          python - <<'PY'
+          import hashlib,json
+          import pandas as pd
+          from pathlib import Path
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          start=pd.Timestamp('2026-01-19T00:00:00Z'); end=pd.Timestamp('2026-08-14T23:59:59Z')
+          r1=pd.read_csv('/tmp/r1e/FRESH_R1_RAW_SHA256.csv').set_index('asset')
+          rows=[]
+          for a in routes:
+              p=Path('trailaris_longcycle/raw_m1')/f'{a}_M1_normalized.csv'
+              d=pd.read_csv(p,usecols=['timestamp','source']); ts=pd.to_datetime(d.timestamp,utc=True,errors='coerce').sort_values(); med=ts.diff().dropna().dt.total_seconds().median()
+              assert not ts.isna().any() and len(d)>=1000 and (pd.isna(med) or med<=75),a
+              if a=='JP225': assert ts.min()==pd.Timestamp('2026-01-21T00:00:00Z'),(a,ts.min())
+              else: assert ts.min()<=start+pd.Timedelta(days=1),(a,ts.min())
+              assert ts.max()>=end-pd.Timedelta(days=2),(a,ts.max())
+              sha=hashlib.sha256(p.read_bytes()).hexdigest(); rr=r1.loc[a]
+              rows.append({'asset':a,'sha256':sha,'rows':len(d),'first':str(ts.min()),'last':str(ts.max()),'same_sha_as_fresh_r1':sha==rr.sha256,'row_delta_vs_fresh_r1':len(d)-int(rr.rows)})
+          out=pd.DataFrame(rows); out.to_csv('trailaris_quant_v2_determinism_r2/FRESH_R2_RAW_SHA256.csv',index=False)
+          s={'state':'FRESH_R2_SNAPSHOT_GATE_PASS','routes':34,'raw_market_cache_reused':False,'same_sha_as_fresh_r1_routes':int(out.same_sha_as_fresh_r1.sum()),'different_sha_vs_fresh_r1_routes':int((~out.same_sha_as_fresh_r1).sum()),'different_assets_vs_fresh_r1':out.loc[~out.same_sha_as_fresh_r1,'asset'].tolist(),'row_delta_total_vs_fresh_r1':int(out.row_delta_vs_fresh_r1.sum()),'promotion_allowed':False}
+          Path('trailaris_quant_v2_determinism_r2/FRESH_R2_DATA_STABILITY.json').write_text(json.dumps(s,indent=2)); print(json.dumps(s,indent=2))
+          PY
+
+      - name: Restore immutable 510-cell factory audit
+        working-directory: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rm -rf /tmp/factory && mkdir -p /tmp/factory trailaris_longcycle/results
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/9268762003/zip > /tmp/factory.zip
+          echo '3e5258cba30bc0d2d034e6cb9ae62c5520d04bda69ca4dc45183e7b861dcf86d  /tmp/factory.zip' | sha256sum -c -
+          unzip -q /tmp/factory.zip -d /tmp/factory
+          cp /tmp/factory/results/R4_FACTORY_AUDIT.csv trailaris_longcycle/results/R4_FACTORY_AUDIT.csv
+          python - <<'PY'
+          import pandas as pd
+          a=pd.read_csv('trailaris_longcycle/results/R4_FACTORY_AUDIT.csv'); assert len(a)==510 and a.strategy_family.nunique()==15
+          print('IMMUTABLE_510_CELL_FACTORY_GATE PASS')
+          PY
+
+      - name: Rebuild causal factors and specs once from frozen snapshot
+        working-directory: source
+        run: |
+          python trailaris_longcycle/build_longcycle_factors.py --rawdir trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_quant_v2_determinism_r2/FRESH_R2_FACTOR_EVIDENCE.json
+          python trailaris_r4/build_research_specs.py
+
+      - name: Execute frozen Quant V2 replay A
+        working-directory: source
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          rm -rf trailaris_quant_v2_determinism_r2/run_a && mkdir -p trailaris_quant_v2_determinism_r2/run_a
+          python trailaris_r5_5/run_longcycle_variant_accelerated.py --rawdir trailaris_longcycle/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --variant trailaris_r5_5/quantitative_integrated_v2.py --name R5_5_QUANTITATIVE_V2_DETERMINISM_A --outdir trailaris_quant_v2_determinism_r2/run_a
+
+      - name: Execute frozen Quant V2 replay B on identical snapshot
+        working-directory: source
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          rm -rf trailaris_quant_v2_determinism_r2/run_b && mkdir -p trailaris_quant_v2_determinism_r2/run_b
+          python trailaris_r5_5/run_longcycle_variant_accelerated.py --rawdir trailaris_longcycle/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --variant trailaris_r5_5/quantitative_integrated_v2.py --name R5_5_QUANTITATIVE_V2_DETERMINISM_B --outdir trailaris_quant_v2_determinism_r2/run_b
+
+      - name: Require deterministic replay identity
+        working-directory: source
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          import pandas as pd
+          from pathlib import Path
+          root=Path('trailaris_quant_v2_determinism_r2')
+          def one(d):
+              p=next(d.glob('*_STATUS.json')); s=json.loads(p.read_text()); return s.get('candidate',s)
+          a=one(root/'run_a'); b=one(root/'run_b')
+          keys=['end_equity','compounded_return_pct','evaluated_weeks','positive_weeks','negative_weeks','executed_trades','wins','losses','flats','profit_factor','max_weekly_drawdown_pct','max_event_equity_drawdown_pct']
+          diffs={k:[a.get(k),b.get(k)] for k in keys if a.get(k)!=b.get(k)}
+          def normcsv(d,suffix):
+              p=next(d.glob(f'*_{suffix}.csv')); x=pd.read_csv(p); return x.to_csv(index=False).encode()
+          sha={}
+          for suffix in ['WEEKLY','EVENTS','DECISIONS','PROMOTED','ROLLING_11W']:
+              ba=normcsv(root/'run_a',suffix); bb=normcsv(root/'run_b',suffix)
+              sha[suffix]={'a':hashlib.sha256(ba).hexdigest(),'b':hashlib.sha256(bb).hexdigest(),'identical':ba==bb}
+          passed=(not diffs) and all(v['identical'] for v in sha.values())
+          audit={'state':'FRESH_SNAPSHOT_DETERMINISM_PASS' if passed else 'FRESH_SNAPSHOT_DETERMINISM_FAIL','candidate_rules_commit':'194031e05594e6921b5410e3eb328a5fb53fde94','same_raw_snapshot_for_both_runs':True,'metric_differences':diffs,'csv_identity':sha,'candidate':a,'promotion_allowed':False,'next_gate':'INDEPENDENT_PROVIDER_OR_BROKER_DATA_REPRODUCTION'}
+          (root/'FRESH_R2_DETERMINISM_AUDIT.json').write_text(json.dumps(audit,indent=2)); print(json.dumps(audit,indent=2))
+          if not passed: raise SystemExit('DETERMINISM GATE FAILED')
+          PY
+
+      - name: Upload complete determinism evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-r5-5-quant-v2-fresh-snapshot-determinism-r2-26w
+          path: source/trailaris_quant_v2_determinism_r2/
+          retention-days: 30
