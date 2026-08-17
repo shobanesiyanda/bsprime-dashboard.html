@@ -1,0 +1,49 @@
+name: Trailaris — JP225 Fresh Boundary Probe
+
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_jp225_fresh_boundary_probe.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  jp225-boundary-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-ephemeral-research-20260815
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install exact acquisition dependency
+        run: npm install --no-save --silent dukascopy-node@1.50.0
+      - name: Fresh JP225 boundary probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p trailaris_jp225_probe
+          node - <<'NODE' | tee trailaris_jp225_probe/JP225_BOUNDARY_PROBE.json
+          const {getHistoricalRates}=require('dukascopy-node');
+          async function q(label,from,to){
+            const d=await getHistoricalRates({instrument:'jpnidxjpy',dates:{from:new Date(from),to:new Date(to)},timeframe:'m1',format:'json',priceType:'bid'});
+            const ts=(d||[]).map(x=>+x.timestamp).filter(Number.isFinite).sort((a,b)=>a-b);
+            return {label,requested_from:from,requested_to:to,rows:ts.length,first:ts.length?new Date(ts[0]).toISOString():null,last:ts.length?new Date(ts.at(-1)).toISOString():null};
+          }
+          (async()=>{
+            const out=[];
+            out.push(await q('JAN19_JAN23','2026-01-19T00:00:00Z','2026-01-23T23:59:59Z'));
+            out.push(await q('JAN19_FEB01','2026-01-19T00:00:00Z','2026-02-01T23:59:59Z'));
+            out.push(await q('FULL_WINDOW','2026-01-19T00:00:00Z','2026-08-15T00:00:00Z'));
+            console.log(JSON.stringify({state:'JP225_FRESH_BOUNDARY_PROBE_COMPLETE',source:'DUKASCOPY_OFFICIAL_M1_BID_RESEARCH_PROXY',instrument:'jpnidxjpy',queries:out},null,2));
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-jp225-fresh-boundary-probe
+          path: trailaris_jp225_probe/JP225_BOUNDARY_PROBE.json
+          retention-days: 30
