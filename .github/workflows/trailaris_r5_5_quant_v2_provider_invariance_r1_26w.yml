@@ -10,7 +10,7 @@ permissions:
   contents: read
 concurrency:
   group: trailaris-r5-5-quant-v2-provider-invariance-r1
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   replay:
     runs-on: ubuntu-latest
@@ -63,10 +63,11 @@ jobs:
         working-directory: source
         run: |
           python - <<'PY'
-          import hashlib,json,pandas as pd
+          import json,subprocess,pandas as pd
           from pathlib import Path
-          frozen='120390ab52e80f51bafedc42389ceb7420a410f2'
-          p=Path('trailaris_r5_5/quantitative_integrated_v2.py'); assert hashlib.sha1(p.read_bytes()).hexdigest()==frozen
+          expected='120390ab52e80f51bafedc42389ceb7420a410f2'
+          actual=subprocess.check_output(['git','rev-parse','HEAD:trailaris_r5_5/quantitative_integrated_v2.py'],text=True).strip()
+          assert actual==expected,(actual,expected)
           routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
           rows=[]
           for a in routes:
@@ -74,7 +75,7 @@ jobs:
             d=pd.read_csv(f,usecols=['timestamp','source']); t=pd.to_datetime(d.timestamp,utc=True,errors='coerce').dropna(); assert len(d)>=1000,a
             rows.append({'asset':a,'rows':len(d),'first':str(t.min()),'last':str(t.max()),'source':'|'.join(sorted(map(str,d.source.dropna().unique())))})
           pd.DataFrame(rows).to_csv('provider_invariance_r1/CANONICAL_ROUTE_GATE.csv',index=False)
-          Path('provider_invariance_r1/FROZEN_RULE_GATE.json').write_text(json.dumps({'state':'PASS','quant_v2_git_blob_sha1':frozen,'routes':34,'quant_v2_modified':False},indent=2))
+          Path('provider_invariance_r1/FROZEN_RULE_GATE.json').write_text(json.dumps({'state':'PASS','quant_v2_git_blob_sha1':actual,'expected_git_blob_sha1':expected,'routes':34,'quant_v2_modified':False},indent=2))
           PY
       - name: Restore immutable 510-cell factory
         working-directory: source
