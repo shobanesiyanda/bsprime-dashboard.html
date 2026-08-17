@@ -1,0 +1,229 @@
+name: Trailaris R5.5 — Quant V2 Independent Fresh-Data Repro R3 26W
+
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_5_quant_v2_independent_repro_r3_26w.yml']
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: trailaris-r5-5-quant-v2-independent-fresh-repro-r3-26w
+  cancel-in-progress: false
+
+jobs:
+  independent-fresh-reproduction-r3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout frozen Quantitative V2 release-candidate rules
+        uses: actions/checkout@v4
+        with:
+          ref: 194031e05594e6921b5410e3eb328a5fb53fde94
+          path: source
+
+      - name: Checkout immutable frozen R5.4 engine estate
+        uses: actions/checkout@v4
+        with:
+          ref: trailaris-r5-4-26week-validation-20260816
+          path: engine
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build independent fresh-data workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p source/trailaris_longcycle source/trailaris_independent_repro
+          cp engine/trailaris_longcycle/acquire_m1_26w.js source/trailaris_longcycle/
+          cp engine/trailaris_longcycle/acquire_binance_m1_26w.py source/trailaris_longcycle/
+          cp engine/trailaris_longcycle/build_longcycle_factors.py source/trailaris_longcycle/
+          cat > source/trailaris_independent_repro/INDEPENDENT_REPRO_PROVENANCE.json <<'JSON'
+          {
+            "state": "INDEPENDENT_FRESH_DATA_REPRODUCTION_STARTED",
+            "candidate_rules_commit": "194031e05594e6921b5410e3eb328a5fb53fde94",
+            "frozen_engine_branch": "trailaris-r5-4-26week-validation-20260816",
+            "historical_window": {"start": "2026-01-19T00:00:00Z", "end": "2026-08-14T23:59:59Z"},
+            "raw_market_cache_reused": false,
+            "primary_sources": ["Dukascopy official M1 bid archive", "Binance official spot M1 archive", "Deriv official M1 candles"],
+            "provider_diversity_claim": false,
+            "provider_boundary_exceptions": {
+              "JP225": {
+                "instrument": "jpnidxjpy",
+                "source": "Dukascopy official M1 bid research proxy",
+                "verified_first_available": "2026-01-21T00:00:00Z",
+                "verification_run_id": 32020978217,
+                "synthetic_backfill": false
+              }
+            }
+          }
+          JSON
+
+      - name: Install exact dependencies and reconstruct frozen R4 engine
+        working-directory: source
+        run: |
+          python -m pip install --quiet pandas numpy
+          npm install --no-save --silent dukascopy-node@1.50.0 ws
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          python -m py_compile trailaris_r5_5/longcycle_bounded_memory_candidate.py trailaris_r5_5/longcycle_integrated_negative_refinement.py trailaris_r5_5/quantitative_integrated_v1.py trailaris_r5_5/run_longcycle_r5_5_memory_accelerated.py trailaris_r5_5/run_integrated_from_memory112_promoted.py trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py
+
+      - name: Freshly reacquire all 34 M1 histories — no cache reuse
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf trailaris_longcycle/raw_m1
+          mkdir -p trailaris_longcycle/raw_m1
+          node trailaris_longcycle/acquire_m1_26w.js > trailaris_independent_repro/acquire_node.log 2>&1 & P1=$!
+          python trailaris_longcycle/acquire_binance_m1_26w.py > trailaris_independent_repro/acquire_binance.log 2>&1 & P2=$!
+          set +e
+          wait $P1; E1=$?
+          wait $P2; E2=$?
+          set -e
+          printf '{"node_exit":%d,"binance_exit":%d}\n' "$E1" "$E2" > trailaris_independent_repro/ACQUISITION_EXIT.json
+          test "$E1" -eq 0
+          test "$E2" -eq 0
+
+      - name: Validate and hash fresh 34-route M1 estate
+        working-directory: source
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          import pandas as pd
+          from pathlib import Path
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          start=pd.Timestamp('2026-01-19T00:00:00Z'); end=pd.Timestamp('2026-08-14T23:59:59Z'); rows=[]
+          boundary_exceptions={
+              'JP225': {
+                  'verified_first_available': pd.Timestamp('2026-01-21T00:00:00Z'),
+                  'verification_run_id': 32020978217,
+                  'synthetic_backfill': False,
+                  'reason': 'Dukascopy jpnidxjpy fresh boundary probe returns no M1 rows before 2026-01-21T00:00:00Z for the requested window'
+              }
+          }
+          for a in routes:
+              p=Path('trailaris_longcycle/raw_m1')/f'{a}_M1_normalized.csv'; assert p.exists(),a
+              d=pd.read_csv(p,usecols=['timestamp','source']); ts=pd.to_datetime(d.timestamp,utc=True,errors='coerce').sort_values(); med=ts.diff().dropna().dt.total_seconds().median()
+              assert not ts.isna().any() and len(d)>=1000 and (pd.isna(med) or med<=75),a
+              if a in boundary_exceptions:
+                  expected=boundary_exceptions[a]['verified_first_available']
+                  assert ts.min()==expected,(a,ts.min(),expected)
+                  boundary_rule='VERIFIED_PROVIDER_BOUNDARY_NO_SYNTHETIC_BACKFILL'
+              else:
+                  assert ts.min()<=start+pd.Timedelta(days=1),(a,ts.min())
+                  boundary_rule='STANDARD_START_COVERAGE_GATE'
+              assert ts.max()>=end-pd.Timedelta(days=2),(a,ts.max())
+              rows.append({'asset':a,'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'rows':len(d),'first':str(ts.min()),'last':str(ts.max()),'median_interval_seconds':None if pd.isna(med) else float(med),'sources':'|'.join(sorted(map(str,d.source.dropna().unique()))),'boundary_rule':boundary_rule})
+          pd.DataFrame(rows).to_csv('trailaris_independent_repro/INDEPENDENT_RAW_M1_SHA256.csv',index=False)
+          gate={'state':'FRESH_34_ROUTE_M1_GATE_PASS','routes':34,'raw_market_cache_reused':False,'requested_window':{'start':str(start),'end':str(end)},'provider_boundary_exceptions':{k:{kk:(str(vv) if isinstance(vv,pd.Timestamp) else vv) for kk,vv in val.items()} for k,val in boundary_exceptions.items()},'files':rows}
+          Path('trailaris_independent_repro/INDEPENDENT_RAW_M1_SHA256.json').write_text(json.dumps(gate,indent=2))
+          print('FRESH_34_ROUTE_M1_GATE PASS')
+          PY
+
+      - name: Restore immutable 510-cell factory audit
+        working-directory: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/r54_control
+          mkdir -p /tmp/r54_control trailaris_longcycle/results
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/9268762003/zip > /tmp/r54_control.zip
+          echo '3e5258cba30bc0d2d034e6cb9ae62c5520d04bda69ca4dc45183e7b861dcf86d  /tmp/r54_control.zip' | sha256sum -c -
+          unzip -q /tmp/r54_control.zip -d /tmp/r54_control
+          cp /tmp/r54_control/results/R4_FACTORY_AUDIT.csv trailaris_longcycle/results/R4_FACTORY_AUDIT.csv
+          python - <<'PY'
+          import pandas as pd
+          a=pd.read_csv('trailaris_longcycle/results/R4_FACTORY_AUDIT.csv'); assert len(a)==510 and a.strategy_family.nunique()==15
+          print('IMMUTABLE_510_CELL_FACTORY_GATE PASS')
+          PY
+
+      - name: Rebuild fresh causal factors and research specs
+        working-directory: source
+        run: |
+          python trailaris_longcycle/build_longcycle_factors.py --rawdir trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_independent_repro/INDEPENDENT_FACTOR_EVIDENCE.json
+          python trailaris_r4/build_research_specs.py
+
+      - name: Reproduce Memory112 estate from fresh data
+        id: memory112
+        continue-on-error: true
+        working-directory: source
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          rm -rf trailaris_independent_repro/memory112 && mkdir -p trailaris_independent_repro/memory112
+          python trailaris_r5_5/run_longcycle_r5_5_memory_accelerated.py --rawdir trailaris_longcycle/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --outdir trailaris_independent_repro/memory112
+
+      - name: Reproduce frozen R5.5 V2 control
+        id: v2control
+        if: steps.memory112.outcome == 'success'
+        continue-on-error: true
+        working-directory: source
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          rm -rf trailaris_independent_repro/v2_control && mkdir -p trailaris_independent_repro/v2_control
+          python trailaris_r5_5/run_integrated_from_memory112_promoted.py --rawdir trailaris_longcycle/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --promoted trailaris_independent_repro/memory112/R5_5_MEMORY112_PROMOTED.csv --factory-audit trailaris_longcycle/results/R4_FACTORY_AUDIT.csv --outdir trailaris_independent_repro/v2_control
+
+      - name: Reproduce frozen Quantitative V2 candidate after exact-control gate
+        id: quantv2
+        if: steps.v2control.outcome == 'success'
+        continue-on-error: true
+        working-directory: source
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          rm -rf trailaris_independent_repro/quant_v2 && mkdir -p trailaris_independent_repro/quant_v2
+          python trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py --rawdir trailaris_longcycle/raw_m1 --specs trailaris_r4/research_proxy_specs.csv --factory-audit trailaris_longcycle/results/R4_FACTORY_AUDIT.csv --canonical-dir trailaris_independent_repro/v2_control --outdir trailaris_independent_repro/quant_v2
+
+      - name: Build compact reproducibility audit
+        if: always()
+        working-directory: source
+        env:
+          MEMORY_OUTCOME: ${{ steps.memory112.outcome }}
+          V2_OUTCOME: ${{ steps.v2control.outcome }}
+          QUANT_OUTCOME: ${{ steps.quantv2.outcome }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          import pandas as pd
+          out=Path('trailaris_independent_repro')
+          cv={'end_equity':1366.8938578865148,'compounded_return_pct':1266.8938578865148,'positive_weeks':26,'executed_trades':2136,'wins':1221,'losses':478,'flats':437,'profit_factor':2.9195127192871873,'max_weekly_drawdown_pct':-3.7440606836682933,'max_event_equity_drawdown_pct':-2.7023988320913572}
+          cq={'end_equity':1389.6425169269207,'compounded_return_pct':1289.6425169269207,'positive_weeks':26,'executed_trades':2119,'wins':1222,'losses':466,'flats':431,'profit_factor':2.9703730692297037,'max_weekly_drawdown_pct':-3.7440606836682933,'max_event_equity_drawdown_pct':-2.7023988320913572}
+          a={'state':'INDEPENDENT_REPRO_AUDIT_BUILT','candidate_rules_commit':'194031e05594e6921b5410e3eb328a5fb53fde94','raw_market_cache_reused':False,'fresh_data_gate':'PASS' if (out/'INDEPENDENT_RAW_M1_SHA256.json').exists() else 'FAIL','memory112_outcome':os.environ.get('MEMORY_OUTCOME'),'v2_control_outcome':os.environ.get('V2_OUTCOME'),'quant_v2_outcome':os.environ.get('QUANT_OUTCOME'),'canonical_v2':cv,'internal_quant_v2':cq,'promotion_allowed':False}
+          mp=out/'memory112/R5_5_MEMORY112_PROMOTED.csv'
+          if mp.exists():
+              p=pd.read_csv(mp); a['fresh_memory112']={'promoted_rows':len(p),'evaluated_weeks':pd.to_datetime(p.eval_week,utc=True).nunique(),'assets':p.asset.nunique()}
+          vp=out/'v2_control/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_STATUS.json'
+          if vp.exists():
+              c=json.loads(vp.read_text())['candidate']; a['fresh_v2_control']=c; a['fresh_v2_identity']={k:(abs(float(c[k])-float(v))<1e-9 if isinstance(v,float) else int(c[k])==int(v)) for k,v in cv.items()}; a['fresh_v2_identity_pass']=all(a['fresh_v2_identity'].values())
+          qp=out/'quant_v2/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_STATUS.json'
+          if qp.exists():
+              q=json.loads(qp.read_text()); c=q['candidate']; a['fresh_quant_v2']=c; a['fresh_quant_v2_identity']={k:(abs(float(c[k])-float(v))<1e-9 if isinstance(v,float) else int(c[k])==int(v)) for k,v in cq.items()}; a['fresh_quant_v2_identity_pass']=all(a['fresh_quant_v2_identity'].values()); a['promotion_allowed']=bool(a.get('fresh_v2_identity_pass') and a['fresh_quant_v2_identity_pass'] and q.get('all_numeric_promotion_gates_pass'))
+          if a['promotion_allowed']: a['state']='INDEPENDENT_FRESH_DATA_REPRODUCTION_PASS'
+          elif a.get('fresh_v2_identity_pass') is False: a['state']='INDEPENDENT_REPRO_FAIL__FROZEN_V2_CONTROL_NOT_EXACTLY_REPRODUCED'
+          elif os.environ.get('QUANT_OUTCOME')!='success': a['state']='INDEPENDENT_REPRO_FAIL__QUANT_V2_NOT_REPRODUCED'
+          a['provider_boundary_exception']='JP225 begins 2026-01-21T00:00:00Z on freshly queried Dukascopy jpnidxjpy; verified by workflow run 32020978217; no synthetic rows inserted'
+          a['evidence_class']='FRESH_REACQUISITION_26_WEEK_CAUSAL_REPRODUCTION; SAME_PRIMARY_PROVIDERS; NO_RAW_M1_CACHE_REUSE; BROKER_PRODUCTION_CERTIFICATION_SEPARATE'
+          (out/'INDEPENDENT_REPRO_AUDIT.json').write_text(json.dumps(a,indent=2,default=str)); print(json.dumps(a,indent=2,default=str))
+          PY
+
+      - name: Upload complete independent reproducibility evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-r5-5-quant-v2-independent-fresh-data-repro-r3-26w
+          path: source/trailaris_independent_repro/
+          retention-days: 30
