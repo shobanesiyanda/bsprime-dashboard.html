@@ -1,0 +1,137 @@
+name: Trailaris R5.5 — Quantitative V2 Exact Estate R3 26W
+
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_5_quantitative_v2_exact_estate_r3_26w.yml']
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: trailaris-r5-5-quantitative-v2-exact-estate-r3-26w
+  cancel-in-progress: false
+
+jobs:
+  exact-canonical-estate-r3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout active research branch
+        uses: actions/checkout@v4
+        with:
+          ref: trailaris-ephemeral-research-20260815
+          path: active
+
+      - name: Checkout immutable frozen R5.4 replay estate
+        uses: actions/checkout@v4
+        with:
+          ref: trailaris-r5-4-26week-validation-20260816
+          path: frozen
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install --quiet pandas numpy
+
+      - name: Restore exact canonical R5.4 34-route M1 cache
+        uses: actions/cache/restore@v4
+        with:
+          path: frozen/trailaris_longcycle/raw_m1
+          key: trailaris-r5-4-m1-34-20260119-20260814-v1
+          fail-on-cache-miss: true
+
+      - name: Inject frozen research sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p frozen/trailaris_r5_5
+          cp active/trailaris_r5_5/longcycle_bounded_memory_candidate.py frozen/trailaris_r5_5/
+          cp active/trailaris_r5_5/longcycle_integrated_negative_refinement.py frozen/trailaris_r5_5/
+          cp active/trailaris_r5_5/quantitative_integrated_v1.py frozen/trailaris_r5_5/
+          cp active/trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py frozen/trailaris_r5_5/
+          cp active/trailaris_r5_5/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_SPEC.json frozen/trailaris_r5_5/
+
+      - name: Reconstruct exact frozen R4 dependencies
+        working-directory: frozen
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          python -m py_compile trailaris_r5_5/longcycle_bounded_memory_candidate.py trailaris_r5_5/longcycle_integrated_negative_refinement.py trailaris_r5_5/quantitative_integrated_v1.py trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py
+
+      - name: Fetch exact canonical R5.5 V2 evidence artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p frozen/canonical_v2
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/9270611209/zip > /tmp/canonical_v2.zip
+          echo 'a8f48dc53f8e38de961bc757984bba12f90c37bce68ecdefa4e0ece59667dffb  /tmp/canonical_v2.zip' | sha256sum -c -
+          unzip -q /tmp/canonical_v2.zip -d frozen/canonical_v2
+
+      - name: Enforce exact canonical artifact and scope
+        working-directory: frozen
+        run: |
+          python - <<'PY'
+          import json, pandas as pd
+          from pathlib import Path
+          s=json.loads(Path('canonical_v2/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_STATUS.json').read_text())
+          p=pd.read_csv('canonical_v2/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_PROMOTED.csv')
+          r=pd.read_csv('canonical_v2/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_GATE_REJECTED.csv')
+          assert s['source_promotion_estate']=='EXACT_R5_5_MEMORY112_PROMOTED_3417'
+          assert s['integrated_counters']['promoted_before_gate']==3417
+          assert s['integrated_counters']['entry_gate_rejected']==228
+          assert s['integrated_counters']['promoted_after_gate']==3189
+          assert len(p)==3189 and len(r)==228
+          assert abs(s['candidate']['end_equity']-1366.8938578865148)<1e-9
+          a=pd.read_csv('trailaris_longcycle/results/R4_FACTORY_AUDIT.csv')
+          assert len(a)==510 and a.strategy_family.nunique()==15
+          print('EXACT_CANONICAL_ARTIFACT_SCOPE PASS')
+          PY
+
+      - name: Rebuild research sizing specs only
+        working-directory: frozen
+        run: python trailaris_r4/build_research_specs.py
+
+      - name: Execute identity-gated exact-estate Quantitative V2 replay
+        working-directory: frozen
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          rm -rf trailaris_r5_5/quantitative_v2_exact_estate_results
+          mkdir -p trailaris_r5_5/quantitative_v2_exact_estate_results
+          python trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py \
+            --rawdir trailaris_longcycle/raw_m1 \
+            --specs trailaris_r4/research_proxy_specs.csv \
+            --factory-audit trailaris_longcycle/results/R4_FACTORY_AUDIT.csv \
+            --canonical-dir canonical_v2 \
+            --outdir trailaris_r5_5/quantitative_v2_exact_estate_results
+
+      - name: Upload complete exact-estate evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-r5-5-quantitative-v2-exact-estate-r3-26w
+          path: frozen/trailaris_r5_5/quantitative_v2_exact_estate_results/
+          retention-days: 30
+
+      - name: Commit compact exact-estate evidence
+        if: success()
+        run: |
+          rm -rf active/trailaris_r5_5/quantitative_v2_exact_estate_results
+          mkdir -p active/trailaris_r5_5/quantitative_v2_exact_estate_results
+          cp frozen/trailaris_r5_5/quantitative_v2_exact_estate_results/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_STATUS.json active/trailaris_r5_5/quantitative_v2_exact_estate_results/
+          cp frozen/trailaris_r5_5/quantitative_v2_exact_estate_results/R5_5_CANONICAL_IDENTITY_WEEKLY.csv active/trailaris_r5_5/quantitative_v2_exact_estate_results/
+          cp frozen/trailaris_r5_5/quantitative_v2_exact_estate_results/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_WEEKLY.csv active/trailaris_r5_5/quantitative_v2_exact_estate_results/
+          cp frozen/trailaris_r5_5/quantitative_v2_exact_estate_results/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_ROLLING_11W.csv active/trailaris_r5_5/quantitative_v2_exact_estate_results/
+          cd active
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f trailaris_r5_5/quantitative_v2_exact_estate_results/
+          git commit -m 'test: exact-estate quantitative V2 R3 evidence [skip ci]' || true
+          git pull --rebase origin trailaris-ephemeral-research-20260815 || true
+          git push origin HEAD:trailaris-ephemeral-research-20260815
