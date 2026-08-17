@@ -1,0 +1,151 @@
+name: Trailaris R5.5 — Quantitative Integrated V1 26W Replay
+
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_r5_5_quantitative_26w.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trailaris-r5-5-quantitative-v1-26w
+  cancel-in-progress: false
+
+jobs:
+  quantitative-integrated-26w:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-ephemeral-research-20260815
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install --quiet pandas numpy
+
+      - name: Verify frozen V2 comparator and quantitative rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile trailaris_r5_5/quantitative_integrated_v1.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          b=json.loads(Path('trailaris_r5_5/R5_5_V2_26W_CANONICAL_BASELINE.json').read_text())
+          q=json.loads(Path('trailaris_r5_5/R5_5_QUANTITATIVE_INTEGRATED_V1_SPEC.json').read_text())
+          assert b['baseline_id']=='R5_5_INTEGRATED_NEGATIVE_REFINEMENT_V2_26W_LOCKED_20260816'
+          assert abs(b['performance']['end_equity']-1366.8938578865148)<1e-9
+          assert b['scope']=={'weeks':26,'routes':34,'strategy_families':15,'route_strategy_cells':510}
+          assert q['state']=='REPLAY_RULES_FROZEN_BEFORE_EXECUTION'
+          assert q['scope']['weeks']==26 and q['scope']['routes']==34 and q['scope']['route_strategy_cells']==510
+          assert q['causality']['target_week_outcomes_used_for_parameter_selection'] is False
+          print('V2 comparator and Quantitative V1 rules verified.')
+          PY
+
+      - name: Reconstruct exact frozen R4 dependencies
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+
+      - name: Restore exact 34-route 26-week M1 research cache
+        uses: actions/cache/restore@v4
+        with:
+          path: trailaris_longcycle/raw_m1
+          key: trailaris-r5-4-m1-34-20260119-20260814-v1
+          fail-on-cache-miss: true
+
+      - name: Rebuild factor evidence and research specifications
+        run: |
+          python trailaris_longcycle/build_longcycle_factors.py --rawdir trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_longcycle/R5_5_QUANT_V1_FACTOR_EVIDENCE.json
+          python trailaris_r4/build_research_specs.py
+
+      - name: Execute full independent 34x15x510 quantitative 26-week replay
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          rm -rf trailaris_r5_5/quantitative_v1_results
+          mkdir -p trailaris_r5_5/quantitative_v1_results
+          python trailaris_r5_5/run_longcycle_variant_accelerated.py \
+            --rawdir trailaris_longcycle/raw_m1 \
+            --specs trailaris_r4/research_proxy_specs.csv \
+            --variant trailaris_r5_5/quantitative_integrated_v1.py \
+            --name R5_5_QUANTITATIVE_INTEGRATED_V1 \
+            --outdir trailaris_r5_5/quantitative_v1_results
+
+      - name: Compare directly with frozen V2 and build quantitative audit
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import numpy as np
+          import pandas as pd
+          out=Path('trailaris_r5_5/quantitative_v1_results')
+          sp=out/'R5_5_QUANTITATIVE_INTEGRATED_V1_STATUS.json'
+          s=json.loads(sp.read_text())
+          b=json.loads(Path('trailaris_r5_5/R5_5_V2_26W_CANONICAL_BASELINE.json').read_text())
+          bp=b['performance']; c=s['candidate']
+          keys=sorted(set(bp).intersection(c))
+          s['frozen_v2_control']=bp
+          s['delta_candidate_minus_v2']={k:float(c[k])-float(bp[k]) for k in keys if isinstance(c[k],(int,float)) and isinstance(bp[k],(int,float))}
+          s['comparison_baseline_id']=b['baseline_id']
+          s['quantitative_rules_frozen_before_replay']=True
+          s['automatic_baseline_promotion']=False
+          sp.write_text(json.dumps(s,indent=2,default=str))
+
+          pr=pd.read_csv(out/'R5_5_QUANTITATIVE_INTEGRATED_V1_PROMOTED.csv')
+          ev=pd.read_csv(out/'R5_5_QUANTITATIVE_INTEGRATED_V1_EVENTS.csv')
+          de=pd.read_csv(out/'R5_5_QUANTITATIVE_INTEGRATED_V1_DECISIONS.csv')
+          def mean(col):
+              return float(pd.to_numeric(pr[col],errors='coerce').mean()) if col in pr and len(pr) else None
+          audit={
+            'state':'QUANTITATIVE_V1_26W_AUDIT_COMPLETE',
+            'baseline_id':b['baseline_id'],
+            'promoted_candidates':int(len(pr)),
+            'executed_trades':int(len(ev)),
+            'selected_decisions':int(de['selected'].astype(bool).sum()) if len(de) else 0,
+            'mean_posterior_win_probability':mean('quant_pwin'),
+            'mean_regularised_expected_r':mean('quant_ev_r'),
+            'mean_conservative_expected_r':mean('quant_conservative_ev_r'),
+            'mean_quant_confidence':mean('quant_confidence'),
+            'mean_fractional_kelly':mean('quant_fractional_kelly'),
+            'mean_quant_score':mean('quant_score'),
+            'mean_factor_support':mean('quant_factor_support'),
+            'mean_risk_scale':mean('quant_risk_scale'),
+            'mean_final_risk_fraction':mean('risk_fraction'),
+            'assets_promoted':int(pr['asset'].nunique()) if len(pr) else 0,
+            'strategies_promoted':int(pr['strategy'].nunique()) if len(pr) else 0,
+            'causality':'ALL_MODEL_INPUTS_EXITED_BEFORE_EVALUATED_WEEK; SAME_TIMESTAMP_FACTOR_SIGNALS_DO_NOT_INFLUENCE_ONE_ANOTHER',
+            'scope_preserved':{'weeks':26,'routes':34,'strategy_families':15,'route_strategy_cells':510},
+            'evidence_class':'FULL_26_WEEK_CAUSAL_WALK_FORWARD_RESEARCH_PROXY; BROKER_PRODUCTION_CERTIFICATION_SEPARATE'
+          }
+          (out/'R5_5_QUANTITATIVE_INTEGRATED_V1_AUDIT.json').write_text(json.dumps(audit,indent=2,default=str))
+          print(json.dumps({'candidate':c,'delta_vs_v2':s['delta_candidate_minus_v2'],'audit':audit},indent=2,default=str))
+          PY
+
+      - name: Upload complete quantitative replay evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-r5-5-quantitative-integrated-v1-26w
+          path: trailaris_r5_5/quantitative_v1_results/
+          retention-days: 30
+
+      - name: Commit compact quantitative evidence
+        if: success()
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f \
+            trailaris_r5_5/quantitative_v1_results/R5_5_QUANTITATIVE_INTEGRATED_V1_STATUS.json \
+            trailaris_r5_5/quantitative_v1_results/R5_5_QUANTITATIVE_INTEGRATED_V1_AUDIT.json \
+            trailaris_r5_5/quantitative_v1_results/R5_5_QUANTITATIVE_INTEGRATED_V1_WEEKLY.csv \
+            trailaris_r5_5/quantitative_v1_results/R5_5_QUANTITATIVE_INTEGRATED_V1_ROLLING_11W.csv
+          git commit -m 'test: quantitative integrated V1 26-week evidence [skip ci]' || true
+          git pull --rebase origin trailaris-ephemeral-research-20260815 || true
+          git push origin HEAD:trailaris-ephemeral-research-20260815 || true
