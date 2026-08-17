@@ -1,0 +1,41 @@
+{
+  "lock_id": "TRAILARIS_R5_5_PROVIDER_INVARIANCE_OVERLAY_DIAGNOSTICS_R0_20260817",
+  "state": "DIAGNOSTIC_COMPLETE__NOT_A_PRODUCTION_VARIANT",
+  "purpose": "Reject simplistic downstream fixes before changing the frozen Quant V2 core.",
+  "base_provider_diverse": {
+    "exact_engine_end_equity": 903.1286538367983,
+    "diagnostic_event_return_reconstruction_end_equity": 908.165308339501,
+    "note": "Diagnostic reconstruction differs slightly from exact engine equity because filtered/scaled event-return diagnostics do not rerun lot discretization and full portfolio state."
+  },
+  "hard_provider_consensus_filter": {
+    "provider_diverse_executed_events_retained": 578,
+    "diagnostic_end_equity": 190.04693188569996,
+    "diagnostic_return_pct": 90.04693188569996,
+    "profit_factor_on_net_r": 2.4265389815810585,
+    "verdict": "REJECT",
+    "reason": "Hard intersection preserves per-trade quality but destroys opportunity capture and compounding."
+  },
+  "same_direction_consensus_filter": {
+    "provider_diverse_executed_events_retained": 531,
+    "diagnostic_end_equity": 171.05612069669326,
+    "diagnostic_return_pct": 71.05612069669324,
+    "verdict": "REJECT"
+  },
+  "rolling_provider_agreement_risk_redistribution": {
+    "lookback_weeks": 8,
+    "predeclared_scale_band": [0.85,1.15],
+    "weekly_risk_budget_mean_preserved": true,
+    "diagnostic_end_equity": 910.4467660010838,
+    "diagnostic_return_pct": 810.4467660010838,
+    "diagnostic_max_drawdown_pct": -3.0633926407125367,
+    "verdict": "REJECT_AS_PRIMARY_RECOVERY_MECHANISM",
+    "reason": "Small improvement only; does not recover the locked performance level and does not materially improve drawdown."
+  },
+  "conclusion": {
+    "do_not_hard_gate_on_provider_consensus": true,
+    "do_not_attempt_recovery_by_simple_risk_reweighting": true,
+    "next_engineering_target": "UPSTREAM_CANONICAL_PROVIDER_INVARIANCE_LAYER",
+    "core_quant_v2_remains_frozen": true,
+    "production_promotion_allowed": false
+  }
+}
