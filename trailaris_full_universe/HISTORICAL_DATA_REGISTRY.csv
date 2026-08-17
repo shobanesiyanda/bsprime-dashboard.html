@@ -1,0 +1,1 @@
+canonical_instrument,asset_class,broker_legal_entity,jurisdiction,server,account_type,data_source,data_start_utc,data_end_utc,bar_interval,rows,coverage_state,ohlc_state,duplicate_state,causality_state,data_hash,evidence_ref
