@@ -91,7 +91,10 @@ jobs:
           cp cal-raw/ACQUISITION_EVIDENCE.json compact/
       - uses: actions/upload-artifact@v4
         if: always()
-        with: {name: qv2-50-cal-duka-${{ matrix.shard }}, path: compact/, retention-days: 30}
+        with:
+          name: 'qv2-50-cal-duka-${{ matrix.shard }}'
+          path: compact/
+          retention-days: 30
 
   missing_core:
     runs-on: ubuntu-latest
