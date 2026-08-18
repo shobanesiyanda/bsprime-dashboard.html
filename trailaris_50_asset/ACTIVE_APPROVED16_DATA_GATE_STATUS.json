@@ -1,0 +1,88 @@
+{
+  "run_id": 32118063986,
+  "status": "completed",
+  "conclusion": "failure",
+  "head_sha": "48cd7366d094f64136590c759fb6b23a58589800",
+  "created_at": "2026-08-18T08:46:06Z",
+  "updated_at": "2026-08-18T08:46:23Z",
+  "jobs": [
+    {
+      "id": 95651984213,
+      "name": "data_gate",
+      "status": "completed",
+      "conclusion": "failure",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm install --no-save --silent dukascopy-node@1.50.0",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Resolve exact approved 16",
+          "status": "completed",
+          "conclusion": "failure"
+        },
+        {
+          "name": "Acquire exact 26-week M1 for approved 16",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Preserve eligibility evidence",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Commit compact gate evidence",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ]
+}
