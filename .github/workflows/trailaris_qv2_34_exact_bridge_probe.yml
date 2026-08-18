@@ -32,3 +32,4 @@ jobs:
           git commit -m 'ops: snapshot exact 34 bridge [skip ci]' || exit 0
           git pull --rebase origin trailaris-qv2-34-success-attribution-20260818
           git push origin HEAD:trailaris-qv2-34-success-attribution-20260818
+# refresh 2
