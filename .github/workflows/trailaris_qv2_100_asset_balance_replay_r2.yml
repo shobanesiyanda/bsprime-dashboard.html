@@ -1,0 +1,319 @@
+name: Trailaris Quant V2 — 100 Asset Balance Replay R2
+
+on:
+  push:
+    branches: [trailaris-r5-4-26week-validation-20260816]
+    paths:
+      - '.github/workflows/trailaris_qv2_100_asset_balance_replay_r2.yml'
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: trailaris-qv2-100-asset-balance-replay-r2
+  cancel-in-progress: false
+
+env:
+  SOURCE_BRANCH: trailaris-quant-v2-100-asset-canonical-expansion-20260818
+  QV2_BLOB: 120390ab52e80f51bafedc42389ceb7420a410f2
+  DISCOVERY_ARTIFACT_ID: 9301401424
+
+jobs:
+  probe_pool:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        shard: [0,1,2,3,4,5,6,7,8,9,10,11]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-quant-v2-100-asset-canonical-expansion-20260818
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install acquisition runtime
+        run: |
+          npm install --no-save --silent dukascopy-node@1.50.0
+          python -m pip install --quiet pandas numpy
+      - name: Build deterministic fresh-data probe pool
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          set -euo pipefail
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${DISCOVERY_ARTIFACT_ID}/zip > discovery.zip
+          mkdir discovery && unzip -q discovery.zip -d discovery
+          python - <<'PY'
+          import pandas as pd
+          from pathlib import Path
+          from trailaris_full_universe.qv2_asset_universe_adapter import classify, ORIGINAL_ROUTES
+          desired={'FX':20,'EQUITY':20,'INDEX':8,'CRYPTO':8,'COMMODITY':6,'METAL':4}
+          caps={'FX':80,'EQUITY':100,'INDEX':999,'CRYPTO':999,'COMMODITY':999,'METAL':40}
+          chosen=[x.strip() for x in Path('trailaris_100_asset/ADDITIONAL_66_CANONICAL.txt').read_text().splitlines() if x.strip()]
+          assert len(chosen)==66 and len(set(chosen))==66
+          d=pd.read_csv('discovery/DISCOVERED_UNIVERSE.csv')
+          d=d[(d.has_full_26w_window.astype(bool))&(d.factor_compatible.astype(bool))].copy()
+          d=d[~d.canonical_instrument.astype(str).isin(set(ORIGINAL_ROUTES))].copy()
+          d['asset_class']=[classify(a,p) for a,p in zip(d.canonical_instrument.astype(str),d.provider_name.astype(str))]
+          d=d[d.asset_class.isin(desired)].copy()
+          by={str(r.canonical_instrument):r for _,r in d.iterrows()}
+          assert all(x in by for x in chosen)
+          order=[]
+          for cls in desired:
+              primary=[x for x in chosen if classify(x,str(by[x].provider_name))==cls]
+              reserve=sorted(x for x in by if str(by[x].asset_class)==cls and x not in set(chosen))
+              seq=(primary+reserve)[:caps[cls]]
+              assert len(seq)>=desired[cls],(cls,len(seq))
+              order.extend(seq)
+          assert len(order)==len(set(order))
+          with open('PROBE_POOL.tsv','w') as f:
+              f.write('instrument_id\tcanonical_instrument\tprovider_name\n')
+              for a in order:
+                  r=by[a];f.write(f"{r.instrument_id}\t{a}\t{r.provider_name}\n")
+          Path('PROBE_POOL_ORDER.txt').write_text('\n'.join(order)+'\n')
+          print({'probe_assets':len(order),'desired':desired})
+          PY
+      - name: Probe exact 26-week M1 coverage
+        run: node trailaris_full_universe/acquire_duka_exact_26w_shard.js --manifest PROBE_POOL.tsv --outdir probe-raw --shard ${{ matrix.shard }} --shards 12 --concurrency 3
+      - name: Preserve probe evidence only
+        if: always()
+        run: |
+          mkdir -p probe-evidence
+          cp probe-raw/ACQUISITION_EVIDENCE.json probe-evidence/ || true
+          cp PROBE_POOL_ORDER.txt probe-evidence/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qv2-100-fresh-probe-${{ matrix.shard }}
+          path: probe-evidence/
+          retention-days: 30
+
+  select66:
+    needs: probe_pool
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-quant-v2-100-asset-canonical-expansion-20260818
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: qv2-100-fresh-probe-*
+          path: probes
+      - name: Select exactly 66 by data eligibility only
+        run: |
+          python - <<'PY'
+          import json,glob
+          from pathlib import Path
+          from trailaris_full_universe.qv2_asset_universe_adapter import classify
+          desired={'FX':20,'EQUITY':20,'INDEX':8,'CRYPTO':8,'COMMODITY':6,'METAL':4}
+          primary=[x.strip() for x in Path('trailaris_100_asset/ADDITIONAL_66_CANONICAL.txt').read_text().splitlines() if x.strip()]
+          evidence=[];order=[]
+          for f in glob.glob('probes/**/ACQUISITION_EVIDENCE.json',recursive=True): evidence.extend(json.load(open(f)).get('evidence',[]))
+          for f in glob.glob('probes/**/PROBE_POOL_ORDER.txt',recursive=True):
+              if not order:order=[x.strip() for x in open(f) if x.strip()]
+          by={str(e['canonical_instrument']):e for e in evidence}
+          assert len(by)>66,len(by)
+          passset={a for a,e in by.items() if e.get('status')=='PASS' and e.get('file')}
+          # provider_name is enough for class resolution; selection never sees candidate/trade outcomes.
+          classmap={a:classify(a,str(e.get('provider_name',''))) for a,e in by.items()}
+          chosen=[];short=0
+          for cls,q in desired.items():
+              seq=[a for a in order if classmap.get(a)==cls and a in passset]
+              take=seq[:q];chosen.extend(take);short+=q-len(take)
+          if short:
+              remainder=[a for a in order if a in passset and a not in set(chosen)]
+              chosen.extend(remainder[:short])
+          assert len(chosen)==66 and len(set(chosen))==66,(len(chosen),short)
+          mix={c:sum(classmap[a]==c for a in chosen) for c in desired}
+          retained=[a for a in primary if a in set(chosen)]
+          replaced=[a for a in primary if a not in set(chosen)]
+          replacements=[a for a in chosen if a not in set(primary)]
+          Path('selected66').mkdir()
+          with open('selected66/SELECTED_66.tsv','w') as f:
+              f.write('instrument_id\tcanonical_instrument\tprovider_name\n')
+              for a in chosen:
+                  e=by[a];f.write(f"{e['instrument_id']}\t{a}\t{e['provider_name']}\n")
+          status={'state':'FRESH_DATA_ELIGIBLE_66_SELECTED','selection_uses_strategy_outcomes':False,'selection_basis':'fresh exact 26-week M1 coverage only; retain original choice where eligible; same-class deterministic replacement first; cross-class fill only if a class lacks enough eligible instruments','selected_assets':66,'desired_mix':desired,'actual_mix':mix,'original_choices_retained':len(retained),'original_choices_replaced_for_data_ineligibility':len(replaced),'replaced_original_assets':replaced,'replacement_assets':replacements,'fresh_probe_pass_assets':len(passset)}
+          Path('selected66/SELECTION_STATUS.json').write_text(json.dumps(status,indent=2));print(json.dumps(status,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-100-selected66-fresh
+          path: selected66/
+          retention-days: 30
+
+  original34:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-r5-4-26week-validation-20260816
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-quant-v2-100-asset-canonical-expansion-20260818
+          path: source
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install and verify
+        run: |
+          python -m pip install --quiet pandas numpy
+          test "$(cd source && git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+          python - <<'PY'
+          import json
+          q=json.load(open('source/trailaris_100_asset/QV2_34_BALANCE_REPLAY_RESULT.json'))['realized_closed_balance_replay']
+          assert abs(q['end_equity']-1400.6510417217567)<1e-9 and q['positive_weeks']==26 and q['executed_trades']==2119
+          PY
+      - uses: actions/cache/restore@v4
+        with:
+          path: trailaris_longcycle/raw_m1
+          key: trailaris-r5-4-m1-34-20260119-20260814-v1
+          fail-on-cache-miss: true
+      - name: Build original 34 bundle
+        env: {PYTHONPATH: '.:source:trailaris_r4'}
+        run: |
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          python trailaris_longcycle/build_longcycle_factors.py --rawdir trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_longcycle/QV2_100_R2_FACTOR_EVIDENCE.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          root=Path('trailaris_longcycle/raw_m1');ev=[]
+          for a in routes:
+              f=root/f'{a}_M1_normalized.csv';assert f.exists(),a;ev.append({'instrument_id':a.lower(),'canonical_instrument':a,'provider_name':a,'status':'PASS','file':str(f)})
+          (root/'ACQUISITION_EVIDENCE.json').write_text(json.dumps({'assets_scheduled':34,'assets_pass':34,'evidence':ev},indent=2))
+          PY
+          python source/trailaris_100_asset/build_asset_bundle.py --rawdir trailaris_longcycle/raw_m1 --outdir original-bundle
+          cp trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv original-bundle/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-100-r2-original34-bundle
+          path: original-bundle/
+          retention-days: 30
+
+  new66:
+    needs: select66
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        shard: [0,1,2,3,4,5,6,7]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-quant-v2-100-asset-canonical-expansion-20260818
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/download-artifact@v4
+        with:
+          name: qv2-100-selected66-fresh
+          path: selected66
+      - name: Install exact runtime
+        run: |
+          npm install --no-save --silent dukascopy-node@1.50.0
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+      - name: Reacquire selected exact 26-week shard
+        run: node trailaris_full_universe/acquire_duka_exact_26w_shard.js --manifest selected66/SELECTED_66.tsv --outdir raw-new --shard ${{ matrix.shard }} --shards 8 --concurrency 3
+      - name: Build selected asset bundle
+        env: {PYTHONPATH: '.:trailaris_r4'}
+        run: python trailaris_100_asset/build_asset_bundle.py --rawdir raw-new --outdir new-bundle
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qv2-100-r2-new66-bundle-${{ matrix.shard }}
+          path: new-bundle/
+          retention-days: 30
+
+  assemble:
+    needs: [original34,new66]
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-quant-v2-100-asset-canonical-expansion-20260818
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Runtime
+        run: |
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+      - uses: actions/download-artifact@v4
+        with: {name: qv2-100-r2-original34-bundle, path: bundles/original}
+      - uses: actions/download-artifact@v4
+        with: {pattern: qv2-100-r2-new66-bundle-*, path: bundles/new}
+      - uses: actions/download-artifact@v4
+        with: {name: qv2-100-selected66-fresh, path: selected66}
+      - name: Assemble exact 100 assets
+        env: {PYTHONPATH: '.:trailaris_r4'}
+        run: |
+          python trailaris_100_asset/assemble_100_universe.py --bundle-root bundles --factor-feed bundles/original/Trailaris_R3_FactorFeed.csv --outdir assembled
+          cp selected66/SELECTION_STATUS.json assembled/FRESH_66_SELECTION_STATUS.json
+          python - <<'PY'
+          import json
+          s=json.load(open('assembled/ASSEMBLY_SUMMARY.json'));assert s['feature_assets']==100 and s['strategy_families']==15
+          print('ASSEMBLY_100_PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        with: {name: qv2-100-r2-assembled, path: assembled/, retention-days: 30}
+
+  replay:
+    needs: assemble
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-quant-v2-100-asset-canonical-expansion-20260818
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Runtime and identities
+        run: |
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          python trailaris_r4/build_research_specs.py
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+          test "$(git rev-parse HEAD:trailaris_r5_5/longcycle_integrated_negative_refinement.py)" = "a6f6fcc8dfc1d265c5917dc9df3f3c73eb08d6cb"
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v1.py)" = "c3debf8da3f184d86c59a287b25a58ebe105bd03"
+      - uses: actions/download-artifact@v4
+        with: {name: qv2-100-r2-assembled, path: assembled}
+      - name: Apply realized closed-balance lot sizing only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('trailaris_r5_4/R5_BASE_CAUSAL_ENGINE.py');s=p.read_text();old='r4.size_trade(r.asset,eq,rf,float(r.stop_distance),specs)';new='r4.size_trade(r.asset,balance,rf,float(r.stop_distance),specs)'
+          assert s.count(old)==2,s.count(old);p.write_text(s.replace(old,new));assert p.read_text().count(new)==2
+          PY
+      - name: Execute 100-asset 26-week replay
+        env: {PYTHONPATH: '.:trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5'}
+        run: python trailaris_100_asset/select_replay_100.py --universe-dir assembled --specs trailaris_r4/research_proxy_specs.csv --balance-control trailaris_100_asset/QV2_34_BALANCE_REPLAY_RESULT.json --outdir replay-100
+      - uses: actions/upload-artifact@v4
+        with: {name: trailaris-qv2-100-asset-balance-replay-r2, path: replay-100/, retention-days: 30}
+      - name: Commit compact evidence
+        run: |
+          set -euo pipefail
+          mkdir -p trailaris_100_asset/results
+          cp replay-100/QV2_100_REPLAY_STATUS.json trailaris_100_asset/results/
+          cp replay-100/QV2_100_WEEKLY.csv trailaris_100_asset/results/
+          cp assembled/FRESH_66_SELECTION_STATUS.json trailaris_100_asset/results/
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add trailaris_100_asset/results/
+          git commit -m 'evidence: Quant V2 100-asset balance replay R2 [skip ci]'
+          git pull --rebase origin "$SOURCE_BRANCH"
+          git push origin HEAD:"$SOURCE_BRANCH"
