@@ -1,55 +1,55 @@
 {
-  "run_id": 32113265595,
+  "run_id": 32113539227,
   "status": "in_progress",
   "conclusion": null,
   "jobs": [
     {
-      "id": 95637127598,
-      "name": "core (BNBUSD)",
-      "status": "in_progress",
-      "conclusion": null
-    },
-    {
-      "id": 95637127600,
-      "name": "core (V50)",
-      "status": "in_progress",
-      "conclusion": null
-    },
-    {
-      "id": 95637127608,
-      "name": "core (XRPUSD)",
+      "id": 95637954551,
+      "name": "core (V25)",
       "status": "completed",
       "conclusion": "failure"
     },
     {
-      "id": 95637127627,
-      "name": "core (V10)",
-      "status": "in_progress",
-      "conclusion": null
-    },
-    {
-      "id": 95637127661,
-      "name": "core (SOLUSD)",
+      "id": 95637954569,
+      "name": "core (BNBUSD)",
       "status": "completed",
       "conclusion": "success"
     },
     {
-      "id": 95637127666,
-      "name": "core (V25)",
+      "id": 95637954573,
+      "name": "core (V50)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 95637954577,
+      "name": "core (XRPUSD)",
       "status": "in_progress",
       "conclusion": null
     },
     {
-      "id": 95637127686,
-      "name": "core (V100)",
+      "id": 95637954595,
+      "name": "core (SOLUSD)",
       "status": "in_progress",
       "conclusion": null
     },
     {
-      "id": 95637127691,
+      "id": 95637954658,
       "name": "core (V75)",
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 95637954699,
+      "name": "core (V100)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 95637954726,
+      "name": "core (V10)",
+      "status": "completed",
+      "conclusion": "failure"
     }
   ]
 }
