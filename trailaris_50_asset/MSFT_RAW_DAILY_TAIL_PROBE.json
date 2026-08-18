@@ -1,0 +1,68 @@
+[
+  {
+    "date": "2025-07-11",
+    "http_code": "200",
+    "bytes": 5101,
+    "url": "https://datafeed.dukascopy.com/datafeed/MSFTUSUSD/2025/06/11/BID_candles_min_1.bi5"
+  },
+  {
+    "date": "2025-07-12",
+    "http_code": "200",
+    "bytes": 1889,
+    "url": "https://datafeed.dukascopy.com/datafeed/MSFTUSUSD/2025/06/12/BID_candles_min_1.bi5"
+  },
+  {
+    "date": "2025-07-13",
+    "http_code": "200",
+    "bytes": 1889,
+    "url": "https://datafeed.dukascopy.com/datafeed/MSFTUSUSD/2025/06/13/BID_candles_min_1.bi5"
+  },
+  {
+    "date": "2025-07-14",
+    "http_code": "200",
+    "bytes": 4936,
+    "url": "https://datafeed.dukascopy.com/datafeed/MSFTUSUSD/2025/06/14/BID_candles_min_1.bi5"
+  },
+  {
+    "date": "2025-07-15",
+    "http_code": "200",
+    "bytes": 5069,
+    "url": "https://datafeed.dukascopy.com/datafeed/MSFTUSUSD/2025/06/15/BID_candles_min_1.bi5"
+  },
+  {
+    "date": "2025-07-16",
+    "http_code": "200",
+    "bytes": 5152,
+    "url": "https://datafeed.dukascopy.com/datafeed/MSFTUSUSD/2025/06/16/BID_candles_min_1.bi5"
+  },
+  {
+    "date": "2025-07-17",
+    "http_code": "200",
+    "bytes": 5084,
+    "url": "https://datafeed.dukascopy.com/datafeed/MSFTUSUSD/2025/06/17/BID_candles_min_1.bi5"
+  },
+  {
+    "date": "2025-07-18",
+    "http_code": "200",
+    "bytes": 5022,
+    "url": "https://datafeed.dukascopy.com/datafeed/MSFTUSUSD/2025/06/18/BID_candles_min_1.bi5"
+  },
+  {
+    "date": "2025-07-19",
+    "http_code": "200",
+    "bytes": 1888,
+    "url": "https://datafeed.dukascopy.com/datafeed/MSFTUSUSD/2025/06/19/BID_candles_min_1.bi5"
+  },
+  {
+    "date": "2025-07-20",
+    "http_code": "503",
+    "bytes": 107,
+    "url": "https://datafeed.dukascopy.com/datafeed/MSFTUSUSD/2025/06/20/BID_candles_min_1.bi5"
+  },
+  {
+    "date": "2025-07-21",
+    "http_code": "504",
+    "bytes": 92,
+    "url": "https://datafeed.dukascopy.com/datafeed/MSFTUSUSD/2025/06/21/BID_candles_min_1.bi5"
+  }
+]
