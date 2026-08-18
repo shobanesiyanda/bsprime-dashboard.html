@@ -1,0 +1,76 @@
+name: Trailaris Quant V2 — 50 Final Complementarity Selection
+on:
+  push:
+    branches: [trailaris-r5-4-26week-validation-20260816]
+    paths: ['.github/workflows/trailaris_qv2_50_final_select.yml']
+permissions:
+  actions: read
+  contents: write
+jobs:
+  synth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        asset: [V75, V50, V100, V25, V10]
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-quant-v2-50-asset-complementarity-20260818}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --quiet pandas numpy requests websocket-client
+      - name: Acquire daily synthetic structural reference
+        run: python trailaris_50_asset/acquire_missing_core_structural.py --asset ${{ matrix.asset }} --outdir core
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 'qv2-50-syn-${{ matrix.asset }}'
+          path: core/
+          retention-days: 30
+  select16:
+    needs: synth
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-quant-v2-50-asset-complementarity-20260818}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --quiet pandas numpy
+      - name: Restore calibration and successful crypto core evidence
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          mkdir -p manifest summaries/duka summaries/core/crypto
+          gh run download 32111975729 -n qv2-50-calibration-manifest -D manifest
+          gh run download 32111975729 -p 'qv2-50-cal-duka-*' -D summaries/duka
+          gh run download 32112762524 -n qv2-50-core-SOLUSD -D summaries/core/crypto/SOLUSD
+          gh run download 32112762524 -n qv2-50-core-BNBUSD -D summaries/core/crypto/BNBUSD
+          gh run download 32112762524 -n qv2-50-core-XRPUSD -D summaries/core/crypto/XRPUSD
+          test "$(find summaries/duka -name DAILY_RETURNS.csv | wc -l)" -eq 12
+      - uses: actions/download-artifact@v4
+        with: {pattern: qv2-50-syn-*, path: summaries/core/synthetic}
+      - name: Select exact 16 against all 34 core assets
+        run: |
+          test "$(find summaries/core -name DATA_QUALITY.csv | wc -l)" -eq 8
+          python trailaris_50_asset/select_complementary_16.py --summaries-root summaries --candidate-list manifest/CANDIDATE_66.txt --candidate-manifest manifest/CALIBRATION_DUKA_MANIFEST.tsv --outdir selection
+          cat selection/QV2_50_SELECTION_EVIDENCE.json
+      - uses: actions/upload-artifact@v4
+        with: {name: qv2-50-complementary-16-final, path: selection/, retention-days: 30}
+      - name: Preserve exact selection before evaluation replay
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          if [ -f trailaris_50_asset/QV2_50_SELECTED_16.txt ]; then
+            cmp trailaris_50_asset/QV2_50_SELECTED_16.txt selection/QV2_50_SELECTED_16.txt
+            exit 0
+          fi
+          cp selection/QV2_50_SELECTED_16.txt trailaris_50_asset/
+          cp selection/QV2_50_SELECTED_16.tsv trailaris_50_asset/
+          cp selection/QV2_50_SELECTION_EVIDENCE.json trailaris_50_asset/
+          cp selection/QV2_50_CANDIDATE_STRUCTURAL_SCORES.csv trailaris_50_asset/
+          git add trailaris_50_asset/QV2_50_SELECTED_16.txt trailaris_50_asset/QV2_50_SELECTED_16.tsv trailaris_50_asset/QV2_50_SELECTION_EVIDENCE.json trailaris_50_asset/QV2_50_CANDIDATE_STRUCTURAL_SCORES.csv
+          git commit -m 'evidence: preserve complementary 16 before 50-asset replay [skip ci]'
+          git pull --rebase origin trailaris-quant-v2-50-asset-complementarity-20260818
+          git push origin HEAD:trailaris-quant-v2-50-asset-complementarity-20260818
