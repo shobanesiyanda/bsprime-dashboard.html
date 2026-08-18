@@ -1,0 +1,25 @@
+name: Trailaris Quant V2 — Independent Missing Two Diagnostic
+on:
+  push:
+    branches: [trailaris-qv2-50-independent-validation-20260818]
+    paths: ['.github/workflows/trailaris_qv2_50_independent_missing2_diagnostic.yml']
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-50-independent-validation-20260818}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - name: Install acquisition runtime
+        run: npm install --no-save --silent dukascopy-node@1.50.0
+      - name: Inspect exact approved provider histories
+        run: node trailaris_50_asset/diagnose_independent_missing2.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-independent-missing2-diagnostic
+          path: MISSING2_DIAGNOSTIC.json
+          retention-days: 30
