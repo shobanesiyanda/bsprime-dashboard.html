@@ -1,0 +1,66 @@
+name: Trailaris Quant V2 — Locate Exact Original34 Control Artifact
+
+on:
+  push:
+    branches: [trailaris-qv2-50-independent-validation-20260818]
+    paths: ['.github/workflows/trailaris_qv2_locate_34_control_artifact.yml']
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  locate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-qv2-50-independent-validation-20260818
+      - name: Inventory likely Original34 replay runs and artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p qv2_locator
+          python - <<'PY'
+          import json,subprocess
+          repo='shobanesiyanda/bsprime-dashboard.html'
+          runs=[]
+          for page in range(1,6):
+              raw=subprocess.check_output(['gh','api',f'repos/{repo}/actions/runs?per_page=100&page={page}'],text=True)
+              z=json.loads(raw).get('workflow_runs',[])
+              if not z:break
+              runs.extend(z)
+          keys=('34','balance','reconcil','closed','quant v2','qv2','50 asset')
+          cand=[]
+          for r in runs:
+              s=' '.join(str(r.get(k,'')) for k in ('name','display_title','path','head_branch')).lower()
+              if any(k in s for k in keys):
+                  arts=[]
+                  try:
+                      a=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/actions/runs/{r["id"]}/artifacts?per_page=100'],text=True)).get('artifacts',[])
+                      arts=[{'id':x['id'],'name':x['name'],'size_in_bytes':x['size_in_bytes'],'expired':x['expired']} for x in a]
+                  except Exception as e:
+                      arts=[{'error':str(e)}]
+                  cand.append({'id':r['id'],'name':r.get('name'),'display_title':r.get('display_title'),'path':r.get('path'),'head_branch':r.get('head_branch'),'head_sha':r.get('head_sha'),'status':r.get('status'),'conclusion':r.get('conclusion'),'created_at':r.get('created_at'),'artifacts':arts})
+          open('qv2_locator/QV2_34_CONTROL_RUN_ARTIFACT_INVENTORY.json','w').write(json.dumps({'runs_scanned':len(runs),'candidates':cand},indent=2))
+          print('RUNS_SCANNED',len(runs),'CANDIDATES',len(cand))
+          for x in cand:
+              if x['artifacts']:
+                  print(json.dumps(x))
+          PY
+      - name: Preserve locator inventory
+        run: |
+          cp qv2_locator/QV2_34_CONTROL_RUN_ARTIFACT_INVENTORY.json trailaris_50_asset/QV2_34_CONTROL_RUN_ARTIFACT_INVENTORY.json
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add trailaris_50_asset/QV2_34_CONTROL_RUN_ARTIFACT_INVENTORY.json
+          git commit -m 'evidence: inventory Original34 replay artifacts [skip ci]' || exit 0
+          git pull --rebase origin trailaris-qv2-50-independent-validation-20260818 || true
+          git push origin HEAD:trailaris-qv2-50-independent-validation-20260818 || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-34-control-artifact-inventory
+          path: qv2_locator/
+          retention-days: 30
