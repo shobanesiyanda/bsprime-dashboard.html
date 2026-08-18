@@ -15,12 +15,12 @@ concurrency:
 
 env:
   QV2_BLOB: 120390ab52e80f51bafedc42389ceb7420a410f2
-  CANONICAL_ARTIFACT_ID: 9270611209
+  QV2_EVIDENCE_ARTIFACT_ID: 9284801783
 
 jobs:
   replay:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 120
     steps:
       - name: Checkout preserved 34-asset estate
         uses: actions/checkout@v4
@@ -28,11 +28,11 @@ jobs:
           ref: trailaris-r5-4-26week-validation-20260816
           path: estate
 
-      - name: Checkout current 100-asset expansion sources
+      - name: Checkout current Quant V2 source
         uses: actions/checkout@v4
         with:
           ref: trailaris-quant-v2-100-asset-canonical-expansion-20260818
-          path: active
+          path: source
 
       - uses: actions/setup-python@v5
         with:
@@ -42,73 +42,51 @@ jobs:
         run: python -m pip install --quiet pandas numpy
 
       - name: Verify Quant V2 strategy identity
-        working-directory: active
+        working-directory: source
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+          test "$(git rev-parse HEAD:trailaris_r5_5/longcycle_integrated_negative_refinement.py)" = "a6f6fcc8dfc1d265c5917dc9df3f3c73eb08d6cb"
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v1.py)" = "c3debf8da3f184d86c59a287b25a58ebe105bd03"
+          test "$(git rev-parse HEAD:trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py)" = "7bdd29922829a3ac53c110dd91a7d5f14201cc34"
 
-      - name: Restore preserved 34-asset M1 estate through PR base cache
+      - name: Restore exact preserved 34-asset M1 estate
         uses: actions/cache/restore@v4
         with:
           path: estate/trailaris_longcycle/raw_m1
-          key: trailaris-r5-5-active-m1-34-20260119-20260814-v1
+          key: trailaris-r5-4-m1-34-20260119-20260814-v1
           fail-on-cache-miss: true
 
-      - name: Inject preserved Quant V2 research sources
+      - name: Inject preserved Quant V2 replay sources
         run: |
           set -euo pipefail
           mkdir -p estate/trailaris_r5_5
-          cp active/trailaris_r5_5/longcycle_bounded_memory_candidate.py estate/trailaris_r5_5/
-          cp active/trailaris_r5_5/longcycle_integrated_negative_refinement.py estate/trailaris_r5_5/
-          cp active/trailaris_r5_5/quantitative_integrated_v1.py estate/trailaris_r5_5/
-          cp active/trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py estate/trailaris_r5_5/
+          cp source/trailaris_r5_5/longcycle_bounded_memory_candidate.py estate/trailaris_r5_5/
+          cp source/trailaris_r5_5/longcycle_integrated_negative_refinement.py estate/trailaris_r5_5/
+          cp source/trailaris_r5_5/quantitative_integrated_v1.py estate/trailaris_r5_5/
+          cp source/trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py estate/trailaris_r5_5/
 
-      - name: Reconstruct exact R4 dependencies
+      - name: Reconstruct exact R4 dependencies and specs
         working-directory: estate
         run: |
           set -euo pipefail
           cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
           cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          python trailaris_r4/build_research_specs.py
 
-      - name: Fetch canonical 34-asset estate evidence
+      - name: Fetch preserved $1389.64 Quant V2 evidence
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          mkdir -p estate/canonical_v2
-          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${CANONICAL_ARTIFACT_ID}/zip > canonical.zip
-          unzip -q canonical.zip -d estate/canonical_v2
-          test -f estate/canonical_v2/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_PROMOTED.csv
+          mkdir -p estate/qv2_reference
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${QV2_EVIDENCE_ARTIFACT_ID}/zip > qv2_reference.zip
+          echo '8c6e42d95e107c1826c9a9c4cd533153ab866b09b55d6329ec3e1e726a12cac7  qv2_reference.zip' | sha256sum -c -
+          unzip -q qv2_reference.zip -d estate/qv2_reference
+          test -f estate/qv2_reference/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_PROMOTED.csv
+          test -f estate/qv2_reference/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_STATUS.json
 
-      - name: Rebuild factor evidence and research specifications
-        working-directory: estate
-        run: |
-          python trailaris_longcycle/build_longcycle_factors.py --rawdir trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_longcycle/QV2_BALANCE_REPLAY_FACTOR_EVIDENCE.json
-          python trailaris_r4/build_research_specs.py
-
-      - name: Reproduce preserved $1389.64 Quant V2 reference
-        working-directory: estate
-        env:
-          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
-        run: |
-          rm -rf trailaris_r5_5/original_reference_results
-          python trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py \
-            --rawdir trailaris_longcycle/raw_m1 \
-            --specs trailaris_r4/research_proxy_specs.csv \
-            --factory-audit trailaris_longcycle/results/R4_FACTORY_AUDIT.csv \
-            --canonical-dir canonical_v2 \
-            --outdir trailaris_r5_5/original_reference_results
-          python - <<'PY'
-          import json
-          p=json.load(open('trailaris_r5_5/original_reference_results/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_STATUS.json'))['candidate']
-          assert abs(p['end_equity']-1389.6425169269207)<1e-9
-          assert abs(p['compounded_return_pct']-1289.6425169269207)<1e-9
-          assert p['positive_weeks']==26
-          assert abs(p['profit_factor']-2.9703730692297037)<1e-12
-          print('REFERENCE_1389_64_REPRODUCED')
-          PY
-
-      - name: Prepare realized closed-balance sizing diagnostic
+      - name: Apply isolated closed-balance lot-sizing semantic
         working-directory: estate
         run: |
           python - <<'PY'
@@ -119,58 +97,66 @@ jobs:
           new='r4.size_trade(r.asset,balance,rf,float(r.stop_distance),specs)'
           assert src.count(old)==1, src.count(old)
           engine.write_text(src.replace(old,new))
-
-          runner=Path('trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py')
-          diag=Path('trailaris_r5_5/run_quantitative_v2_balance_diagnostic.py')
-          r=runner.read_text()
-          assert r.count('assert_identity(identity)')==1
-          diag.write_text(r.replace('assert_identity(identity)', "print('IDENTITY_ASSERT_BYPASSED_FOR_BALANCE_DIAGNOSTIC')"))
-          print('BALANCE_DIAGNOSTIC_PREPARED')
+          print('CLOSED_BALANCE_SIZING_APPLIED_TO_ISOLATED_REPLAY_ONLY')
           PY
 
-      - name: Replay 34 assets using realized closed-balance sizing
+      - name: Replay exact Quant V2 promoted estate with closed-balance lot sizing
         working-directory: estate
         env:
           PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
         run: |
-          rm -rf trailaris_r5_5/balance_diagnostic_results
-          python trailaris_r5_5/run_quantitative_v2_balance_diagnostic.py \
-            --rawdir trailaris_longcycle/raw_m1 \
-            --specs trailaris_r4/research_proxy_specs.csv \
-            --factory-audit trailaris_longcycle/results/R4_FACTORY_AUDIT.csv \
-            --canonical-dir canonical_v2 \
-            --outdir trailaris_r5_5/balance_diagnostic_results
-
-      - name: Build replay comparison
-        working-directory: estate
-        run: |
           python - <<'PY'
-          import json
+          import json, sys
           from pathlib import Path
-          ref=json.load(open('trailaris_r5_5/original_reference_results/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_STATUS.json'))['candidate']
-          diag=json.load(open('trailaris_r5_5/balance_diagnostic_results/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_STATUS.json'))['candidate']
+          import pandas as pd
+          import trailaris_r4_full_universe_loop as r4
+          import longcycle_integrated_negative_refinement as v2
+          from run_quantitative_v2_from_canonical_v2_estate import load_feature_cache, replay_estate
+
+          ref_status=json.loads(Path('qv2_reference/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_STATUS.json').read_text())
+          ref=ref_status['candidate']
+          assert abs(ref['end_equity']-1389.6425169269207)<1e-9
+          assert abs(ref['compounded_return_pct']-1289.6425169269207)<1e-9
+          assert ref['positive_weeks']==26
+          assert abs(ref['profit_factor']-2.9703730692297037)<1e-12
+
+          P=pd.read_csv('qv2_reference/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_PROMOTED.csv')
+          assert len(P)==3151, len(P)
+          for c in ('entry_time','decision_time','exit_time','eval_week'):
+              P[c]=pd.to_datetime(P[c],utc=True,errors='coerce')
+          assert not P[['entry_time','decision_time','exit_time','eval_week']].isna().any().any()
+          assert P.eval_week.nunique()==26
+
+          specs=r4.load_specs(Path('trailaris_r4/research_proxy_specs.csv'),'research-proxy')
+          routes=list(r4.ROUTES)
+          assert len(routes)==34
+          fcache,raw_end=load_feature_cache(Path('trailaris_longcycle/raw_m1'),routes)
+          result,W,EV,DE,R=replay_estate(P,specs,fcache,raw_end,v2,r4)
+
           report={
             'state':'BALANCE_REPLAY_COMPLETE',
             'assets':34,
             'weeks':26,
             'starting_balance_usd':100.0,
             'preserved_reference':ref,
-            'realized_closed_balance_replay':diag,
+            'realized_closed_balance_replay':result,
             'delta_replay_minus_reference':{
-              'ending_balance_usd':diag['end_equity']-ref['end_equity'],
-              'compounded_return_percentage_points':diag['compounded_return_pct']-ref['compounded_return_pct'],
-              'profit_factor':diag['profit_factor']-ref['profit_factor'],
-              'max_weekly_drawdown_percentage_points':diag['max_weekly_drawdown_pct']-ref['max_weekly_drawdown_pct'],
-              'max_event_drawdown_percentage_points':diag['max_event_equity_drawdown_pct']-ref['max_event_equity_drawdown_pct'],
-              'executed_trades':diag['executed_trades']-ref['executed_trades']
+              'ending_balance_usd':result['end_equity']-ref['end_equity'],
+              'compounded_return_percentage_points':result['compounded_return_pct']-ref['compounded_return_pct'],
+              'profit_factor':result['profit_factor']-ref['profit_factor'],
+              'max_weekly_drawdown_percentage_points':result['max_weekly_drawdown_pct']-ref['max_weekly_drawdown_pct'],
+              'max_event_drawdown_percentage_points':result['max_event_equity_drawdown_pct']-ref['max_event_equity_drawdown_pct'],
+              'executed_trades':result['executed_trades']-ref['executed_trades']
             },
-            'sizing_semantic':'Fresh entries size from current realized closed account balance; strategy-controlled position compounding remains unchanged.',
+            'sizing_semantic':'All new entries, including strategy-authorized add-ons, use current realized closed account balance as the account-size input to lot sizing. Eligibility, ranking, strategy state, exposure controls, execution and management are unchanged.',
             'baseline_status':'REFERENCE_PRESERVED__NO_AUTOMATIC_REPLACEMENT'
           }
-          out=Path('trailaris_r5_5/balance_replay_evidence'); out.mkdir(exist_ok=True)
+          out=Path('trailaris_r5_5/balance_replay_evidence'); out.mkdir(parents=True,exist_ok=True)
           (out/'QV2_34_BALANCE_REPLAY_STATUS.json').write_text(json.dumps(report,indent=2,default=str))
-          Path(out/'REFERENCE_WEEKLY.csv').write_text(Path('trailaris_r5_5/original_reference_results/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_WEEKLY.csv').read_text())
-          Path(out/'BALANCE_REPLAY_WEEKLY.csv').write_text(Path('trailaris_r5_5/balance_diagnostic_results/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_WEEKLY.csv').read_text())
+          W.to_csv(out/'BALANCE_REPLAY_WEEKLY.csv',index=False)
+          EV.to_csv(out/'BALANCE_REPLAY_EVENTS.csv',index=False)
+          DE.to_csv(out/'BALANCE_REPLAY_DECISIONS.csv',index=False)
+          R.to_csv(out/'BALANCE_REPLAY_ROLLING_11W.csv',index=False)
           print(json.dumps(report,indent=2,default=str))
           PY
 
