@@ -1,0 +1,158 @@
+{
+  "recovery16": {
+    "run_id": 32147629069,
+    "status": "completed",
+    "conclusion": "failure",
+    "head_sha": "38421aa6adde059a48060ac84cce15ac89ffe8bc",
+    "created_at": "2026-08-18T14:19:28Z",
+    "updated_at": "2026-08-18T14:20:43Z",
+    "jobs": [
+      {
+        "id": 95745189461,
+        "name": "acquire16",
+        "status": "completed",
+        "conclusion": "failure",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v5",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Install acquisition runtime",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Resolve immutable approved-16 provider identities",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Acquire untouched approved-16 M1 estate by date shards",
+            "status": "completed",
+            "conclusion": "failure"
+          },
+          {
+            "name": "Enforce exact 16 acquisition gate",
+            "status": "completed",
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Post Run actions/setup-python@v5",
+            "status": "completed",
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ]
+  },
+  "recovery34": {
+    "run_id": 32147886554,
+    "status": "in_progress",
+    "conclusion": null,
+    "head_sha": "f65b0be2d0e008c9b7ee803fe94c82eaff2fc7e7",
+    "created_at": "2026-08-18T14:22:03Z",
+    "updated_at": "2026-08-18T14:22:07Z",
+    "jobs": [
+      {
+        "id": 95746061504,
+        "name": "acquire34",
+        "status": "in_progress",
+        "conclusion": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v5",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Install acquisition runtime",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Acquire untouched original-34 M1 estate with sharded core pulls",
+            "status": "in_progress",
+            "conclusion": null
+          },
+          {
+            "name": "Merge and enforce exact 34 acquisition gate",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Post Run actions/setup-python@v5",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "pending",
+            "conclusion": null
+          }
+        ]
+      }
+    ]
+  }
+}
