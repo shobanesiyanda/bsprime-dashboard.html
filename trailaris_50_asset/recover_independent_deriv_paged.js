@@ -24,8 +24,7 @@ async function requestPage(client,symbol,endEpoch,stats){
  let last='';
  for(let attempt=1;attempt<=12;attempt++){
   try{
-   // Deriv rejects subscribe=0 for this historical request. Omit subscribe entirely.
-   const x=await client.req({ticks_history:symbol,end:String(endEpoch),style:'candles',granularity:60,count:PAGE_COUNT,adjust_start_time:1});
+   const x=await client.req({ticks_history:symbol,end:Number(endEpoch),style:'candles',granularity:60,count:PAGE_COUNT,adjust_start_time:1});
    stats.requests++;await sleep(PACE_MS);return x;
   }catch(e){
    last=String(e);
@@ -46,14 +45,15 @@ async function one(asset,symbol){
    }
    const cs=x.candles||[];if(!cs.length)throw new Error(`empty page before requested start at end=${endEpoch}`);
    const epochs=cs.map(c=>+c.epoch).filter(Number.isFinite);if(!epochs.length)throw new Error('page has no finite epochs');
-   const earliest=Math.min(...epochs);stats.pages++;
+   const earliest=Math.min(...epochs),latest=Math.max(...epochs);stats.pages++;
+   if(latest>endEpoch+60)throw new Error(`provider ignored historical end: latest=${latest} requested_end=${endEpoch}`);
    for(const c of cs){
     const t=(+c.epoch)*1000;if(!Number.isFinite(t)||t<S||t>=E)continue;
     const o=+c.open,h=+c.high,l=+c.low,cl=+c.close;if(!valid(o,h,l,cl)){stats.invalid++;continue}
     const sig=[o,h,l,cl].join('|');if(map.has(t)){stats.duplicates++;if(map.get(t).sig!==sig)stats.conflicts++;continue}
     map.set(t,{sig,row:[new Date(t).toISOString(),o,h,l,cl,'','','',0,'DERIV_OFFICIAL_M1_CANDLES',asset]});
    }
-   console.log(JSON.stringify({asset,page:stats.pages,rows:map.size,earliest:new Date(earliest*1000).toISOString(),end_cursor:new Date(endEpoch*1000).toISOString(),rate_limit_backoffs:stats.rate_limit_backoffs}));
+   console.log(JSON.stringify({asset,page:stats.pages,rows:map.size,earliest:new Date(earliest*1000).toISOString(),latest:new Date(latest*1000).toISOString(),end_cursor:new Date(endEpoch*1000).toISOString(),rate_limit_backoffs:stats.rate_limit_backoffs}));
    if(earliest*1000<=S)break;
    if(previousEarliest!==null&&earliest>=previousEarliest)throw new Error(`non-retreating history cursor ${earliest} >= ${previousEarliest}`);
    previousEarliest=earliest;endEpoch=earliest-1;
@@ -63,7 +63,7 @@ async function one(asset,symbol){
   const coverage=!!first&&!!last&&first<=new Date(S+60000)&&last>=new Date(E-2*60000);
   const ok=rows.length>=250000&&coverage&&stats.invalid===0&&stats.conflicts===0;
   if(ok){const f=fs.createWriteStream(path.join(OUT,asset+'_M1_normalized.csv'));f.write('timestamp,open,high,low,close,bid,ask,spread,volume,source,asset\n');for(const r of rows)f.write(r.join(',')+'\n');await new Promise(res=>f.end(res))}
-  return {instrument_id:symbol,canonical_instrument:asset,provider_name:'DERIV_OFFICIAL_M1_CANDLES',rows:rows.length,first:first?first.toISOString():'',last:last?last.toISOString():'',full_window_coverage:coverage,status:ok?'PASS':'FAIL',file:ok?path.join(OUT,asset+'_M1_normalized.csv'):'',...stats,page_count:PAGE_COUNT,pace_ms:PACE_MS,request_semantics:'BACKWARD_COUNT_5000_CANDLE_PAGES__ONE_SYMBOL_AT_A_TIME__GLOBAL_PACING__RATE_LIMIT_BACKOFF__SUBSCRIBE_OMITTED'};
+  return {instrument_id:symbol,canonical_instrument:asset,provider_name:'DERIV_OFFICIAL_M1_CANDLES',rows:rows.length,first:first?first.toISOString():'',last:last?last.toISOString():'',full_window_coverage:coverage,status:ok?'PASS':'FAIL',file:ok?path.join(OUT,asset+'_M1_normalized.csv'):'',...stats,page_count:PAGE_COUNT,pace_ms:PACE_MS,request_semantics:'BACKWARD_COUNT_5000_CANDLE_PAGES__NUMERIC_END_EPOCH__ONE_SYMBOL_AT_A_TIME__GLOBAL_PACING__RATE_LIMIT_BACKOFF__SUBSCRIBE_OMITTED'};
  }finally{try{client.ws.close()}catch{}}
 }
 (async()=>{
