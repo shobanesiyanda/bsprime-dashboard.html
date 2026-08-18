@@ -1,0 +1,284 @@
+{
+  "workflows": {
+    "trailaris_r5_5_quantitative_v2_exact_estate_r3_26w.yml": {
+      "runs": [
+        {
+          "conclusion": "failure",
+          "createdAt": "2026-08-17T09:46:01Z",
+          "databaseId": 32016871059,
+          "displayTitle": "fix: continue exact-estate quant V2 on canonical R5.4 cache",
+          "headBranch": "trailaris-ephemeral-research-20260815",
+          "headSha": "0ba14b4d980b8eb2c7ee38ab70b1695f580b3eae",
+          "status": "completed",
+          "artifacts": []
+        }
+      ]
+    },
+    "trailaris_quant_v2_34_balance_reconciliation.yml": {
+      "runs": [
+        {
+          "conclusion": "failure",
+          "createdAt": "2026-08-18T00:54:27Z",
+          "databaseId": 32086267472,
+          "displayTitle": "quant v2: add 34 asset balance compounding reconciliation",
+          "headBranch": "trailaris-quant-v2-100-asset-canonical-expansion-20260818",
+          "headSha": "17bdccf21de3a58d58a64f8b1fb53e1c1205c6f7",
+          "status": "completed",
+          "artifacts": []
+        }
+      ]
+    },
+    "trailaris_qv2_34_success_attribution.yml": {
+      "runs": [
+        {
+          "conclusion": "failure",
+          "createdAt": "2026-08-18T10:24:48Z",
+          "databaseId": 32126622529,
+          "displayTitle": "research: run exact 34 success attribution",
+          "headBranch": "trailaris-qv2-34-success-attribution-20260818",
+          "headSha": "cfdd2fdfaeb2aeab2ff3dade07a9c6bda6267227",
+          "status": "completed",
+          "artifacts": [
+            {
+              "id": 9320866502,
+              "name": "qv2-34-attribution-promotion-0",
+              "size_in_bytes": 117690,
+              "expired": false,
+              "files": [
+                "QV2_34_GATE_REJECTIONS_SHARD_0.csv.gz",
+                "QV2_34_PROMOTED_SHARD_0.csv.gz",
+                "QV2_34_PROMOTION_SHARD_0_STATUS.json"
+              ]
+            },
+            {
+              "id": 9320854712,
+              "name": "qv2-34-attribution-promotion-4",
+              "size_in_bytes": 107739,
+              "expired": false,
+              "files": [
+                "QV2_34_GATE_REJECTIONS_SHARD_4.csv.gz",
+                "QV2_34_PROMOTED_SHARD_4.csv.gz",
+                "QV2_34_PROMOTION_SHARD_4_STATUS.json"
+              ]
+            },
+            {
+              "id": 9320853022,
+              "name": "qv2-34-attribution-promotion-1",
+              "size_in_bytes": 121947,
+              "expired": false,
+              "files": [
+                "QV2_34_GATE_REJECTIONS_SHARD_1.csv.gz",
+                "QV2_34_PROMOTION_SHARD_1_STATUS.json",
+                "QV2_34_PROMOTED_SHARD_1.csv.gz"
+              ]
+            },
+            {
+              "id": 9320852155,
+              "name": "qv2-34-attribution-promotion-2",
+              "size_in_bytes": 90174,
+              "expired": false,
+              "files": [
+                "QV2_34_GATE_REJECTIONS_SHARD_2.csv.gz",
+                "QV2_34_PROMOTED_SHARD_2.csv.gz",
+                "QV2_34_PROMOTION_SHARD_2_STATUS.json"
+              ]
+            },
+            {
+              "id": 9320839199,
+              "name": "qv2-34-attribution-promotion-5",
+              "size_in_bytes": 103928,
+              "expired": false,
+              "files": [
+                "QV2_34_GATE_REJECTIONS_SHARD_5.csv.gz",
+                "QV2_34_PROMOTED_SHARD_5.csv.gz",
+                "QV2_34_PROMOTION_SHARD_5_STATUS.json"
+              ]
+            },
+            {
+              "id": 9320839185,
+              "name": "qv2-34-attribution-promotion-3",
+              "size_in_bytes": 109373,
+              "expired": false,
+              "files": [
+                "QV2_34_GATE_REJECTIONS_SHARD_3.csv.gz",
+                "QV2_34_PROMOTED_SHARD_3.csv.gz",
+                "QV2_34_PROMOTION_SHARD_3_STATUS.json"
+              ]
+            },
+            {
+              "id": 9320772950,
+              "name": "qv2-34-attribution-assembled",
+              "size_in_bytes": 202563461,
+              "expired": false,
+              "files": [
+                "ALL_CANDIDATES.csv.gz",
+                "AUDJPY_FEATURE_ecea3cf47169c7b4.csv.gz",
+                "ASSEMBLY_SUMMARY.json",
+                "AUDUSD_FEATURE_3364df6a4ba64b72.csv.gz",
+                "BNBUSD_FEATURE_69ad8018d7339d89.csv.gz",
+                "BRENT_FEATURE_a3af58d63afc702b.csv.gz",
+                "BTCUSD_FEATURE_385b36cd25ae60e8.csv.gz",
+                "CADJPY_FEATURE_7e022f1ed9c362b6.csv.gz",
+                "ETHUSD_FEATURE_495f6c20899339ef.csv.gz",
+                "EURGBP_FEATURE_182c761f51a206b1.csv.gz",
+                "EURJPY_FEATURE_b5b31a92ec9a7c12.csv.gz",
+                "EURUSD_FEATURE_97f93791bf0edb7c.csv.gz",
+                "FEATURE_INDEX.csv",
+                "GBPCHF_FEATURE_6f7ed504cf230a83.csv.gz",
+                "GBPJPY_FEATURE_e8d1de990af97fd9.csv.gz",
+                "GBPUSD_FEATURE_010095f8e4cdc9ac.csv.gz",
+                "GER40_FEATURE_35f63f3e72e128f5.csv.gz",
+                "JP225_FEATURE_e02f208a35998a83.csv.gz",
+                "NATGAS_FEATURE_45b3055d68798035.csv.gz",
+                "NZDUSD_FEATURE_01cb43da4369a1a1.csv.gz",
+                "SOLUSD_FEATURE_6d726dd9b2931d23.csv.gz",
+                "UK100_FEATURE_83d971f789ec0c50.csv.gz",
+                "UNIVERSE_ADAPTER_MAP.csv",
+                "US100_FEATURE_60ccc172c519a49a.csv.gz",
+                "US30_FEATURE_118263d39f660fc6.csv.gz",
+                "US500_FEATURE_3a6d4d8184686aaa.csv.gz",
+                "USDCAD_FEATURE_02147c17949c7ccb.csv.gz",
+                "USDCHF_FEATURE_d2d51d361085dea0.csv.gz",
+                "USDJPY_FEATURE_99960dbd4e8c1e35.csv.gz",
+                "V100_FEATURE_9d1f1e947219d996.csv.gz",
+                "V10_FEATURE_6ab651ff6f7d4e00.csv.gz",
+                "V25_FEATURE_7960835a9edb17eb.csv.gz",
+                "V50_FEATURE_21298e6aac94ae14.csv.gz",
+                "V75_FEATURE_c8530421b48f6ef9.csv.gz",
+                "WTI_FEATURE_a83622f25fa92a8b.csv.gz",
+                "XAGUSD_FEATURE_35c2bfed452febbe.csv.gz",
+                "XAUUSD_FEATURE_1d3571c0a4e24d86.csv.gz",
+                "XRPUSD_FEATURE_46bd1c9ab822a856.csv.gz"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "trailaris_qv2_34_exact_canonical_bridge.yml": {
+      "runs": [
+        {
+          "conclusion": "failure",
+          "createdAt": "2026-08-18T10:51:54Z",
+          "databaseId": 32128865113,
+          "displayTitle": "research: allow non-selected extra reconstructed veto in exact bridge",
+          "headBranch": "trailaris-qv2-34-success-attribution-20260818",
+          "headSha": "51590c1f967abc09cf99c0b53cc660e141746467",
+          "status": "completed",
+          "artifacts": [
+            {
+              "id": 9321442616,
+              "name": "trailaris-qv2-34-exact-canonical-bridge",
+              "size_in_bytes": 2125459,
+              "expired": false,
+              "files": [
+                "bridge_equity/QV2_34_EXACT_BRIDGE_EVENTS.csv.gz",
+                "bridge_equity/QV2_34_EXACT_BRIDGE_KEPT.csv.gz",
+                "bridge_equity/QV2_34_EXACT_BRIDGE_DECISIONS.csv.gz",
+                "bridge_equity/QV2_34_EXACT_BRIDGE_STATUS.json",
+                "bridge_equity/QV2_34_EXACT_BRIDGE_VETO.csv.gz",
+                "bridge_equity/QV2_34_EXACT_BRIDGE_WEEKLY.csv",
+                "bridge_balance/QV2_34_EXACT_BRIDGE_DECISIONS.csv.gz",
+                "bridge_balance/QV2_34_EXACT_BRIDGE_EVENTS.csv.gz",
+                "bridge_balance/QV2_34_EXACT_BRIDGE_STATUS.json",
+                "bridge_balance/QV2_34_EXACT_BRIDGE_WEEKLY.csv"
+              ]
+            }
+          ]
+        },
+        {
+          "conclusion": "failure",
+          "createdAt": "2026-08-18T10:48:22Z",
+          "databaseId": 32128571402,
+          "displayTitle": "research: run exact 34 canonical attribution bridge",
+          "headBranch": "trailaris-qv2-34-success-attribution-20260818",
+          "headSha": "1790e35fb0f8209a901c6d8aebb8a69e15d1296f",
+          "status": "completed",
+          "artifacts": []
+        }
+      ]
+    }
+  },
+  "event_candidates": [
+    {
+      "workflow": "trailaris_qv2_34_success_attribution.yml",
+      "run_id": 32126622529,
+      "run_conclusion": "failure",
+      "artifact_id": 9320866502,
+      "artifact_name": "qv2-34-attribution-promotion-0",
+      "file": "QV2_34_PROMOTION_SHARD_0_STATUS.json"
+    },
+    {
+      "workflow": "trailaris_qv2_34_success_attribution.yml",
+      "run_id": 32126622529,
+      "run_conclusion": "failure",
+      "artifact_id": 9320854712,
+      "artifact_name": "qv2-34-attribution-promotion-4",
+      "file": "QV2_34_PROMOTION_SHARD_4_STATUS.json"
+    },
+    {
+      "workflow": "trailaris_qv2_34_success_attribution.yml",
+      "run_id": 32126622529,
+      "run_conclusion": "failure",
+      "artifact_id": 9320853022,
+      "artifact_name": "qv2-34-attribution-promotion-1",
+      "file": "QV2_34_PROMOTION_SHARD_1_STATUS.json"
+    },
+    {
+      "workflow": "trailaris_qv2_34_success_attribution.yml",
+      "run_id": 32126622529,
+      "run_conclusion": "failure",
+      "artifact_id": 9320852155,
+      "artifact_name": "qv2-34-attribution-promotion-2",
+      "file": "QV2_34_PROMOTION_SHARD_2_STATUS.json"
+    },
+    {
+      "workflow": "trailaris_qv2_34_success_attribution.yml",
+      "run_id": 32126622529,
+      "run_conclusion": "failure",
+      "artifact_id": 9320839199,
+      "artifact_name": "qv2-34-attribution-promotion-5",
+      "file": "QV2_34_PROMOTION_SHARD_5_STATUS.json"
+    },
+    {
+      "workflow": "trailaris_qv2_34_success_attribution.yml",
+      "run_id": 32126622529,
+      "run_conclusion": "failure",
+      "artifact_id": 9320839185,
+      "artifact_name": "qv2-34-attribution-promotion-3",
+      "file": "QV2_34_PROMOTION_SHARD_3_STATUS.json"
+    },
+    {
+      "workflow": "trailaris_qv2_34_exact_canonical_bridge.yml",
+      "run_id": 32128865113,
+      "run_conclusion": "failure",
+      "artifact_id": 9321442616,
+      "artifact_name": "trailaris-qv2-34-exact-canonical-bridge",
+      "file": "bridge_equity/QV2_34_EXACT_BRIDGE_EVENTS.csv.gz"
+    },
+    {
+      "workflow": "trailaris_qv2_34_exact_canonical_bridge.yml",
+      "run_id": 32128865113,
+      "run_conclusion": "failure",
+      "artifact_id": 9321442616,
+      "artifact_name": "trailaris-qv2-34-exact-canonical-bridge",
+      "file": "bridge_equity/QV2_34_EXACT_BRIDGE_STATUS.json"
+    },
+    {
+      "workflow": "trailaris_qv2_34_exact_canonical_bridge.yml",
+      "run_id": 32128865113,
+      "run_conclusion": "failure",
+      "artifact_id": 9321442616,
+      "artifact_name": "trailaris-qv2-34-exact-canonical-bridge",
+      "file": "bridge_balance/QV2_34_EXACT_BRIDGE_EVENTS.csv.gz"
+    },
+    {
+      "workflow": "trailaris_qv2_34_exact_canonical_bridge.yml",
+      "run_id": 32128865113,
+      "run_conclusion": "failure",
+      "artifact_id": 9321442616,
+      "artifact_name": "trailaris-qv2-34-exact-canonical-bridge",
+      "file": "bridge_balance/QV2_34_EXACT_BRIDGE_STATUS.json"
+    }
+  ]
+}
