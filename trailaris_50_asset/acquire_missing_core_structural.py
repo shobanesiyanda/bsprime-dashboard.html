@@ -36,7 +36,12 @@ def summarize(asset,rows,source,daily_fallback=False):
  if daily_fallback:vals=[(n,.25) for n,_,_ in SESSIONS]
  else:
   vals=[(n,float(z.loc[z.timestamp.dt.hour.ge(h0)&z.timestamp.dt.hour.lt(h1),'abs_lr'].sum(skipna=True))) for n,h0,h1 in SESSIONS];tot=sum(v for _,v in vals) or 1.;vals=[(n,v/tot) for n,v in vals]
- sess=[{'asset':asset,'session':n,'activity_share':v,'role':'CORE'} for n,v in vals];first=z.timestamp.iloc[0];last=z.timestamp.iloc[-1];q={'asset':asset,'role':'CORE','asset_class':cls,'provider_name':source,'rows':len(z),'first':str(first),'last':str(last),'daily_observations':len(dr),'stale_return_share':float((lr.abs()<1e-14).mean()),'local_gap_gt5m_share':0.0,'coverage_pass':bool(len(z)>100 and first<=START+pd.Timedelta(days=3) and last>=END-pd.Timedelta(days=3)),'anchor':asset,'session_profile_neutral_fallback':daily_fallback};return daily,sess,q
+ sess=[{'asset':asset,'session':n,'activity_share':v,'role':'CORE'} for n,v in vals];first=z.timestamp.iloc[0];last=z.timestamp.iloc[-1]
+ if asset in SYN:
+  coverage=bool(len(z)>=120 and last>=END-pd.Timedelta(days=3));coverage_state='PARTIAL_CORE_REFERENCE_DUE_PROVIDER_ONE_YEAR_RETENTION' if first>START+pd.Timedelta(days=3) else 'FULL'
+ else:
+  coverage=bool(len(z)>100 and first<=START+pd.Timedelta(days=3) and last>=END-pd.Timedelta(days=3));coverage_state='FULL' if coverage else 'FAIL'
+ q={'asset':asset,'role':'CORE','asset_class':cls,'provider_name':source,'rows':len(z),'first':str(first),'last':str(last),'daily_observations':len(dr),'stale_return_share':float((lr.abs()<1e-14).mean()),'local_gap_gt5m_share':0.0,'coverage_pass':coverage,'coverage_state':coverage_state,'anchor':asset,'session_profile_neutral_fallback':daily_fallback};return daily,sess,q
 def one(asset):
  if asset in CRYPTO:rows,src,fb=crypto_rows(CRYPTO[asset]);return summarize(asset,rows,src,fb)
  if asset in SYN:return summarize(asset,deriv(SYN[asset]),f'DERIV_{SYN[asset]}_1D_STRUCTURAL',True)
@@ -46,5 +51,5 @@ def main():
  for asset in assets:d,s,q=one(asset);daily+=d;sess+=s;qual.append(q)
  pd.DataFrame(daily).to_csv(a.outdir/'DAILY_RETURNS.csv',index=False);pd.DataFrame(sess).to_csv(a.outdir/'SESSION_PROFILE.csv',index=False);pd.DataFrame(qual).to_csv(a.outdir/'DATA_QUALITY.csv',index=False);print(json.dumps({'quality':qual},indent=2,default=str));bad=[q['asset'] for q in qual if not q['coverage_pass']]
  if bad:raise RuntimeError(f'missing-core structural coverage failure: {bad}; quality={json.dumps(qual,default=str)}')
- status={'state':'MISSING_CORE_STRUCTURAL_REFERENCE_COMPLETE','assets':len(assets),'asset_names':assets,'uses_strategy_outcomes':False};(a.outdir/'SUMMARY.json').write_text(json.dumps(status,indent=2));print(json.dumps(status,indent=2))
+ status={'state':'MISSING_CORE_STRUCTURAL_REFERENCE_COMPLETE','assets':len(assets),'asset_names':assets,'uses_strategy_outcomes':False,'synthetic_core_retention_note':'Deriv public history available from 2025-08-18; 154-day overlap used only for the five existing synthetic core references. Candidate eligibility still requires full structural calibration coverage.'};(a.outdir/'SUMMARY.json').write_text(json.dumps(status,indent=2));print(json.dumps(status,indent=2))
 if __name__=='__main__':main()
