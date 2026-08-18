@@ -1,0 +1,179 @@
+name: Trailaris Quant V2 — Original34 Recompute From Preserved Bundle
+
+on:
+  push:
+    branches: [trailaris-qv2-50-independent-validation-20260818]
+    paths: ['.github/workflows/trailaris_qv2_34_recompute_from_bundle.yml']
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: trailaris-qv2-original34-bundle-recompute
+  cancel-in-progress: false
+
+env:
+  QV2_BLOB: 120390ab52e80f51bafedc42389ceb7420a410f2
+  ORIGINAL34_ARTIFACT_ID: 9308647757
+  TARGET_BRANCH: trailaris-qv2-50-independent-validation-20260818
+
+jobs:
+  recompute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-qv2-50-independent-validation-20260818
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Restore exact research runtime
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+          python trailaris_r4/build_research_specs.py
+          python -m py_compile trailaris_50_asset/assemble_independent_34.py trailaris_50_asset/promote_independent_shard.py trailaris_50_asset/replay_independent_from_promoted.py trailaris_50_asset/batch_consistent_drawdown.py trailaris_50_asset/correct_replay_drawdown.py
+
+      - name: Restore preserved exact Original34 bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p original34
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${ORIGINAL34_ARTIFACT_ID}/zip > original34.zip
+          unzip -q original34.zip -d original34
+          test -f original34/BUNDLE_SUMMARY.json
+          test -f original34/FEATURE_INDEX.csv
+          test -f original34/CANDIDATES.csv.gz
+          test -f original34/Trailaris_R3_FactorFeed.csv
+          python - <<'PY'
+          import json,pandas as pd
+          s=json.load(open('original34/BUNDLE_SUMMARY.json'))
+          i=pd.read_csv('original34/FEATURE_INDEX.csv')
+          assert s['assets_pass']==34 and s['feature_assets']==34 and s['candidate_assets']==34
+          assert len(i)==34 and i.asset.nunique()==34
+          print('PRESERVED_ORIGINAL34_BUNDLE_GATE PASS')
+          PY
+
+      - name: Reassemble exact Original34 research universe
+        env:
+          PYTHONPATH: .:trailaris_r4
+        run: |
+          rm -rf assembled34
+          python trailaris_50_asset/assemble_independent_34.py --bundle-root original34 --factor-feed original34/Trailaris_R3_FactorFeed.csv --outdir assembled34
+          python - <<'PY'
+          import json
+          s=json.load(open('assembled34/ASSEMBLY_SUMMARY.json'))
+          assert s['feature_assets']==34 and s['candidate_assets']==34 and s['quant_v2_modified'] is False
+          print('ORIGINAL34_ASSEMBLY_GATE PASS')
+          PY
+
+      - name: Recompute exact frozen Quant V2 weekly promotions for Original34
+        env:
+          PYTHONPATH: .:trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          set -euo pipefail
+          rm -rf promoted34 && mkdir promoted34
+          for shard in 0 1 2 3 4 5; do
+            mkdir -p promoted34/s${shard}
+            python trailaris_50_asset/promote_independent_shard.py --universe-dir assembled34 --assets 34 --shard ${shard} --shards 6 --outdir promoted34/s${shard}
+          done
+          python - <<'PY'
+          import glob,pandas as pd
+          z=[]
+          for f in glob.glob('promoted34/s*/QV2_34_PROMOTED_SHARD_*.csv.gz'):
+              try:d=pd.read_csv(f)
+              except pd.errors.EmptyDataError:continue
+              if len(d):z.append(d)
+          p=pd.concat(z,ignore_index=True)
+          assert p.eval_week_index.nunique()==26 and sorted(p.eval_week_index.astype(int).unique())==list(range(26))
+          print('ORIGINAL34_PROMOTION_GATE PASS',len(p))
+          PY
+
+      - name: Apply realized closed-balance sizing semantic only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('trailaris_r5_4/R5_BASE_CAUSAL_ENGINE.py')
+          s=p.read_text()
+          old='r4.size_trade(r.asset,eq,rf,float(r.stop_distance),specs)'
+          new='r4.size_trade(r.asset,balance,rf,float(r.stop_distance),specs)'
+          n=s.count(old)
+          assert n in (1,2),n
+          p.write_text(s.replace(old,new))
+          print('CLOSED_BALANCE_PATCH_COUNT',n)
+          PY
+
+      - name: Replay exact Original34 and correct full-period drawdown
+        env:
+          PYTHONPATH: .:trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          rm -rf result34
+          python trailaris_50_asset/replay_independent_from_promoted.py --universe-dir assembled34 --promoted-root promoted34 --assets 34 --specs trailaris_r4/research_proxy_specs.csv --outdir result34
+          python trailaris_50_asset/correct_replay_drawdown.py --status result34/QV2_34_INDEPENDENT_STATUS.json --events result34/QV2_34_INDEPENDENT_EVENTS.csv.gz
+
+      - name: Enforce exact Original34 control reproduction and freeze corrected drawdown
+        run: |
+          python - <<'PY'
+          import json,math,shutil
+          from pathlib import Path
+          s=json.load(open('result34/QV2_34_INDEPENDENT_STATUS.json'))
+          c=s['candidate']
+          assert abs(c['end_balance']-1400.6510417217567)<1e-9,(c['end_balance'],1400.6510417217567)
+          assert abs(c['compounded_return_pct']-1300.6510417217567)<1e-9
+          assert c['evaluated_weeks']==26 and c['positive_weeks']==26
+          assert c['executed_trades']==2119
+          assert abs(c['profit_factor']-3.0217601028262315)<1e-12
+          assert abs(c['max_weekly_drawdown_pct']-(-3.7441302489758743))<1e-9
+          g=float(c['batch_consistent_global_event_drawdown_pct'])
+          assert math.isfinite(g) and g<=0 and g>-25
+          out={
+            'state':'ORIGINAL34_CORRECTED_GLOBAL_EVENT_DRAWDOWN_COMPLETE',
+            'control_reproduced':True,
+            'assets':34,
+            'starting_balance_usd':100.0,
+            'ending_balance_usd':c['end_balance'],
+            'compounded_return_pct':c['compounded_return_pct'],
+            'executed_trades':c['executed_trades'],
+            'profit_factor':c['profit_factor'],
+            'max_weekly_drawdown_pct':c['max_weekly_drawdown_pct'],
+            'authoritative_global_event_drawdown_pct':g,
+            'week_local_mark_to_market_drawdown_pct':c.get('week_local_mark_to_market_drawdown_pct'),
+            'legacy_timestamp_resorted_drawdown_pct':c.get('legacy_global_event_drawdown_pct'),
+            'global_drawdown_evidence':c.get('batch_consistent_global_event_drawdown_evidence'),
+            'authoritative_method':'BATCH_CONSISTENT_REPLAY_EVENT_ROW_ORDER__BALANCE_AFTER__GLOBAL_PEAK_TO_TROUGH',
+            'strategy_blob':'120390ab52e80f51bafedc42389ceb7420a410f2',
+            'quant_v2_modified':False,
+            'asset_universe_modified':False
+          }
+          p=Path('trailaris_50_asset/QV2_34_CORRECTED_GLOBAL_EVENT_DRAWDOWN.json')
+          p.write_text(json.dumps(out,indent=2))
+          shutil.copy2('result34/QV2_34_INDEPENDENT_WEEKLY.csv','trailaris_50_asset/QV2_34_CORRECTED_CONTROL_WEEKLY.csv')
+          print(json.dumps(out,indent=2))
+          PY
+
+      - name: Preserve corrected control evidence
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add trailaris_50_asset/QV2_34_CORRECTED_GLOBAL_EVENT_DRAWDOWN.json trailaris_50_asset/QV2_34_CORRECTED_CONTROL_WEEKLY.csv
+          git commit -m 'evidence: freeze corrected Original34 global drawdown [skip ci]' || exit 0
+          git pull --rebase origin ${TARGET_BRANCH}
+          git push origin HEAD:${TARGET_BRANCH}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-qv2-original34-corrected-bundle-recompute
+          path: |
+            result34/
+            trailaris_50_asset/QV2_34_CORRECTED_GLOBAL_EVENT_DRAWDOWN.json
+          retention-days: 30
