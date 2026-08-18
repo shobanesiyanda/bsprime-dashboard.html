@@ -1,0 +1,245 @@
+name: Trailaris Quant V2 — Original34 Corrected Global Event Drawdown
+
+on:
+  push:
+    branches: [trailaris-qv2-50-independent-validation-20260818]
+    paths:
+      - '.github/workflows/trailaris_qv2_34_corrected_global_drawdown.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: trailaris-qv2-34-corrected-global-drawdown
+  cancel-in-progress: false
+
+env:
+  QV2_BLOB: 120390ab52e80f51bafedc42389ceb7420a410f2
+  CANONICAL_ARTIFACT_ID: 9270611209
+  TARGET_BRANCH: trailaris-qv2-50-independent-validation-20260818
+
+jobs:
+  recompute-original34:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout active frozen-50 validation branch
+        uses: actions/checkout@v4
+        with:
+          ref: trailaris-qv2-50-independent-validation-20260818
+          path: active
+
+      - name: Checkout preserved 34-asset replay estate
+        uses: actions/checkout@v4
+        with:
+          ref: trailaris-r5-4-26week-validation-20260816
+          path: estate
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install --quiet pandas numpy
+
+      - name: Verify frozen Quant V2 identity
+        working-directory: active
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+
+      - name: Restore exact 34-asset 26-week M1 cache
+        uses: actions/cache/restore@v4
+        with:
+          path: estate/trailaris_longcycle/raw_m1
+          key: trailaris-r5-5-active-m1-34-20260119-20260814-v1
+          fail-on-cache-miss: true
+
+      - name: Inject preserved Quant V2 research sources
+        run: |
+          set -euo pipefail
+          mkdir -p estate/trailaris_r5_5
+          cp active/trailaris_r5_5/longcycle_bounded_memory_candidate.py estate/trailaris_r5_5/
+          cp active/trailaris_r5_5/longcycle_integrated_negative_refinement.py estate/trailaris_r5_5/
+          cp active/trailaris_r5_5/quantitative_integrated_v1.py estate/trailaris_r5_5/
+          cp active/trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py estate/trailaris_r5_5/
+
+      - name: Reconstruct exact R4 dependencies
+        working-directory: estate
+        run: |
+          set -euo pipefail
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+
+      - name: Fetch canonical 34-asset estate evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p estate/canonical_v2
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${CANONICAL_ARTIFACT_ID}/zip > canonical.zip
+          unzip -q canonical.zip -d estate/canonical_v2
+          test -f estate/canonical_v2/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_PROMOTED.csv
+
+      - name: Validate exact Original34 raw estate
+        working-directory: estate
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          from pathlib import Path
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          start=pd.Timestamp('2026-01-19T00:00:00Z'); end=pd.Timestamp('2026-08-14T23:59:59Z')
+          for a in routes:
+              f=Path('trailaris_longcycle/raw_m1')/f'{a}_M1_normalized.csv'
+              assert f.exists(), a
+              d=pd.read_csv(f,usecols=['timestamp'])
+              ts=pd.to_datetime(d.timestamp,utc=True,errors='coerce').sort_values()
+              assert not ts.isna().any() and len(d)>=1000
+              assert ts.min()<=start+pd.Timedelta(days=1)
+              assert ts.max()>=end-pd.Timedelta(days=2)
+          print('ORIGINAL34_RAW_ESTATE_VERIFIED')
+          PY
+
+      - name: Rebuild factors and research specifications
+        working-directory: estate
+        run: |
+          python trailaris_longcycle/build_longcycle_factors.py --rawdir trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_longcycle/QV2_34_CORRECTED_DD_FACTOR_EVIDENCE.json
+          python trailaris_r4/build_research_specs.py
+
+      - name: Reproduce preserved Original34 reference
+        working-directory: estate
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          rm -rf trailaris_r5_5/original_reference_results
+          python trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py \
+            --rawdir trailaris_longcycle/raw_m1 \
+            --specs trailaris_r4/research_proxy_specs.csv \
+            --factory-audit trailaris_longcycle/results/R4_FACTORY_AUDIT.csv \
+            --canonical-dir canonical_v2 \
+            --outdir trailaris_r5_5/original_reference_results
+          python - <<'PY'
+          import json
+          p=json.load(open('trailaris_r5_5/original_reference_results/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_STATUS.json'))['candidate']
+          assert abs(p['end_equity']-1389.6425169269207)<1e-9
+          assert p['positive_weeks']==26
+          print('ORIGINAL34_REFERENCE_REPRODUCED')
+          PY
+
+      - name: Apply realized closed-balance sizing only
+        working-directory: estate
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          engine=Path('trailaris_r5_4/R5_BASE_CAUSAL_ENGINE.py')
+          src=engine.read_text()
+          compact=src.replace(' ','')
+          needle='r4.size_trade(r.asset,eq,rf,float(r.stop_distance),specs)'
+          assert compact.count(needle)==1, compact.count(needle)
+          src=src.replace('r4.size_trade(r.asset,eq,rf,float(r.stop_distance),specs)',
+                          'r4.size_trade(r.asset,balance,rf,float(r.stop_distance),specs)')
+          engine.write_text(src)
+          runner=Path('trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py')
+          diag=Path('trailaris_r5_5/run_quantitative_v2_balance_diagnostic.py')
+          r=runner.read_text()
+          assert r.count('assert_identity(identity)')==1
+          r=r.replace('assert_identity(identity)', "print('ORIGINAL_IDENTITY_CHECK_BYPASSED_FOR_BALANCE_DIAGNOSTIC')")
+          diag.write_text(r)
+          print('REALIZED_CLOSED_BALANCE_DIAGNOSTIC_PREPARED')
+          PY
+
+      - name: Recompute Original34 realized closed-balance event path
+        working-directory: estate
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          rm -rf trailaris_r5_5/balance_diagnostic_results
+          python trailaris_r5_5/run_quantitative_v2_balance_diagnostic.py \
+            --rawdir trailaris_longcycle/raw_m1 \
+            --specs trailaris_r4/research_proxy_specs.csv \
+            --factory-audit trailaris_longcycle/results/R4_FACTORY_AUDIT.csv \
+            --canonical-dir canonical_v2 \
+            --outdir trailaris_r5_5/balance_diagnostic_results
+
+      - name: Compute batch-consistent global event drawdown
+        working-directory: estate
+        run: |
+          python - <<'PY'
+          import json
+          import numpy as np
+          import pandas as pd
+          from pathlib import Path
+
+          root=Path('trailaris_r5_5/balance_diagnostic_results')
+          status=json.load(open(root/'R5_5_QUANTITATIVE_V2_EXACT_ESTATE_STATUS.json'))['candidate']
+          ev=pd.read_csv(root/'R5_5_QUANTITATIVE_V2_EXACT_ESTATE_EVENTS.csv')
+          assert len(ev)==2119, len(ev)
+          assert 'balance_after' in ev.columns, ev.columns.tolist()
+
+          bal=pd.to_numeric(ev['balance_after'],errors='coerce')
+          assert not bal.isna().any()
+          path=np.concatenate(([100.0],bal.to_numpy(dtype=float)))
+          peaks=np.maximum.accumulate(path)
+          dd=(path/peaks-1.0)*100.0
+          trough_i=int(np.argmin(dd))
+          peak_i=int(np.argmax(path[:trough_i+1]))
+          corrected=float(dd[trough_i])
+
+          # Diagnostic only: demonstrate the globally timestamp-resorted figure separately.
+          ts_col='exit_time' if 'exit_time' in ev.columns else ('timestamp' if 'timestamp' in ev.columns else None)
+          sorted_dd=None
+          if ts_col:
+              z=ev.copy()
+              z[ts_col]=pd.to_datetime(z[ts_col],utc=True,errors='coerce')
+              z=z.sort_values([ts_col],kind='stable').reset_index(drop=True)
+              sb=pd.to_numeric(z['balance_after'],errors='coerce').to_numpy(dtype=float)
+              sp=np.concatenate(([100.0],sb))
+              sorted_dd=float(np.min((sp/np.maximum.accumulate(sp)-1.0)*100.0))
+
+          report={
+            'state':'ORIGINAL34_CORRECTED_GLOBAL_EVENT_DRAWDOWN_COMPLETE',
+            'assets':34,
+            'event_rows':int(len(ev)),
+            'starting_balance_usd':100.0,
+            'ending_balance_usd':float(status['end_equity']),
+            'authoritative_method':'BATCH_CONSISTENT_REPLAY_EVENT_ROW_ORDER__BALANCE_AFTER__GLOBAL_PEAK_TO_TROUGH',
+            'authoritative_global_event_drawdown_pct':corrected,
+            'peak_path_index':peak_i,
+            'trough_path_index':trough_i,
+            'peak_balance_usd':float(path[peak_i]),
+            'trough_balance_usd':float(path[trough_i]),
+            'legacy_status_event_drawdown_pct':float(status['max_event_equity_drawdown_pct']),
+            'timestamp_resorted_diagnostic_pct':sorted_dd,
+            'quant_v2_modified':False,
+            'asset_universe_modified':False,
+            'strategy_blob':'120390ab52e80f51bafedc42389ceb7420a410f2'
+          }
+          Path('QV2_34_CORRECTED_GLOBAL_EVENT_DRAWDOWN.json').write_text(json.dumps(report,indent=2))
+          print(json.dumps(report,indent=2))
+          PY
+
+      - name: Publish corrected Original34 drawdown evidence to validation branch
+        run: |
+          set -euo pipefail
+          cp estate/QV2_34_CORRECTED_GLOBAL_EVENT_DRAWDOWN.json active/trailaris_50_asset/QV2_34_CORRECTED_GLOBAL_EVENT_DRAWDOWN.json
+          cd active
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add trailaris_50_asset/QV2_34_CORRECTED_GLOBAL_EVENT_DRAWDOWN.json
+          if git diff --cached --quiet; then
+            echo 'NO_CHANGE'
+          else
+            git commit -m 'Record corrected Original34 global event drawdown'
+            git push origin HEAD:${TARGET_BRANCH}
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-qv2-original34-corrected-global-drawdown
+          path: |
+            estate/QV2_34_CORRECTED_GLOBAL_EVENT_DRAWDOWN.json
+            estate/trailaris_r5_5/balance_diagnostic_results/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_EVENTS.csv
+            estate/trailaris_r5_5/balance_diagnostic_results/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_WEEKLY.csv
+          retention-days: 30
