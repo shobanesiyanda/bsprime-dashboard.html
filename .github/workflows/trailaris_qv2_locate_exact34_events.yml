@@ -1,0 +1,83 @@
+name: Trailaris Quant V2 — Locate Exact Original34 Event Path
+
+on:
+  push:
+    branches: [trailaris-qv2-50-independent-validation-20260818]
+    paths: ['.github/workflows/trailaris_qv2_locate_exact34_events.yml']
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  locate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-qv2-50-independent-validation-20260818
+      - name: Locate exact 34 replay runs, artifacts and event files
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p exact34_locator/downloads
+          python - <<'PY'
+          import json,subprocess,zipfile,io,os,re
+          repo='shobanesiyanda/bsprime-dashboard.html'
+          workflows=[
+            'trailaris_r5_5_quantitative_v2_exact_estate_r3_26w.yml',
+            'trailaris_quant_v2_34_balance_reconciliation.yml',
+            'trailaris_qv2_34_success_attribution.yml',
+            'trailaris_qv2_34_exact_canonical_bridge.yml'
+          ]
+          report={'workflows':{},'event_candidates':[]}
+          for wf in workflows:
+            try:
+              raw=subprocess.check_output(['gh','run','list','--repo',repo,'--workflow',wf,'--limit','100','--json','databaseId,status,conclusion,headBranch,headSha,createdAt,displayTitle'],text=True)
+              runs=json.loads(raw)
+            except subprocess.CalledProcessError as e:
+              report['workflows'][wf]={'error':str(e),'runs':[]};continue
+            entries=[]
+            for r in runs:
+              arts=[]
+              try:
+                ar=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/actions/runs/{r["databaseId"]}/artifacts?per_page=100'],text=True)).get('artifacts',[])
+              except Exception:
+                ar=[]
+              for a in ar:
+                rec={'id':a['id'],'name':a['name'],'size_in_bytes':a['size_in_bytes'],'expired':a['expired'],'files':[]}
+                if not a['expired'] and a['size_in_bytes']<400_000_000:
+                  try:
+                    b=subprocess.check_output(['gh','api',f'repos/{repo}/actions/artifacts/{a["id"]}/zip'])
+                    z=zipfile.ZipFile(io.BytesIO(b)); names=z.namelist(); rec['files']=names
+                    for n in names:
+                      low=n.lower()
+                      if ('event' in low or 'replay' in low or 'status' in low) and (low.endswith('.csv') or low.endswith('.csv.gz') or low.endswith('.json')):
+                        report['event_candidates'].append({'workflow':wf,'run_id':r['databaseId'],'run_conclusion':r['conclusion'],'artifact_id':a['id'],'artifact_name':a['name'],'file':n})
+                  except Exception as e:
+                    rec['inspect_error']=str(e)
+                arts.append(rec)
+              entries.append({**r,'artifacts':arts})
+            report['workflows'][wf]={'runs':entries}
+          open('exact34_locator/EXACT34_EVENT_PATH_INVENTORY.json','w').write(json.dumps(report,indent=2))
+          print('EVENT_CANDIDATES',len(report['event_candidates']))
+          for x in report['event_candidates']:
+            print(json.dumps(x))
+          PY
+      - name: Preserve inventory
+        run: |
+          cp exact34_locator/EXACT34_EVENT_PATH_INVENTORY.json trailaris_50_asset/EXACT34_EVENT_PATH_INVENTORY.json
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add trailaris_50_asset/EXACT34_EVENT_PATH_INVENTORY.json
+          git commit -m 'evidence: locate exact Original34 event path [skip ci]' || exit 0
+          git pull --rebase origin trailaris-qv2-50-independent-validation-20260818 || true
+          git push origin HEAD:trailaris-qv2-50-independent-validation-20260818 || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-exact34-event-path-inventory
+          path: exact34_locator/
+          retention-days: 30
