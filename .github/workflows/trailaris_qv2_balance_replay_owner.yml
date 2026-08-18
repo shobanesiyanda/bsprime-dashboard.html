@@ -24,11 +24,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-      - name: Checkout cache-owning 34-asset estate
+      - name: Checkout cache-owning 34-asset estate at workspace root
         uses: actions/checkout@v4
         with:
           ref: trailaris-r5-4-26week-validation-20260816
-          path: estate
 
       - name: Checkout current Quant V2 source and result branch
         uses: actions/checkout@v4
@@ -55,21 +54,20 @@ jobs:
       - name: Restore exact preserved 34-asset M1 estate
         uses: actions/cache/restore@v4
         with:
-          path: estate/trailaris_longcycle/raw_m1
+          path: trailaris_longcycle/raw_m1
           key: trailaris-r5-4-m1-34-20260119-20260814-v1
           fail-on-cache-miss: true
 
       - name: Inject preserved Quant V2 replay sources
         run: |
           set -euo pipefail
-          mkdir -p estate/trailaris_r5_5
-          cp source/trailaris_r5_5/longcycle_bounded_memory_candidate.py estate/trailaris_r5_5/
-          cp source/trailaris_r5_5/longcycle_integrated_negative_refinement.py estate/trailaris_r5_5/
-          cp source/trailaris_r5_5/quantitative_integrated_v1.py estate/trailaris_r5_5/
-          cp source/trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py estate/trailaris_r5_5/
+          mkdir -p trailaris_r5_5
+          cp source/trailaris_r5_5/longcycle_bounded_memory_candidate.py trailaris_r5_5/
+          cp source/trailaris_r5_5/longcycle_integrated_negative_refinement.py trailaris_r5_5/
+          cp source/trailaris_r5_5/quantitative_integrated_v1.py trailaris_r5_5/
+          cp source/trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py trailaris_r5_5/
 
       - name: Reconstruct exact R4 dependencies and research specs
-        working-directory: estate
         run: |
           set -euo pipefail
           cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
@@ -81,15 +79,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          mkdir -p estate/qv2_reference
+          mkdir -p qv2_reference
           gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${QV2_EVIDENCE_ARTIFACT_ID}/zip > qv2_reference.zip
           echo '8c6e42d95e107c1826c9a9c4cd533153ab866b09b55d6329ec3e1e726a12cac7  qv2_reference.zip' | sha256sum -c -
-          unzip -q qv2_reference.zip -d estate/qv2_reference
-          test -f estate/qv2_reference/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_PROMOTED.csv
-          test -f estate/qv2_reference/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_STATUS.json
+          unzip -q qv2_reference.zip -d qv2_reference
+          test -f qv2_reference/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_PROMOTED.csv
+          test -f qv2_reference/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_STATUS.json
 
       - name: Apply isolated realized closed-balance lot sizing
-        working-directory: estate
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -103,7 +100,6 @@ jobs:
           PY
 
       - name: Replay exact promoted estate
-        working-directory: estate
         env:
           PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
         run: |
@@ -166,14 +162,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: trailaris-qv2-34-closed-balance-replay
-          path: estate/trailaris_r5_5/balance_replay_evidence/
+          path: trailaris_r5_5/balance_replay_evidence/
           retention-days: 30
 
       - name: Commit compact result to 100-asset expansion branch
         run: |
           set -euo pipefail
           mkdir -p source/trailaris_100_asset
-          cp estate/trailaris_r5_5/balance_replay_evidence/QV2_34_BALANCE_REPLAY_STATUS.json source/trailaris_100_asset/QV2_34_BALANCE_REPLAY_RESULT.json
+          cp trailaris_r5_5/balance_replay_evidence/QV2_34_BALANCE_REPLAY_STATUS.json source/trailaris_100_asset/QV2_34_BALANCE_REPLAY_RESULT.json
           cd source
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
