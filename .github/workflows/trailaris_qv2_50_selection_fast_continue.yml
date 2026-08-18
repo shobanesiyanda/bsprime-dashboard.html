@@ -72,3 +72,4 @@ jobs:
           git commit -m 'evidence: preserve complementary 16 before 50-asset replay [skip ci]'
           git pull --rebase origin trailaris-quant-v2-50-asset-complementarity-20260818
           git push origin HEAD:trailaris-quant-v2-50-asset-complementarity-20260818
+# hourly synthetic structural reference revision
