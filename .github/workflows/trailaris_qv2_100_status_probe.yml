@@ -1,0 +1,50 @@
+name: Trailaris Quant V2 — 100 Replay Status Probe
+
+on:
+  push:
+    branches: [trailaris-r5-4-26week-validation-20260816]
+    paths:
+      - '.github/workflows/trailaris_qv2_100_status_probe.yml'
+
+permissions:
+  actions: read
+  contents: write
+
+env:
+  TARGET_SHA: f3f528b9b75f13efa5fec76dce64c8f764837f0d
+  RESULT_BRANCH: trailaris-quant-v2-100-asset-canonical-expansion-20260818
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-quant-v2-100-asset-canonical-expansion-20260818
+      - name: Capture workflow runs for target commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${TARGET_SHA}&per_page=100" > /tmp/runs.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.load(open('/tmp/runs.json'))
+          rows=[]
+          for r in d.get('workflow_runs',[]):
+              rows.append({k:r.get(k) for k in ['id','name','status','conclusion','event','head_sha','created_at','updated_at','run_started_at','html_url']})
+          out={'target_sha':'f3f528b9b75f13efa5fec76dce64c8f764837f0d','runs':rows}
+          Path('trailaris_100_asset').mkdir(exist_ok=True)
+          Path('trailaris_100_asset/ACTIVE_100_REPLAY_RUN_STATUS.json').write_text(json.dumps(out,indent=2))
+          print(json.dumps(out,indent=2))
+          PY
+      - name: Commit status snapshot
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add trailaris_100_asset/ACTIVE_100_REPLAY_RUN_STATUS.json
+          git commit -m 'ops: 100-asset replay run status [skip ci]'
+          git pull --rebase origin "$RESULT_BRANCH"
+          git push origin HEAD:"$RESULT_BRANCH"
