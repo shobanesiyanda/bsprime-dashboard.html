@@ -21,7 +21,7 @@ def crypto_rows(symbol):
 def deriv(symbol):
  ws=websocket.create_connection('wss://ws.binaryws.com/websockets/v3?app_id=1089',timeout=20);rows=[]
  try:
-  ws.send(json.dumps({'ticks_history':symbol,'start':int(START.timestamp()),'end':int(END.timestamp())-1,'style':'candles','granularity':86400,'count':5000,'adjust_start_time':1}))
+  ws.send(json.dumps({'ticks_history':symbol,'end':int(END.timestamp())-1,'style':'candles','granularity':86400,'count':250,'adjust_start_time':1}))
   x=json.loads(ws.recv())
   if x.get('error'):raise RuntimeError(x['error'].get('message'))
   for c in x.get('candles',[]):
