@@ -1,0 +1,17 @@
+{
+  "state": "QV2_50_EVIDENCE_PRESERVED",
+  "workflow_run_id": 32120438494,
+  "replay_job_id": 95663633595,
+  "replay_artifact_id": 9318836671,
+  "replay_artifact_digest": "sha256:02a2834391272b51663cc514ba7071c497f9eda355ba3752b07bae4c5eb99d69",
+  "assembled_artifact_id": 9318715516,
+  "assembled_artifact_digest": "sha256:79fb754d2ba9ae0c6c10e25965b4d907c6ea47721b734a9a79d47c84478546c1",
+  "approved16_bundle_artifact_id": 9318464866,
+  "approved16_bundle_artifact_digest": "sha256:9d6946439ce44a54145df9d1e02e7f2ee45c90cb0cdbe15fa8a67b9b92363d94",
+  "strategy_blob": "120390ab52e80f51bafedc42389ceb7420a410f2",
+  "experimental_delta": "ASSET_UNIVERSE_34_TO_50_ONLY",
+  "closed_balance_compounding": true,
+  "automatic_baseline_replacement": false,
+  "evidence_class": "26_WEEK_CAUSAL_WALK_FORWARD_RESEARCH_PROXY; BROKER_PRODUCTION_CERTIFICATION_SEPARATE",
+  "workflow_note": "Replay, artifact upload, assembly, all six promotion shards and closed-balance execution completed successfully. The workflow conclusion was failure only because the final compact Git push conflicted after evidence upload; compact evidence was subsequently preserved directly on the evaluation branch."
+}
