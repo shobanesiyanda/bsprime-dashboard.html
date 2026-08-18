@@ -22,12 +22,14 @@ jobs:
           set -euo pipefail
           mkdir -p trailaris_50_asset
           gh run list --workflow trailaris_qv2_50_independent_26w_validation_v4.yml --branch trailaris-qv2-50-independent-validation-20260818 --limit 5 --json databaseId,status,conclusion,headSha,createdAt,updatedAt,url > trailaris_50_asset/ACTIVE_INDEPENDENT_V4_STATUS.json
+          gh run list --workflow trailaris_qv2_deriv_request_probe_v2.yml --branch trailaris-qv2-50-independent-validation-20260818 --limit 5 --json databaseId,status,conclusion,headSha,createdAt,updatedAt,url > trailaris_50_asset/ACTIVE_DERIV_REQUEST_PROBE_STATUS.json
           cat trailaris_50_asset/ACTIVE_INDEPENDENT_V4_STATUS.json
+          cat trailaris_50_asset/ACTIVE_DERIV_REQUEST_PROBE_STATUS.json
       - name: Commit status snapshot
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add trailaris_50_asset/ACTIVE_INDEPENDENT_V4_STATUS.json
-          git commit -m 'status: snapshot independent validation V4 [skip ci]' || exit 0
+          git add trailaris_50_asset/ACTIVE_INDEPENDENT_V4_STATUS.json trailaris_50_asset/ACTIVE_DERIV_REQUEST_PROBE_STATUS.json
+          git commit -m 'status: snapshot V4 and Deriv probe [skip ci]' || exit 0
           git pull --rebase origin trailaris-qv2-50-independent-validation-20260818 || true
           git push origin HEAD:trailaris-qv2-50-independent-validation-20260818 || true
