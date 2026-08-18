@@ -1,0 +1,28 @@
+{
+  "state": "QV2_34_50_EVENT_DRAWDOWN_REPORTING_REPAIRED",
+  "reporting_only_change": true,
+  "strategy_modified": false,
+  "asset_universe_modified": false,
+  "trade_selection_modified": false,
+  "position_sizing_modified": false,
+  "pnl_modified": false,
+  "method": "For each eval_week replay book independently: begin at that week's realized start equity; at each unique exit timestamp realize all exits due at that timestamp as one accounting batch; mark-to-market only positions from that same replay book still open after the batch; calculate peak-to-trough equity drawdown inside that book; report the worst drawdown across the 26 books.",
+  "why_legacy_global_event_dd_is_not_authoritative": "The 26-week research runner replays each evaluated week as a separate portfolio book. Positions in one book may have exit timestamps beyond the calendar boundary while the next week's book is replayed separately. Globally sorting event-equity rows therefore interleaves accounting states from different replay books. Same-timestamp exits were also serialized, allowing transient marks before the full exit batch was accounted.",
+  "original_34": {
+    "legacy_reported_event_drawdown_pct": -2.702834147462363,
+    "authoritative_batch_consistent_event_drawdown_pct": -3.7441302489758854,
+    "max_weekly_drawdown_pct": -3.7441302489758743,
+    "worst_eval_week": "2026-03-02",
+    "interpretation": "Authoritative event DD is numerically consistent with the exact weekly-book drawdown once same-book mark-to-market accounting is reconstructed."
+  },
+  "exact_50": {
+    "legacy_reported_event_drawdown_pct": -5.246810634190813,
+    "authoritative_batch_consistent_event_drawdown_pct": -2.60654364007018,
+    "max_weekly_drawdown_pct": -2.6065436400701913,
+    "worst_eval_week": "2026-06-01",
+    "interpretation": "The prior -5.2468% headline was a cross-book/same-timestamp reporting artifact; the corrected event DD does not change any trade or P&L."
+  },
+  "corrected_delta_50_minus_34_event_drawdown_percentage_points": 1.1375866089057053,
+  "corrected_conclusion": "On an apples-to-apples batch-consistent basis, the exact 50 improved event drawdown versus the 34 control while also increasing ending equity and trade throughput. Fresh independent validation remains required before production-universe promotion.",
+  "legacy_metrics_preserved_for_audit_lineage": true
+}
