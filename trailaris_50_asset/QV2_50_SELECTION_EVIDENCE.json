@@ -1,0 +1,39 @@
+{
+  "state": "COMPLEMENTARY_16_SELECTED_PRE_REPLAY",
+  "selection_window": "2025-07-21T00:00:00Z to 2026-01-19T00:00:00Z",
+  "evaluation_window_not_used_for_selection": true,
+  "strategy_outcomes_used": false,
+  "core_assets": 34,
+  "candidate_pool_predeclared": 66,
+  "structurally_eligible_candidates": 44,
+  "selected_assets": [
+    "COCOA.CMD",
+    "SUGAR.CMD",
+    "COFFEE.CMD",
+    "AAPL.US",
+    "SOYBEAN.CMD",
+    "ORCL.US",
+    "MSFT.US",
+    "USDCNH",
+    "V.US",
+    "AUDNZD",
+    "EURCHF",
+    "GBPNZD",
+    "FRA.IDX",
+    "TSLA.US",
+    "CHI.IDX",
+    "COPPER.CMD"
+  ],
+  "selected_class_mix": {
+    "COMMODITY": 5,
+    "EQUITY": 5,
+    "FX": 4,
+    "INDEX": 2
+  },
+  "mean_selected_core_correlation": 0.14150539934652168,
+  "mean_selected_residual_variance_ratio": 0.7709451651922421,
+  "mean_selected_tail_codrawdown_frequency": 0.6205018939393939,
+  "mean_selected_pairwise_corr_at_entry": 0.10115165385561323,
+  "selection_method": "joint minimum-redundancy structural complementarity; no evaluation-period P&L or strategy outcome used",
+  "automatic_50_asset_replay_authorized": false
+}
