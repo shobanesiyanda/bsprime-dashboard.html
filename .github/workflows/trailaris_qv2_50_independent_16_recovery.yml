@@ -43,8 +43,8 @@ jobs:
                   r=by[asset];f.write(f"{r.instrument_id}\t{asset}\t{r.provider_name}\n")
           print('APPROVED16_PROVIDER_IDENTITY PASS')
           PY
-      - name: Acquire untouched approved-16 M1 estate
-        run: node trailaris_50_asset/acquire_independent_manifest.js --manifest APPROVED16.tsv --start "$START" --end "$END" --outdir raw16 --concurrency 4
+      - name: Acquire untouched approved-16 M1 estate by date shards
+        run: node trailaris_50_asset/acquire_independent_manifest.js --manifest APPROVED16.tsv --start "$START" --end "$END" --outdir raw16 --concurrency 4 --chunk-days 28
       - name: Enforce exact 16 acquisition gate
         run: |
           python - <<'PY'
@@ -53,6 +53,7 @@ jobs:
           e=json.loads(Path('raw16/ACQUISITION_EVIDENCE_ADDITIONS.json').read_text());approved=[x.strip() for x in Path('trailaris_50_asset/QV2_50_APPROVED_EVALUATION_16.txt').read_text().splitlines() if x.strip()]
           assert e['assets_scheduled']==16 and e['assets_pass']==16,(e['assets_pass'],[(r['canonical_instrument'],r['status'],r.get('error','')) for r in e['evidence'] if r['status']!='PASS'])
           assert {r['canonical_instrument'] for r in e['evidence']}==set(approved)
+          assert all(r.get('conflicting_duplicates',0)==0 and r.get('invalid_ohlc',0)==0 for r in e['evidence'])
           for r in e['evidence']:r['file']=str(Path('raw16')/f"{r['canonical_instrument']}_M1_normalized.csv")
           e['data_reused_from_2026']=False;Path('raw16/ACQUISITION_EVIDENCE.json').write_text(json.dumps(e,indent=2));print('INDEPENDENT_16_DATA_GATE PASS')
           PY
@@ -61,3 +62,4 @@ jobs:
           name: qv2-independent-raw16-recovery
           path: raw16/
           retention-days: 30
+# sharded-recovery-v2
