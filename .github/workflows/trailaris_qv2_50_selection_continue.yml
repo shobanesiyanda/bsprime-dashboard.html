@@ -1,0 +1,64 @@
+name: Trailaris Quant V2 — 50 Selection Continuation
+on:
+  push:
+    branches: [trailaris-r5-4-26week-validation-20260816]
+    paths: ['.github/workflows/trailaris_qv2_50_selection_continue.yml']
+permissions:
+  actions: read
+  contents: write
+jobs:
+  continue_selection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-quant-v2-50-asset-complementarity-20260818}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Wait only for existing calibration shards
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 80); do
+            gh api 'repos/shobanesiyanda/bsprime-dashboard.html/actions/runs/32111975729/jobs?per_page=100' > /tmp/jobs.json
+            state=$(python - <<'PY'
+          import json
+          j=json.load(open('/tmp/jobs.json')).get('jobs',[])
+          d=[x for x in j if x['name'].startswith('duka (')]
+          print('PASS' if len(d)==12 and all(x['status']=='completed' and x.get('conclusion')=='success' for x in d) else 'WAIT')
+          PY
+            )
+            [ "$state" = PASS ] && break
+            sleep 15
+          done
+          [ "$state" = PASS ]
+      - name: Restore existing calibration evidence
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          mkdir -p manifest summaries/duka
+          gh run download 32111975729 -n qv2-50-calibration-manifest -D manifest
+          gh run download 32111975729 -p 'qv2-50-cal-duka-*' -D summaries/duka
+          test "$(find summaries/duka -name DAILY_RETURNS.csv | wc -l)" -eq 12
+      - name: Acquire repaired eight-core structural sidecar
+        run: |
+          python -m pip install --quiet pandas numpy requests websocket-client
+          python trailaris_50_asset/acquire_missing_core_structural.py --outdir summaries/missing-core
+      - name: Select exact complementary 16
+        run: |
+          python trailaris_50_asset/select_complementary_16.py --summaries-root summaries --candidate-list manifest/CANDIDATE_66.txt --candidate-manifest manifest/CALIBRATION_DUKA_MANIFEST.tsv --outdir selection
+          cat selection/QV2_50_SELECTION_EVIDENCE.json
+      - uses: actions/upload-artifact@v4
+        with: {name: qv2-50-complementary-16-selection-final, path: selection/, retention-days: 30}
+      - name: Preserve selection before replay
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          cp selection/QV2_50_SELECTED_16.txt trailaris_50_asset/
+          cp selection/QV2_50_SELECTED_16.tsv trailaris_50_asset/
+          cp selection/QV2_50_SELECTION_EVIDENCE.json trailaris_50_asset/
+          cp selection/QV2_50_CANDIDATE_STRUCTURAL_SCORES.csv trailaris_50_asset/
+          git add trailaris_50_asset/QV2_50_SELECTED_16.txt trailaris_50_asset/QV2_50_SELECTED_16.tsv trailaris_50_asset/QV2_50_SELECTION_EVIDENCE.json trailaris_50_asset/QV2_50_CANDIDATE_STRUCTURAL_SCORES.csv
+          git commit -m 'evidence: preserve complementary 16 before 50-asset replay [skip ci]'
+          git pull --rebase origin trailaris-quant-v2-50-asset-complementarity-20260818
+          git push origin HEAD:trailaris-quant-v2-50-asset-complementarity-20260818
