@@ -1,0 +1,27 @@
+{
+  "state": "CANDIDATE_INDEPENDENT_WINDOW_1_INVALIDATED_AT_DATA_GATE",
+  "raw_window": "2024-12-23T00:00:00Z/2025-07-21T00:00:00Z",
+  "evaluated_window": "2025-01-20T00:00:00Z/2025-07-21T00:00:00Z",
+  "strategy_replay_started": false,
+  "strategy_outcomes_observed": false,
+  "quant_v2_modified": false,
+  "asset_universe_modified": false,
+  "acceptance_thresholds_modified": false,
+  "reason": "Exact approved MSFT.US provider history (Dukascopy msftususd) contains no M1 bars after 2025-07-11 within the candidate holdout, leaving the final 2025-07-14 through 2025-07-18 trading week uncovered. Long-range truncation was excluded by date-sharded requests; the gap persisted. COFFEE.CMD was recovered by date sharding. The holdout is rejected for incomplete exact-asset evidence before any promotion or portfolio replay.",
+  "provider_diagnostics": {
+    "MSFT.US": {
+      "instrument_id": "msftususd",
+      "first": "2024-12-23T14:30:00.000Z",
+      "last": "2025-07-11T19:59:00.000Z",
+      "invalid_ohlc": 0,
+      "conflicting_duplicates": 0
+    },
+    "COFFEE.CMD": {
+      "instrument_id": "coffeecmdusx",
+      "date_sharding_recovered_required_coverage": true
+    }
+  },
+  "replacement_window_selection_rule": "Move the complete 26-week evaluated window exactly one week earlier, solely to end before the provider gap. Keep the same 28-day warm-up, exact 34 and exact 50 universes, Quant V2 identity, closed-balance sizing and all predeclared acceptance thresholds.",
+  "replacement_raw_window": "2024-12-16T00:00:00Z/2025-07-14T00:00:00Z",
+  "replacement_evaluated_window": "2025-01-13T00:00:00Z/2025-07-14T00:00:00Z"
+}
