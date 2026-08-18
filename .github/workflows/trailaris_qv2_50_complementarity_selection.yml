@@ -1,0 +1,142 @@
+name: Trailaris Quant V2 — 50 Asset Complementarity Selection
+
+on:
+  push:
+    branches: [trailaris-quant-v2-50-asset-complementarity-20260818]
+    paths:
+      - '.github/workflows/trailaris_qv2_50_complementarity_selection.yml'
+      - 'trailaris_50_asset/**'
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: trailaris-qv2-50-complementarity-selection
+  cancel-in-progress: false
+
+env:
+  BRANCH: trailaris-quant-v2-50-asset-complementarity-20260818
+  DISCOVERY_ARTIFACT_ID: 9301401424
+  QV2_BLOB: 120390ab52e80f51bafedc42389ceb7420a410f2
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-quant-v2-50-asset-complementarity-20260818}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Build pre-outcome structural manifest
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pandas
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${DISCOVERY_ARTIFACT_ID}/zip > discovery.zip
+          mkdir discovery && unzip -q discovery.zip -d discovery
+          python - <<'PY'
+          import pandas as pd
+          from pathlib import Path
+          core=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          missing_core={'SOLUSD','BNBUSD','XRPUSD','V75','V50','V100','V25','V10'}
+          cand=[x.strip() for x in Path('trailaris_100_asset/ADDITIONAL_66_CANONICAL.txt').read_text().splitlines() if x.strip()]
+          assert len(cand)==66 and len(set(cand))==66 and not set(cand)&set(core)
+          d=pd.read_csv('discovery/DISCOVERED_UNIVERSE.csv');by={str(r.canonical_instrument):r for _,r in d.iterrows()}
+          need=cand+[x for x in core if x not in missing_core]
+          miss=[x for x in need if x not in by]
+          assert not miss,miss
+          Path('manifest').mkdir()
+          with open('manifest/CALIBRATION_DUKA_MANIFEST.tsv','w') as f:
+            f.write('instrument_id\tcanonical_instrument\tprovider_name\trole\n')
+            for x in need:
+              r=by[x];f.write(f"{r.instrument_id}\t{x}\t{r.provider_name}\t{'CANDIDATE' if x in cand else 'CORE'}\n")
+          Path('manifest/CANDIDATE_66.txt').write_text('\n'.join(cand)+'\n')
+          assert len(need)==92
+          print({'duka_assets':len(need),'candidate_assets':66,'duka_core_assets':26,'separate_core_assets':8})
+          PY
+      - uses: actions/upload-artifact@v4
+        with: {name: qv2-50-calibration-manifest, path: manifest/, retention-days: 30}
+
+  duka:
+    needs: manifest
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix: {shard: [0,1,2,3,4,5,6,7,8,9,10,11]}
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-quant-v2-50-asset-complementarity-20260818}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/download-artifact@v4
+        with: {name: qv2-50-calibration-manifest, path: manifest}
+      - name: Install structural runtime
+        run: |
+          npm install --no-save --silent dukascopy-node@1.50.0
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+      - name: Acquire pre-replay M1 calibration shard
+        run: node trailaris_50_asset/acquire_calibration_duka_shard.js --manifest manifest/CALIBRATION_DUKA_MANIFEST.tsv --outdir cal-raw --shard ${{ matrix.shard }} --shards 12 --concurrency 3 --start 2025-07-21T00:00:00Z --end 2026-01-19T00:00:00Z
+      - name: Reduce to structural evidence only
+        env: {PYTHONPATH: '.:trailaris_r4'}
+        run: |
+          python trailaris_50_asset/summarize_calibration_shard.py --rawdir cal-raw --outdir compact --candidate-list manifest/CANDIDATE_66.txt
+          cp cal-raw/ACQUISITION_EVIDENCE.json compact/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: qv2-50-cal-duka-${{ matrix.shard }}, path: compact/, retention-days: 30}
+
+  missing_core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-quant-v2-50-asset-complementarity-20260818}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --quiet pandas numpy requests websocket-client
+      - name: Acquire eight non-Dukascopy baseline structural references
+        run: python trailaris_50_asset/acquire_missing_core_structural.py --outdir missing-core
+      - uses: actions/upload-artifact@v4
+        with: {name: qv2-50-cal-missing-core, path: missing-core/, retention-days: 30}
+
+  select16:
+    needs: [manifest,duka,missing_core]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-quant-v2-50-asset-complementarity-20260818}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --quiet pandas numpy
+      - uses: actions/download-artifact@v4
+        with: {name: qv2-50-calibration-manifest, path: manifest}
+      - uses: actions/download-artifact@v4
+        with: {pattern: qv2-50-cal-duka-*, path: summaries/duka}
+      - uses: actions/download-artifact@v4
+        with: {name: qv2-50-cal-missing-core, path: summaries/missing-core}
+      - name: Select exactly 16 complementary additions jointly
+        run: python trailaris_50_asset/select_complementary_16.py --summaries-root summaries --candidate-list manifest/CANDIDATE_66.txt --candidate-manifest manifest/CALIBRATION_DUKA_MANIFEST.tsv --outdir selection
+      - uses: actions/upload-artifact@v4
+        with: {name: qv2-50-complementary-16-selection, path: selection/, retention-days: 30}
+      - name: Preserve compact selection evidence
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          cp selection/QV2_50_SELECTED_16.txt trailaris_50_asset/
+          cp selection/QV2_50_SELECTED_16.tsv trailaris_50_asset/
+          cp selection/QV2_50_SELECTION_EVIDENCE.json trailaris_50_asset/
+          cp selection/QV2_50_CANDIDATE_STRUCTURAL_SCORES.csv trailaris_50_asset/
+          git add trailaris_50_asset/QV2_50_SELECTED_16.txt trailaris_50_asset/QV2_50_SELECTED_16.tsv trailaris_50_asset/QV2_50_SELECTION_EVIDENCE.json trailaris_50_asset/QV2_50_CANDIDATE_STRUCTURAL_SCORES.csv
+          git commit -m 'evidence: select complementary 16 before 50-asset replay [skip ci]'
+          git pull --rebase origin "$BRANCH"
+          git push origin HEAD:"$BRANCH"
