@@ -94,9 +94,11 @@ jobs:
           src=engine.read_text()
           old='r4.size_trade(r.asset,eq,rf,float(r.stop_distance),specs)'
           new='r4.size_trade(r.asset,balance,rf,float(r.stop_distance),specs)'
-          assert src.count(old)==1, src.count(old)
+          assert src.count(old)==2, src.count(old)
           engine.write_text(src.replace(old,new))
-          print('CLOSED_BALANCE_SIZING_APPLIED_TO_ISOLATED_REPLAY_ONLY')
+          assert engine.read_text().count(old)==0
+          assert engine.read_text().count(new)==2
+          print('CLOSED_BALANCE_SIZING_APPLIED_TO_BOTH_FRESH_ENTRY_PATHS')
           PY
 
       - name: Replay exact promoted estate
@@ -146,7 +148,7 @@ jobs:
               'max_event_drawdown_percentage_points':result['max_event_equity_drawdown_pct']-ref['max_event_equity_drawdown_pct'],
               'executed_trades':result['executed_trades']-ref['executed_trades']
             },
-            'sizing_semantic':'All new entries, including strategy-authorized add-ons, use current realized closed account balance as the account-size input to lot sizing. Eligibility, ranking, strategy state, exposure controls, execution and management are unchanged.',
+            'sizing_semantic':'All new entries, including strategy-authorized add-ons and post-recycle entries, use current realized closed account balance as the account-size input to lot sizing. Eligibility, ranking, strategy state, exposure controls, execution and management are unchanged.',
             'baseline_status':'REFERENCE_PRESERVED__NO_AUTOMATIC_REPLACEMENT'
           }
           out=Path('trailaris_r5_5/balance_replay_evidence'); out.mkdir(parents=True,exist_ok=True)
