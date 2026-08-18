@@ -1,0 +1,59 @@
+name: Trailaris Quant V2 — Window 2 Exact 34 Isolated Recovery
+on:
+  push:
+    branches: [trailaris-qv2-50-independent-validation-20260818]
+    paths: ['.github/workflows/trailaris_qv2_50_window2_34_isolated_recovery.yml']
+permissions:
+  contents: read
+env:
+  START: '2024-12-16T00:00:00Z'
+  END: '2025-07-14T00:00:00Z'
+jobs:
+  acquire34:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-50-independent-validation-20260818}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install acquisition runtime
+        run: |
+          npm install --no-save --silent dukascopy-node@1.50.0 ws
+          python -m pip install --quiet pandas numpy
+      - name: Acquire 24 Dukascopy core plus attempt legacy synthetic lane
+        shell: bash
+        run: |
+          set +e
+          node trailaris_50_asset/acquire_independent_core.js --start "$START" --end "$END" --outdir raw_core --chunk-days 28
+          echo "CORE_GENERAL_EXIT=$?"
+          exit 0
+      - name: Acquire five official Binance crypto series
+        run: python trailaris_50_asset/acquire_independent_crypto.py --start "$START" --end "$END" --outdir raw_crypto
+      - name: Recover five exact Deriv synthetics using explicit start/end chunks
+        run: node trailaris_50_asset/recover_independent_deriv.js --start "$START" --end "$END" --outdir raw_core
+      - name: Reconcile exact 34 and enforce strict data gate
+        run: |
+          python - <<'PY'
+          import json,shutil
+          from pathlib import Path
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          syn={'V75','V50','V100','V25','V10'};g=json.loads(Path('raw_core/ACQUISITION_EVIDENCE_CORE.json').read_text());d=json.loads(Path('raw_core/DERIV_RECOVERY_EVIDENCE.json').read_text());c=json.loads(Path('raw_crypto/ACQUISITION_EVIDENCE_CRYPTO.json').read_text())
+          by={str(r['canonical_instrument']):r for r in g['evidence'] if str(r['canonical_instrument']) not in syn};by.update({str(r['canonical_instrument']):r for r in d['evidence']});by.update({str(r['canonical_instrument']):r for r in c['evidence']})
+          assert set(by)==set(routes),(set(by)^set(routes));root=Path('raw34');root.mkdir();rows=[];bad=[]
+          for a in routes:
+              r=by[a];src=(Path('raw_crypto') if a in {'BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD'} else Path('raw_core'))/f'{a}_M1_normalized.csv';dst=root/src.name
+              if r['status']!='PASS' or not r.get('full_window_coverage') or int(r.get('conflicting_duplicates',0))!=0 or int(r.get('invalid_ohlc',0))!=0 or not src.exists():bad.append((a,r.get('status'),r.get('last'),r.get('error','')))
+              else:shutil.copy2(src,dst);r['file']=str(dst)
+              rows.append(r)
+          assert not bad,bad
+          out={'state':'INDEPENDENT_WINDOW2_EXACT_34_DATA_PASS','start':'2024-12-16T00:00:00Z','end_exclusive':'2025-07-14T00:00:00Z','assets_scheduled':34,'assets_pass':34,'evidence':rows,'data_reused_from_2026':False,'strategy_outcomes_used_for_recovery':False,'synthetic_recovery':'EXACT_DERIV_SYMBOLS__EXPLICIT_START_END_3DAY_CANDLE_CHUNKS__NO_INTERPOLATION'}
+          (root/'ACQUISITION_EVIDENCE.json').write_text(json.dumps(out,indent=2));print('WINDOW2_EXACT_34_DATA_GATE PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-window2-exact34-isolated
+          path: raw34/
+          retention-days: 30
