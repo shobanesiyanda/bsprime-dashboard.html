@@ -1,0 +1,160 @@
+{
+  "state": "QV2_34_EXACT_SUCCESS_ATTRIBUTION_COMPLETE",
+  "evidence_scope": "Exact 34-asset canonical R5.5 promotion estate bridged into Quant V2 and exact realized-closed-balance replay",
+  "source_evidence": {
+    "canonical_r5_5_artifact_id": 9270611209,
+    "canonical_r5_5_artifact_run_id": 31973576216,
+    "exact_bridge_run_id": 32128865113,
+    "exact_bridge_artifact_id": 9321442616,
+    "exact_bridge_artifact_digest": "sha256:b3e2ea73d9f5b918cfbfe8ddedc421f86af016ef08dcc917044a6abd9d1411f7",
+    "strategy_blob": "120390ab52e80f51bafedc42389ceb7420a410f2"
+  },
+  "exact_closed_balance_control": {
+    "starting_balance_usd": 100.0,
+    "ending_equity_usd": 1400.6510417217567,
+    "return_pct": 1300.6510417217567,
+    "positive_weeks": 26,
+    "weeks_ge_5pct": 22,
+    "weeks_ge_10pct": 21,
+    "executed_trades": 2119,
+    "wins": 1223,
+    "losses": 465,
+    "flats": 431,
+    "nonflat_win_rate": 0.7245260663507109,
+    "profit_factor": 3.0217601028262315,
+    "max_weekly_drawdown_pct": -3.7441302489758743,
+    "max_event_equity_drawdown_pct": -2.702834147462363
+  },
+  "refinement_progression": [
+    {"stage":"Frozen R5.4 control","end_equity":1136.4556497760627,"trades":2152,"nonflat_win_rate":0.6289493019838354,"profit_factor":2.791840637059962,"max_event_dd_pct":-3.1202037867421484},
+    {"stage":"112-day bounded-memory leader","end_equity":1272.6945454530814,"trades":2206,"nonflat_win_rate":0.6351156069364162,"profit_factor":2.837039669341938,"max_event_dd_pct":-2.669798710057736},
+    {"stage":"R5.5 negative refinement","end_equity":1366.8938578865148,"trades":2136,"nonflat_win_rate":0.7186580341377281,"profit_factor":2.9195127192871873,"max_event_dd_pct":-2.7023988320913572},
+    {"stage":"Quant V2 strict negative-veto estate","end_equity":1389.6425169269207,"trades":2119,"nonflat_win_rate":0.7239336492890995,"profit_factor":2.9703730692297037,"max_event_dd_pct":-2.7023988320913572},
+    {"stage":"Quant V2 realized closed-balance sizing","end_equity":1400.6510417217567,"trades":2119,"nonflat_win_rate":0.7245260663507109,"profit_factor":3.0217601028262315,"max_event_dd_pct":-2.702834147462363}
+  ],
+  "profit_engine": {
+    "selected_assets": 32,
+    "profitable_assets": 29,
+    "negative_assets": 3,
+    "assets_never_selected": ["BTCUSD","V25"],
+    "top_5_assets": [
+      {"asset":"USDCHF","trades":154,"net_pnl_usd":238.325435,"profit_factor":5.261034,"nonflat_win_rate":0.666667,"share_net_event_pnl":0.183288},
+      {"asset":"GBPCHF","trades":188,"net_pnl_usd":222.284081,"profit_factor":4.295411,"nonflat_win_rate":0.727273,"share_net_event_pnl":0.170951},
+      {"asset":"NZDUSD","trades":199,"net_pnl_usd":167.246263,"profit_factor":3.043594,"nonflat_win_rate":0.685185,"share_net_event_pnl":0.128623},
+      {"asset":"EURGBP","trades":95,"net_pnl_usd":90.506006,"profit_factor":6.092589,"nonflat_win_rate":0.829545,"share_net_event_pnl":0.069605},
+      {"asset":"CADJPY","trades":142,"net_pnl_usd":86.526241,"profit_factor":7.837552,"nonflat_win_rate":0.802083,"share_net_event_pnl":0.066544}
+    ],
+    "top_5_combined": {"share_of_selected_trades":0.36715431807456345,"share_of_net_event_pnl":0.6190115832085344,"profit_factor":4.41560924300787,"nonflat_win_rate":0.7329931972789115},
+    "negative_assets_detail": [
+      {"asset":"NATGAS","net_pnl_usd":-17.174772,"profit_factor":0.500409},
+      {"asset":"ETHUSD","net_pnl_usd":-10.398255,"profit_factor":0.810691},
+      {"asset":"XRPUSD","net_pnl_usd":-0.384119,"profit_factor":0.436640}
+    ]
+  },
+  "asset_class_attribution": [
+    {"class":"FX","trades":1375,"share_net_event_pnl":0.803536,"profit_factor":3.778742,"nonflat_win_rate":0.734032},
+    {"class":"INDEX","trades":434,"share_net_event_pnl":0.135101,"profit_factor":2.285173,"nonflat_win_rate":0.743169},
+    {"class":"ENERGY","trades":117,"share_net_event_pnl":0.018414,"profit_factor":1.459795,"nonflat_win_rate":0.625000},
+    {"class":"METAL","trades":26,"share_net_event_pnl":0.016489,"profit_factor":3.472998,"nonflat_win_rate":0.739130},
+    {"class":"SYNTHETIC","trades":38,"share_net_event_pnl":0.016193,"profit_factor":13.975393,"nonflat_win_rate":0.947368},
+    {"class":"CRYPTO","trades":129,"share_net_event_pnl":0.010268,"profit_factor":1.196098,"nonflat_win_rate":0.583333}
+  ],
+  "strategy_family_attribution": [
+    {"family":"ENSEMBLE_REGIME","trades":911,"share_net_event_pnl":0.418886,"profit_factor":2.561264,"nonflat_win_rate":0.747847},
+    {"family":"RELATIVE_VALUE_PAIRS","trades":806,"share_net_event_pnl":0.359261,"profit_factor":3.706915,"nonflat_win_rate":0.704684},
+    {"family":"MEAN_REVERSION","trades":295,"share_net_event_pnl":0.123642,"profit_factor":2.856867,"nonflat_win_rate":0.725424},
+    {"family":"SESSION_TIME","trades":46,"share_net_event_pnl":0.052885,"profit_factor":4.190180,"nonflat_win_rate":0.411765},
+    {"family":"INTERMARKET","trades":57,"share_net_event_pnl":0.044821,"profit_factor":6.336415,"nonflat_win_rate":0.769231},
+    {"family":"VOLATILITY_REGIME","trades":3,"share_net_event_pnl":0.001166,"profit_factor":1.847617,"nonflat_win_rate":0.5},
+    {"family":"SUPPLY_DEMAND","trades":1,"share_net_event_pnl":-0.000661,"profit_factor":0.0,"nonflat_win_rate":0.0}
+  ],
+  "family_concentration": {"top_2_share_net_event_pnl":0.7781470519595552,"top_3_share_net_event_pnl":0.9017886235845483,"top_5_share_net_event_pnl":0.9994943685716114},
+  "tier_attribution": {
+    "tier_A":{"trades":1824,"share_net_event_pnl":0.901948,"profit_factor":2.903274,"nonflat_win_rate":0.722876},
+    "tier_B":{"trades":295,"share_net_event_pnl":0.098052,"profit_factor":5.730952,"nonflat_win_rate":0.740506},
+    "interpretation":"Tier B operated at the lower nominal risk tier while exhibiting materially higher realized PF, adding secondary edge without carrying Tier-A risk."
+  },
+  "right_tail": {
+    "mean_net_r_per_trade":0.367594645660077,
+    "median_net_r_per_trade":0.1875,
+    "top_10pct_winners_share_of_gross_winning_pnl":0.5378956407453197,
+    "top_10pct_winners_share_of_net_event_pnl":0.8039487891843418,
+    "trades_net_r_ge_2":142,
+    "net_event_pnl_from_net_r_ge_2_usd":888.8546506232644,
+    "share_net_event_pnl_from_net_r_ge_2":0.6835874148911993,
+    "trades_net_r_ge_3":56,
+    "net_event_pnl_from_net_r_ge_3_usd":485.7898480015285,
+    "share_net_event_pnl_from_net_r_ge_3":0.3736041951773547
+  },
+  "weak_runner_partial_management": {
+    "repaired_selected_trades":584,
+    "pre_repair_wins":222,
+    "pre_repair_flats":362,
+    "pre_repair_losses":0,
+    "post_repair_wins":584,
+    "post_repair_flats":0,
+    "post_repair_losses":0,
+    "net_incremental_r":31.28989701183317,
+    "approx_incremental_pnl_usd_at_actual_risk_cash":38.040347095166915,
+    "trades_improved_in_r":457,
+    "trades_reduced_in_r":127,
+    "mechanism":"25% realization at +0.75R on weak protected runners converted the structural zero-R dead zone into +0.1875R while leaving 75% on the preserved exit path."
+  },
+  "gate_cascade": {
+    "memory112_promoted_before_r5_5_gate":3417,
+    "r5_5_negative_gate_rejected":228,
+    "r5_5_post_gate":3189,
+    "exact_quant_v2_vetoed":38,
+    "exact_quant_v2_kept":3151,
+    "closed_balance_selected":2119,
+    "effective_selected_share_of_memory112_promoted":0.6201346210125841,
+    "quant_v2_effect_vs_r5_5":{"ending_equity_usd":22.748659040405983,"selected_trades_delta":-17,"wins_delta":1,"losses_delta":-12,"flats_delta":-6,"profit_factor_delta":0.050860349942516425,"max_event_dd_delta_pct_points":0.0},
+    "interpretation":"Quant V2 was surgical: it removed about 1.2% of the post-R5.5 promotion estate, materially improving loss quality without broadly throttling winners."
+  },
+  "portfolio_capacity_and_throughput": {
+    "trades_per_week_mean":81.5,
+    "nonzero_duration_max_concurrent_positions":6,
+    "nonzero_duration_median_concurrent_positions":1.0,
+    "nonzero_duration_p95_concurrent_positions":2.0,
+    "max_nominal_open_risk_pct_of_equity":0.999119812632917,
+    "median_nominal_open_risk_pct_of_equity":0.45342362551622123,
+    "p95_nominal_open_risk_pct_of_equity":0.9318210443832396,
+    "selected_trades_after_week_growth_ge_10pct":652,
+    "mean_actual_risk_pct_on_trades_after_week_growth_ge_10pct":0.107817,
+    "mean_actual_risk_pct_on_selected_trades_with_week_growth_0_to_5pct":0.442165,
+    "mean_actual_risk_pct_on_selected_trades_with_week_growth_5_to_10pct":0.438155,
+    "interpretation":"High trade throughput was decoupled from simultaneous portfolio risk. Once weekly growth reached 10%, fresh trade risk fell to roughly one quarter of normal, protecting compounding."
+  },
+  "closed_balance_portfolio_decision_counts": {
+    "SELECTED":2119,
+    "OPEN_RISK_BUDGET":531,
+    "LOT_BELOW_MIN":181,
+    "SAME_ASSET_NOT_PROTECTED_INDEPENDENT":155,
+    "CONFIG_WEEKLY_LOSS_BREAKER":130,
+    "FACTOR_DUPLICATION":23,
+    "MARGIN_BUDGET":9,
+    "ASSET_WEEKLY_LOSS_BREAKER":2
+  },
+  "max_event_drawdown_forensic": {
+    "peak_timestamp":"2026-03-31T00:05:00Z",
+    "peak_equity_usd":178.19784369791873,
+    "trough_timestamp":"2026-03-31T09:05:00Z",
+    "trough_equity_usd":173.38145152840977,
+    "drawdown_pct":-2.702834147462363,
+    "events_peak_to_trough":11,
+    "realized_pnl_peak_to_trough_usd":-3.179992169508992,
+    "aggregate_unrealized_pnl_at_trough_usd":-0.35640000000003624,
+    "open_positions_at_trough":1,
+    "open_position_at_trough":{"asset":"SOLUSD","strategy_family":"RELATIVE_VALUE_PAIRS","risk_cash_usd":0.8676257142857231},
+    "principal_loss_sequence":[
+      {"asset":"WTI","net_pnl_usd":-0.875314},
+      {"asset":"NATGAS","net_pnl_usd":-0.875971},
+      {"asset":"BNBUSD","net_pnl_usd":-0.870583},
+      {"asset":"AUDUSD","net_pnl_usd":-0.854286},
+      {"asset":"WTI","net_pnl_usd":-0.691725}
+    ],
+    "interpretation":"The maximum event drawdown was a short sequential loss cluster, not a leverage or concurrency blow-up; only one position remained open at the trough."
+  },
+  "core_conclusion": "The 34 was profitable because a very high-edge FX core and two dominant strategy families generated most of the gross edge, while bounded-memory validation, two-tier risk, weak-runner partial monetization, strict negative-only Quant V2 vetoes, a sub-1% nominal open-risk ceiling, low concurrent position count, and the weekly gain governor prevented that edge from being surrendered. The architecture produced high trade throughput without high simultaneous risk, and continuous compounding converted 26 positive weeks into the large ending-equity result.",
+  "evidence_class": "26_WEEK_CAUSAL_WALK_FORWARD_RESEARCH_PROXY; BROKER_PRODUCTION_CERTIFICATION_SEPARATE"
+}
