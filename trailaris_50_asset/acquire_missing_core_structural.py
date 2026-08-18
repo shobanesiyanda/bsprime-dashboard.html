@@ -22,14 +22,12 @@ def deriv(symbol):
  ws=websocket.create_connection('wss://ws.binaryws.com/websockets/v3?app_id=1089',timeout=25);rows=[];end=int(END.timestamp())-1
  try:
   while end>=int(START.timestamp()):
-   ws.send(json.dumps({'ticks_history':symbol,'end':end,'style':'candles','granularity':300,'count':5000,'adjust_start_time':1}))
+   ws.send(json.dumps({'ticks_history':symbol,'end':end,'style':'candles','granularity':3600,'count':5000,'adjust_start_time':1}))
    x=json.loads(ws.recv())
-   if x.get('error'):
-    raise RuntimeError(x['error'].get('message'))
+   if x.get('error'):raise RuntimeError(x['error'].get('message'))
    cs=x.get('candles',[])
    if not cs:break
-   epochs=[int(c['epoch']) for c in cs]
-   rows += [(pd.to_datetime(int(c['epoch']),unit='s',utc=True),float(c['close'])) for c in cs if int(START.timestamp())<=int(c['epoch'])<int(END.timestamp())]
+   epochs=[int(c['epoch']) for c in cs];rows += [(pd.to_datetime(int(c['epoch']),unit='s',utc=True),float(c['close'])) for c in cs if int(START.timestamp())<=int(c['epoch'])<int(END.timestamp())]
    m=min(epochs);end=m-1
    if m<=int(START.timestamp()):break
  finally:ws.close()
@@ -41,10 +39,10 @@ def summarize(asset,rows,source,daily_fallback=False):
  if daily_fallback:vals=[(n,.25) for n,_,_ in SESSIONS]
  else:
   vals=[(n,float(z.loc[z.timestamp.dt.hour.ge(h0)&z.timestamp.dt.hour.lt(h1),'abs_lr'].sum(skipna=True))) for n,h0,h1 in SESSIONS];tot=sum(v for _,v in vals) or 1.;vals=[(n,v/tot) for n,v in vals]
- sess=[{'asset':asset,'session':n,'activity_share':v,'role':'CORE'} for n,v in vals];first=z.timestamp.iloc[0];last=z.timestamp.iloc[-1];q={'asset':asset,'role':'CORE','asset_class':cls,'provider_name':source,'rows':len(z),'first':str(first),'last':str(last),'daily_observations':len(dr),'stale_return_share':float((lr.abs()<1e-14).mean()),'local_gap_gt5m_share':0.0 if daily_fallback else float((z.timestamp.diff().dt.total_seconds().div(60).where(lambda s:s.le(180))>10).mean()),'coverage_pass':bool(len(z)>100 and first<=START+pd.Timedelta(days=3) and last>=END-pd.Timedelta(days=3)),'anchor':asset,'session_profile_neutral_fallback':daily_fallback};return daily,sess,q
+ sess=[{'asset':asset,'session':n,'activity_share':v,'role':'CORE'} for n,v in vals];first=z.timestamp.iloc[0];last=z.timestamp.iloc[-1];q={'asset':asset,'role':'CORE','asset_class':cls,'provider_name':source,'rows':len(z),'first':str(first),'last':str(last),'daily_observations':len(dr),'stale_return_share':float((lr.abs()<1e-14).mean()),'local_gap_gt5m_share':0.0,'coverage_pass':bool(len(z)>100 and first<=START+pd.Timedelta(days=3) and last>=END-pd.Timedelta(days=3)),'anchor':asset,'session_profile_neutral_fallback':daily_fallback};return daily,sess,q
 def one(asset):
  if asset in CRYPTO:rows,src,fb=crypto_rows(CRYPTO[asset]);return summarize(asset,rows,src,fb)
- if asset in SYN:return summarize(asset,deriv(SYN[asset]),f'DERIV_{SYN[asset]}_5M_STRUCTURAL')
+ if asset in SYN:return summarize(asset,deriv(SYN[asset]),f'DERIV_{SYN[asset]}_1H_STRUCTURAL')
  raise ValueError(asset)
 def main():
  ap=argparse.ArgumentParser();ap.add_argument('--outdir',type=Path,required=True);ap.add_argument('--asset',choices=list(CRYPTO)+list(SYN));a=ap.parse_args();a.outdir.mkdir(parents=True,exist_ok=True);assets=[a.asset] if a.asset else list(CRYPTO)+list(SYN);daily=[];sess=[];qual=[]
