@@ -35,3 +35,4 @@ jobs:
           git commit -m 'ops: snapshot exact 50 replay [skip ci]' || exit 0
           git pull --rebase origin trailaris-quant-v2-50-asset-evaluation-20260818
           git push origin HEAD:trailaris-quant-v2-50-asset-evaluation-20260818
+# refresh after preserved COCOA recovery
