@@ -19,8 +19,8 @@
     "baseline_assets": 34,
     "additional_assets": 66,
     "target_assets": 100,
-    "selection_manifest": "trailaris_100_asset/ADDITIONAL_66_MANIFEST.tsv",
-    "selection_rule": "Fixed before any 100-asset replay outcome is observed; no post-result substitution or cherry-picking.",
+    "selection_manifest": "trailaris_100_asset/ADDITIONAL_66_CANONICAL.txt",
+    "selection_rule": "Fixed before any 100-asset replay outcome is observed; provider identifiers are derived mechanically from the preserved discovery evidence and no post-result substitution is permitted.",
     "additional_asset_mix": {
       "FX": 20,
       "EQUITY": 20,
