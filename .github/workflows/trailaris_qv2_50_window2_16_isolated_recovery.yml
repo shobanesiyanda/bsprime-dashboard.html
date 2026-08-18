@@ -48,7 +48,7 @@ jobs:
           node trailaris_50_asset/acquire_independent_manifest.js --manifest APPROVED16.tsv --start "$START" --end "$END" --outdir raw16 --concurrency 4 --chunk-days 28
           echo "GENERAL_ACQUISITION_EXIT=$?"
           exit 0
-      - name: Recover exact SOYBEAN provider series in isolated process
+      - name: Recover exact SOYBEAN provider series in isolated terminal-first process
         run: node trailaris_50_asset/recover_independent_soybean.js --start "$START" --end "$END" --outdir raw16
       - name: Reconcile exact immutable 16 and enforce strict gate
         run: |
@@ -65,7 +65,7 @@ jobs:
               if r['status']!='PASS' or not r.get('full_window_coverage') or int(r.get('conflicting_duplicates',0))!=0 or int(r.get('invalid_ohlc',0))!=0 or not p.exists():bad.append((a,r.get('status'),r.get('last'),str(p)))
               r['file']=str(p)
           assert not bad,bad
-          out={'state':'INDEPENDENT_WINDOW2_EXACT_16_DATA_PASS','start':'2024-12-16T00:00:00Z','end_exclusive':'2025-07-14T00:00:00Z','assets_scheduled':16,'assets_pass':16,'evidence':rows,'data_reused_from_2026':False,'strategy_outcomes_used_for_recovery':False,'soybean_recovery':'EXACT_SAME_PROVIDER_INSTRUMENT__ISOLATED_QUERY_SHAPE_ONLY'}
+          out={'state':'INDEPENDENT_WINDOW2_EXACT_16_DATA_PASS','start':'2024-12-16T00:00:00Z','end_exclusive':'2025-07-14T00:00:00Z','assets_scheduled':16,'assets_pass':16,'evidence':rows,'data_reused_from_2026':False,'strategy_outcomes_used_for_recovery':False,'soybean_recovery':'EXACT_SAME_PROVIDER_INSTRUMENT__TERMINAL_QUERY_FIRST__NO_INTERPOLATION'}
           Path('raw16/ACQUISITION_EVIDENCE.json').write_text(json.dumps(out,indent=2));print('WINDOW2_EXACT_16_DATA_GATE PASS')
           PY
       - uses: actions/upload-artifact@v4
@@ -73,3 +73,4 @@ jobs:
           name: qv2-window2-exact16-isolated
           path: raw16/
           retention-days: 30
+# terminal-first-rerun
