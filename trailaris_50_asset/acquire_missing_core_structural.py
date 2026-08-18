@@ -9,7 +9,7 @@ SESSIONS=[('ASIA',0,7),('LONDON',7,13),('NEW_YORK',13,21),('LATE',21,24)]
 def binance(symbol):
  rows=[];cur=int(START.timestamp()*1000);end=int(END.timestamp()*1000)
  while cur<end:
-  r=requests.get('https://api.binance.com/api/v3/klines',params={'symbol':symbol,'interval':'5m','startTime':cur,'endTime':end-1,'limit':1000},timeout=30);r.raise_for_status();x=r.json()
+  r=requests.get('https://api.binance.us/api/v3/klines',params={'symbol':symbol,'interval':'5m','startTime':cur,'endTime':end-1,'limit':1000},timeout=30);r.raise_for_status();x=r.json()
   if not x:break
   for q in x:rows.append((pd.to_datetime(int(q[0]),unit='ms',utc=True),float(q[4])))
   nxt=int(x[-1][0])+300000
@@ -41,17 +41,17 @@ def summarize(asset,rows,source):
  vals=[]
  for name,h0,h1 in SESSIONS:vals.append((name,float(z.loc[z.timestamp.dt.hour.ge(h0)&z.timestamp.dt.hour.lt(h1),'abs_lr'].sum(skipna=True))))
  tot=sum(v for _,v in vals) or 1.;sess=[{'asset':asset,'session':n,'activity_share':v/tot,'role':'CORE'} for n,v in vals]
- q={'asset':asset,'role':'CORE','asset_class':'CRYPTO' if asset in {'SOLUSD','BNBUSD','XRPUSD'} else 'SYNTHETIC','provider_name':source,'rows':len(z),'first':str(z.timestamp.iloc[0]),'last':str(z.timestamp.iloc[-1]),'daily_observations':len(dr),'stale_return_share':float((lr.abs()<1e-14).mean()),'local_gap_gt5m_share':float((z.timestamp.diff().dt.total_seconds().div(60).where(lambda s:s.le(180))>10).mean()),'coverage_pass':bool(z.timestamp.iloc[0]<=START+pd.Timedelta(days=3) and z.timestamp.iloc[-1]>=END-pd.Timedelta(days=3)),'anchor':asset}
+ q={'asset':asset,'role':'CORE','asset_class':'CRYPTO' if asset in {'SOLUSD','BNBUSD','XRPUSD'} else 'SYNTHETIC','provider_name':source,'rows':len(z),'first':str(z.timestamp.iloc[0]),'last':str(z.timestamp.iloc[-1]),'daily_observations':len(dr),'stale_return_share':float((lr.abs()<1e-14).mean()),'local_gap_gt5m_share':float((z.timestamp.diff().dt.total_seconds().div(60).where(lambda s:s.le(180))>10).mean()),'coverage_pass':bool(len(z)>100 and z.timestamp.iloc[0]<=START+pd.Timedelta(days=3) and z.timestamp.iloc[-1]>=END-pd.Timedelta(days=3)),'anchor':asset}
  return daily,sess,q
 
 def main():
  ap=argparse.ArgumentParser();ap.add_argument('--outdir',type=Path,required=True);a=ap.parse_args();a.outdir.mkdir(parents=True,exist_ok=True)
  daily=[];sess=[];qual=[]
  for asset,sym in {'SOLUSD':'SOLUSDT','BNBUSD':'BNBUSDT','XRPUSD':'XRPUSDT'}.items():
-  d,s,q=summarize(asset,binance(sym),f'BINANCE_{sym}_5M_STRUCTURAL_PROXY');daily+=d;sess+=s;qual.append(q)
+  d,s,q=summarize(asset,binance(sym),f'BINANCE_US_{sym}_5M_STRUCTURAL_PROXY');daily+=d;sess+=s;qual.append(q)
  for asset,sym in {'V75':'R_75','V50':'R_50','V100':'R_100','V25':'R_25','V10':'R_10'}.items():
   d,s,q=summarize(asset,deriv(sym),f'DERIV_{sym}_5M_STRUCTURAL');daily+=d;sess+=s;qual.append(q)
  pd.DataFrame(daily).to_csv(a.outdir/'DAILY_RETURNS.csv',index=False);pd.DataFrame(sess).to_csv(a.outdir/'SESSION_PROFILE.csv',index=False);pd.DataFrame(qual).to_csv(a.outdir/'DATA_QUALITY.csv',index=False)
- if not all(q['coverage_pass'] for q in qual):raise RuntimeError('missing-core structural coverage failure')
- status={'state':'MISSING_CORE_STRUCTURAL_REFERENCE_COMPLETE','assets':8,'uses_strategy_outcomes':False,'crypto_quote_proxy':'USDT used only for pre-replay structural correlation/session research','synthetic_source':'Deriv public candle history','granularity':'5m'};(a.outdir/'SUMMARY.json').write_text(json.dumps(status,indent=2));print(json.dumps(status,indent=2))
+ if not all(q['coverage_pass'] for q in qual):raise RuntimeError(f"missing-core structural coverage failure: {[q['asset'] for q in qual if not q['coverage_pass']]}")
+ status={'state':'MISSING_CORE_STRUCTURAL_REFERENCE_COMPLETE','assets':8,'uses_strategy_outcomes':False,'crypto_quote_proxy':'USDT used only for pre-replay structural correlation/session research','crypto_source':'Binance.US public 5m candles','synthetic_source':'Deriv public candle history','granularity':'5m'};(a.outdir/'SUMMARY.json').write_text(json.dumps(status,indent=2));print(json.dumps(status,indent=2))
 if __name__=='__main__':main()
