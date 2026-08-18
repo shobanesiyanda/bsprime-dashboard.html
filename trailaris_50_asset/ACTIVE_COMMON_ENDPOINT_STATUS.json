@@ -1,0 +1,16 @@
+{
+  "run_id": 32148561339,
+  "status": "completed",
+  "conclusion": "success",
+  "head_sha": "61b9244d06372aff0605c18c012056d42d58eef2",
+  "created_at": "2026-08-18T14:28:43Z",
+  "updated_at": "2026-08-18T14:29:16Z",
+  "jobs": [
+    {
+      "id": 95748350852,
+      "name": "endpoint",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ]
+}
