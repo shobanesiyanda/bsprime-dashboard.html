@@ -1,0 +1,210 @@
+name: Trailaris Quant V2 — 34 Asset Balance Reconciliation
+
+on:
+  push:
+    branches: [trailaris-quant-v2-100-asset-canonical-expansion-20260818]
+    paths:
+      - '.github/workflows/trailaris_quant_v2_34_balance_reconciliation.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: trailaris-quant-v2-34-balance-reconciliation
+  cancel-in-progress: false
+
+env:
+  QV2_BLOB: 120390ab52e80f51bafedc42389ceb7420a410f2
+  CANONICAL_ARTIFACT_ID: 9270611209
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout 100-asset expansion branch
+        uses: actions/checkout@v4
+        with:
+          ref: trailaris-quant-v2-100-asset-canonical-expansion-20260818
+          path: active
+
+      - name: Checkout preserved 34-asset replay estate
+        uses: actions/checkout@v4
+        with:
+          ref: trailaris-r5-4-26week-validation-20260816
+          path: estate
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install --quiet pandas numpy
+
+      - name: Verify Quant V2 strategy identity
+        working-directory: active
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+
+      - name: Restore exact 34-asset 26-week M1 cache
+        uses: actions/cache/restore@v4
+        with:
+          path: estate/trailaris_longcycle/raw_m1
+          key: trailaris-r5-5-active-m1-34-20260119-20260814-v1
+          fail-on-cache-miss: true
+
+      - name: Inject preserved Quant V2 research sources
+        run: |
+          set -euo pipefail
+          mkdir -p estate/trailaris_r5_5
+          cp active/trailaris_r5_5/longcycle_bounded_memory_candidate.py estate/trailaris_r5_5/
+          cp active/trailaris_r5_5/longcycle_integrated_negative_refinement.py estate/trailaris_r5_5/
+          cp active/trailaris_r5_5/quantitative_integrated_v1.py estate/trailaris_r5_5/
+          cp active/trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py estate/trailaris_r5_5/
+
+      - name: Reconstruct exact R4 dependencies
+        working-directory: estate
+        run: |
+          set -euo pipefail
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+
+      - name: Fetch canonical 34-asset estate evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p estate/canonical_v2
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${CANONICAL_ARTIFACT_ID}/zip > canonical.zip
+          unzip -q canonical.zip -d estate/canonical_v2
+          test -f estate/canonical_v2/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_PROMOTED.csv
+
+      - name: Validate the 34-asset raw estate
+        working-directory: estate
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          from pathlib import Path
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          start=pd.Timestamp('2026-01-19T00:00:00Z'); end=pd.Timestamp('2026-08-14T23:59:59Z')
+          for a in routes:
+              f=Path('trailaris_longcycle/raw_m1')/f'{a}_M1_normalized.csv'
+              assert f.exists(), a
+              d=pd.read_csv(f,usecols=['timestamp'])
+              ts=pd.to_datetime(d.timestamp,utc=True,errors='coerce').sort_values()
+              assert not ts.isna().any() and len(d)>=1000
+              assert ts.min()<=start+pd.Timedelta(days=1)
+              assert ts.max()>=end-pd.Timedelta(days=2)
+          print('RAW_ESTATE_34_VERIFIED')
+          PY
+
+      - name: Rebuild factor evidence and research specifications
+        working-directory: estate
+        run: |
+          python trailaris_longcycle/build_longcycle_factors.py --rawdir trailaris_longcycle/raw_m1 --out trailaris_longcycle/raw_m1/Trailaris_R3_FactorFeed.csv --audit trailaris_longcycle/QV2_34_BALANCE_FACTOR_EVIDENCE.json
+          python trailaris_r4/build_research_specs.py
+
+      - name: Reproduce the preserved Quant V2 result first
+        working-directory: estate
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          rm -rf trailaris_r5_5/original_reference_results
+          python trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py \
+            --rawdir trailaris_longcycle/raw_m1 \
+            --specs trailaris_r4/research_proxy_specs.csv \
+            --factory-audit trailaris_longcycle/results/R4_FACTORY_AUDIT.csv \
+            --canonical-dir canonical_v2 \
+            --outdir trailaris_r5_5/original_reference_results
+          python - <<'PY'
+          import json
+          p=json.load(open('trailaris_r5_5/original_reference_results/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_STATUS.json'))['candidate']
+          assert abs(p['end_equity']-1389.6425169269207)<1e-9
+          assert abs(p['compounded_return_pct']-1289.6425169269207)<1e-9
+          assert p['positive_weeks']==26
+          assert abs(p['profit_factor']-2.9703730692297037)<1e-12
+          print('REFERENCE_1389_64_REPRODUCED')
+          PY
+
+      - name: Create isolated realized-balance sizing diagnostic
+        working-directory: estate
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          engine=Path('trailaris_r5_4/R5_BASE_CAUSAL_ENGINE.py')
+          src=engine.read_text()
+          compact=src.replace(' ','')
+          needle='r4.size_trade(r.asset,eq,rf,float(r.stop_distance),specs)'
+          assert compact.count(needle)==1, compact.count(needle)
+          src=src.replace('r4.size_trade(r.asset,eq,rf,float(r.stop_distance),specs)',
+                          'r4.size_trade(r.asset,balance,rf,float(r.stop_distance),specs)')
+          engine.write_text(src)
+
+          runner=Path('trailaris_r5_5/run_quantitative_v2_from_canonical_v2_estate.py')
+          diag=Path('trailaris_r5_5/run_quantitative_v2_balance_diagnostic.py')
+          r=runner.read_text()
+          assert r.count('assert_identity(identity)')==1
+          r=r.replace('assert_identity(identity)', "print('ORIGINAL_IDENTITY_CHECK_BYPASSED_FOR_BALANCE_DIAGNOSTIC')")
+          diag.write_text(r)
+          print('BALANCE_DIAGNOSTIC_PREPARED')
+          PY
+
+      - name: Run the 34-asset realized-balance sizing diagnostic
+        working-directory: estate
+        env:
+          PYTHONPATH: trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5
+        run: |
+          rm -rf trailaris_r5_5/balance_diagnostic_results
+          python trailaris_r5_5/run_quantitative_v2_balance_diagnostic.py \
+            --rawdir trailaris_longcycle/raw_m1 \
+            --specs trailaris_r4/research_proxy_specs.csv \
+            --factory-audit trailaris_longcycle/results/R4_FACTORY_AUDIT.csv \
+            --canonical-dir canonical_v2 \
+            --outdir trailaris_r5_5/balance_diagnostic_results
+
+      - name: Build reconciliation comparison
+        working-directory: estate
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import pandas as pd
+
+          ref=json.load(open('trailaris_r5_5/original_reference_results/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_STATUS.json'))['candidate']
+          diag=json.load(open('trailaris_r5_5/balance_diagnostic_results/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_STATUS.json'))['candidate']
+          ev=pd.read_csv('trailaris_r5_5/balance_diagnostic_results/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_EVENTS.csv')
+          report={
+            'state':'BALANCE_COMPOUNDING_DIAGNOSTIC_COMPLETE',
+            'assets':34,
+            'weeks':26,
+            'starting_balance_usd':100.0,
+            'preserved_reference':ref,
+            'realized_balance_sizing_diagnostic':diag,
+            'delta_diagnostic_minus_reference':{
+              'ending_balance_usd':diag['end_equity']-ref['end_equity'],
+              'compounded_return_percentage_points':diag['compounded_return_pct']-ref['compounded_return_pct'],
+              'profit_factor':diag['profit_factor']-ref['profit_factor'],
+              'max_weekly_drawdown_percentage_points':diag['max_weekly_drawdown_pct']-ref['max_weekly_drawdown_pct'],
+              'max_event_drawdown_percentage_points':diag['max_event_equity_drawdown_pct']-ref['max_event_equity_drawdown_pct'],
+              'executed_trades':diag['executed_trades']-ref['executed_trades']
+            },
+            'sizing_semantic':'Fresh entries use current realized closed balance as the account-size input to size_trade. All other strategy, ranking, risk-state, execution and management code remains from the preserved estate.',
+            'promotion_status':'DIAGNOSTIC_ONLY__DO_NOT_OVERWRITE_REFERENCE_AUTOMATICALLY'
+          }
+          out=Path('trailaris_r5_5/balance_reconciliation_evidence')
+          out.mkdir(exist_ok=True)
+          (out/'QV2_34_BALANCE_RECONCILIATION_STATUS.json').write_text(json.dumps(report,indent=2,default=str))
+          Path(out/'REFERENCE_WEEKLY.csv').write_text(Path('trailaris_r5_5/original_reference_results/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_WEEKLY.csv').read_text())
+          Path(out/'BALANCE_DIAGNOSTIC_WEEKLY.csv').write_text(Path('trailaris_r5_5/balance_diagnostic_results/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_WEEKLY.csv').read_text())
+          print(json.dumps(report['delta_diagnostic_minus_reference'],indent=2))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-qv2-34-balance-reconciliation
+          path: estate/trailaris_r5_5/balance_reconciliation_evidence/
+          retention-days: 30
