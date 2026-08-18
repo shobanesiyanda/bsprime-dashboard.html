@@ -15,6 +15,7 @@ env:
   QV2_BLOB: 120390ab52e80f51bafedc42389ceb7420a410f2
   DISCOVERY_ARTIFACT_ID: 9301401424
   ORIGINAL34_ARTIFACT_ID: 9308647757
+  COCOA_BUNDLE_ARTIFACT_ID: 9308982790
   EVAL_BRANCH: trailaris-quant-v2-50-asset-evaluation-20260818
 
 jobs:
@@ -56,20 +57,56 @@ jobs:
                   r=by[a];f.write(f"{r.instrument_id}\t{a}\t{r.provider_name}\n")
           print('FOUNDER_APPROVED_16_IDENTITY PASS')
           PY
-      - name: Acquire exact 26-week M1 for approved 16
+      - name: Acquire exact 26-week M1 for approved additions
         run: node trailaris_full_universe/acquire_duka_exact_26w_shard.js --manifest APPROVED16.tsv --outdir raw16 --shard 0 --shards 1 --concurrency 4
-      - name: Enforce evaluation-data gate and build asset-local bundle
-        env: {PYTHONPATH: '.:trailaris_r4:trailaris_full_universe'}
+      - name: Enforce fresh-data gate for 15 non-COCOA additions
         run: |
           set -euo pipefail
+          mkdir -p raw15
           python - <<'PY'
           import json
           e=json.load(open('raw16/ACQUISITION_EVIDENCE.json'))
-          bad=[r for r in e['evidence'] if r.get('status')!='PASS']
-          assert e['assets_scheduled']==16 and e['assets_pass']==16,(e['assets_pass'],bad)
-          print('APPROVED_16_EVALUATION_DATA PASS')
+          keep=[r for r in e['evidence'] if r['canonical_instrument']!='COCOA.CMD']
+          bad=[r for r in keep if r.get('status')!='PASS']
+          assert len(keep)==15 and not bad,bad
+          out={'shard':0,'shards':1,'assets_scheduled':15,'assets_pass':15,'evidence':keep}
+          json.dump(out,open('raw15/ACQUISITION_EVIDENCE.json','w'),indent=2)
+          print('FRESH_15_EVALUATION_DATA PASS')
           PY
-          python trailaris_100_asset/build_asset_bundle.py --rawdir raw16 --outdir bundle16
+      - name: Build fresh 15 asset-local bundle
+        env: {PYTHONPATH: '.:trailaris_r4:trailaris_full_universe'}
+        run: python trailaris_100_asset/build_asset_bundle.py --rawdir raw15 --outdir bundle16/fresh15
+      - name: Restore preserved accepted COCOA bundle
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          set -euo pipefail
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${COCOA_BUNDLE_ARTIFACT_ID}/zip > cocoa-source.zip
+          echo 'c052fdcce4f54b8fb0f60350cf7e37d2b9b94b6f453bde109a675bead8361d41  cocoa-source.zip' | sha256sum -c -
+          mkdir cocoa-source && unzip -q cocoa-source.zip -d cocoa-source
+          mkdir -p bundle16/preserved-cocoa
+          python - <<'PY'
+          import json,shutil
+          from pathlib import Path
+          import pandas as pd
+          src=Path('cocoa-source');dst=Path('bundle16/preserved-cocoa')
+          idx=pd.read_csv(src/'FEATURE_INDEX.csv');z=idx[idx.asset.astype(str).eq('COCOA.CMD')].copy();assert len(z)==1,z
+          row=z.iloc[0];shutil.copy2(src/str(row.feature_file),dst/str(row.feature_file));z.to_csv(dst/'FEATURE_INDEX.csv',index=False)
+          c=pd.read_csv(src/'CANDIDATES.csv.gz');c=c[c.asset.astype(str).eq('COCOA.CMD')].copy();assert len(c)>0 and c.asset.nunique()==1
+          c.to_csv(dst/'CANDIDATES.csv.gz',index=False,compression='gzip')
+          s={'state':'PRESERVED_COCOA_BUNDLE_EXTRACTED','asset':'COCOA.CMD','feature_rows':int(row.feature_rows),'candidate_rows':len(c),'source_artifact_id':9308982790,'source_artifact_digest':'sha256:c052fdcce4f54b8fb0f60350cf7e37d2b9b94b6f453bde109a675bead8361d41','selection_outcomes_used':False}
+          (dst/'BUNDLE_SUMMARY.json').write_text(json.dumps(s,indent=2));print(json.dumps(s,indent=2))
+          PY
+      - name: Verify exact approved-16 bundle composition
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          from pathlib import Path
+          rows=[]
+          for f in Path('bundle16').rglob('FEATURE_INDEX.csv'):rows.extend(pd.read_csv(f).asset.astype(str).tolist())
+          expected=set(x.strip() for x in Path('trailaris_50_asset/QV2_50_APPROVED_EVALUATION_16.txt').read_text().splitlines() if x.strip())
+          assert len(rows)==16 and set(rows)==expected and len(set(rows))==16,(len(rows),sorted(set(rows)^expected))
+          print('APPROVED_16_BUNDLE_IDENTITY PASS')
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: qv2-50-approved16-bundle
@@ -172,7 +209,7 @@ jobs:
           python trailaris_r4/build_research_specs.py
           test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
           test "$(git rev-parse HEAD:trailaris_r5_5/longcycle_integrated_negative_refinement.py)" = "a6f6fcc8dfc1d265c5917dc9df3f3c73eb08d6cb"
-          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v1.py)" = "c3debf8da3f15a287b25a58ebe105bd03" || test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v1.py)" = "c3debf8da3f184d86c59a287b25a58ebe105bd03"
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v1.py)" = "c3debf8da3f184d86c59a287b25a58ebe105bd03"
       - uses: actions/download-artifact@v4
         with: {name: qv2-50-exact-assembled, path: assembled50}
       - uses: actions/download-artifact@v4
