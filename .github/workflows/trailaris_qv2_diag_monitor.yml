@@ -17,19 +17,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: trailaris-qv2-50-independent-validation-20260818
-      - name: Snapshot Original34 diagnostic run
+      - name: Snapshot Original34 preserved-bundle recompute
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           mkdir -p trailaris_50_asset
-          gh run list --workflow trailaris_qv2_34_corrected_global_drawdown.yml --branch trailaris-qv2-50-independent-validation-20260818 --limit 5 --json databaseId,status,conclusion,headSha,createdAt,updatedAt,url > trailaris_50_asset/ACTIVE_ORIGINAL34_CORRECTED_DD_STATUS.json
+          gh run list --workflow trailaris_qv2_34_recompute_from_bundle.yml --branch trailaris-qv2-50-independent-validation-20260818 --limit 5 --json databaseId,status,conclusion,headSha,createdAt,updatedAt,url > trailaris_50_asset/ACTIVE_ORIGINAL34_CORRECTED_DD_STATUS.json
           cat trailaris_50_asset/ACTIVE_ORIGINAL34_CORRECTED_DD_STATUS.json
       - name: Commit status snapshot
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add trailaris_50_asset/ACTIVE_ORIGINAL34_CORRECTED_DD_STATUS.json
-          git commit -m 'status: snapshot Original34 corrected drawdown run [skip ci]' || exit 0
+          git commit -m 'status: snapshot Original34 preserved-bundle recompute [skip ci]' || exit 0
           git pull --rebase origin trailaris-qv2-50-independent-validation-20260818 || true
           git push origin HEAD:trailaris-qv2-50-independent-validation-20260818 || true
