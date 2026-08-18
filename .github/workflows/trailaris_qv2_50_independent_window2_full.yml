@@ -1,0 +1,306 @@
+name: Trailaris Quant V2 — Independent Window 2 Full Validation
+
+on:
+  push:
+    branches: [trailaris-qv2-50-independent-validation-20260818]
+    paths: ['.github/workflows/trailaris_qv2_50_independent_window2_full.yml']
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+env:
+  QV2_BLOB: 120390ab52e80f51bafedc42389ceb7420a410f2
+  DISCOVERY_ARTIFACT_ID: 9301401424
+  START: '2024-12-16T00:00:00Z'
+  END: '2025-07-14T00:00:00Z'
+
+jobs:
+  acquire34:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-50-independent-validation-20260818}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install acquisition runtime
+        run: |
+          npm install --no-save --silent dukascopy-node@1.50.0 ws
+          python -m pip install --quiet pandas numpy
+      - name: Acquire untouched original-34 market estate
+        shell: bash
+        run: |
+          set -euo pipefail
+          node trailaris_50_asset/acquire_independent_core.js --start "$START" --end "$END" --outdir raw_core --chunk-days 28 > core.log 2>&1 & P1=$!
+          python trailaris_50_asset/acquire_independent_crypto.py --start "$START" --end "$END" --outdir raw_crypto > crypto.log 2>&1 & P2=$!
+          FAIL=0; wait $P1 || FAIL=1; wait $P2 || FAIL=1
+          cat core.log; cat crypto.log
+          test "$FAIL" = 0
+      - name: Enforce exact 34 data gate
+        run: |
+          python - <<'PY'
+          import json,shutil
+          from pathlib import Path
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          root=Path('raw34');root.mkdir();rows=[]
+          for src,name in [(Path('raw_core'),'ACQUISITION_EVIDENCE_CORE.json'),(Path('raw_crypto'),'ACQUISITION_EVIDENCE_CRYPTO.json')]:
+              e=json.loads((src/name).read_text())
+              for r in e['evidence']:
+                  asset=str(r['canonical_instrument']);p=src/f'{asset}_M1_normalized.csv'
+                  if r['status']=='PASS':
+                      assert p.exists(),(asset,p);dst=root/p.name;shutil.copy2(p,dst);r['file']=str(dst)
+                  rows.append(r)
+          assert len(rows)==34 and {r['canonical_instrument'] for r in rows}==set(routes)
+          bad=[r for r in rows if r['status']!='PASS' or not r.get('full_window_coverage')]
+          assert not bad,bad
+          assert all(int(r.get('conflicting_duplicates',0))==0 and int(r.get('invalid_ohlc',0))==0 for r in rows)
+          out={'state':'INDEPENDENT_WINDOW2_34_DATA_PASS','start':'2024-12-16T00:00:00Z','end_exclusive':'2025-07-14T00:00:00Z','assets_scheduled':34,'assets_pass':34,'evidence':rows,'data_reused_from_2026':False,'strategy_outcomes_used_for_window_selection':False}
+          (root/'ACQUISITION_EVIDENCE.json').write_text(json.dumps(out,indent=2));print('INDEPENDENT_WINDOW2_34_DATA_GATE PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-window2-full-raw34
+          path: raw34/
+          retention-days: 30
+
+  acquire16:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-50-independent-validation-20260818}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install acquisition runtime
+        run: |
+          npm install --no-save --silent dukascopy-node@1.50.0
+          python -m pip install --quiet pandas
+      - name: Resolve exact approved-16 provider identities
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          set -euo pipefail
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${DISCOVERY_ARTIFACT_ID}/zip > discovery.zip
+          mkdir discovery && unzip -q discovery.zip -d discovery
+          python - <<'PY'
+          import pandas as pd
+          from pathlib import Path
+          approved=[x.strip() for x in Path('trailaris_50_asset/QV2_50_APPROVED_EVALUATION_16.txt').read_text().splitlines() if x.strip()]
+          expected=['COCOA.CMD','SUGAR.CMD','COFFEE.CMD','AAPL.US','SOYBEAN.CMD','NVDA.US','MSFT.US','USDCNH','V.US','AUDNZD','EURCHF','GBPNZD','FRA.IDX','TSLA.US','CHI.IDX','COPPER.CMD'];assert approved==expected
+          d=pd.read_csv('discovery/DISCOVERED_UNIVERSE.csv');by={str(r.canonical_instrument):r for _,r in d.iterrows()};assert set(approved)<=set(by)
+          with open('APPROVED16.tsv','w') as f:
+              f.write('instrument_id\tcanonical_instrument\tprovider_name\n')
+              for asset in approved:
+                  r=by[asset];f.write(f"{r.instrument_id}\t{asset}\t{r.provider_name}\n")
+          print('APPROVED16_PROVIDER_IDENTITY PASS')
+          PY
+      - name: Acquire untouched exact approved-16 estate
+        run: node trailaris_50_asset/acquire_independent_manifest.js --manifest APPROVED16.tsv --start "$START" --end "$END" --outdir raw16 --concurrency 4 --chunk-days 28
+      - name: Enforce exact 16 data gate
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          e=json.loads(Path('raw16/ACQUISITION_EVIDENCE_ADDITIONS.json').read_text());approved=[x.strip() for x in Path('trailaris_50_asset/QV2_50_APPROVED_EVALUATION_16.txt').read_text().splitlines() if x.strip()]
+          assert e['assets_scheduled']==16 and e['assets_pass']==16,(e['assets_pass'],[(r['canonical_instrument'],r['status'],r.get('error','')) for r in e['evidence'] if r['status']!='PASS'])
+          assert {r['canonical_instrument'] for r in e['evidence']}==set(approved)
+          assert all(int(r.get('conflicting_duplicates',0))==0 and int(r.get('invalid_ohlc',0))==0 and r.get('full_window_coverage') for r in e['evidence'])
+          for r in e['evidence']:r['file']=str(Path('raw16')/f"{r['canonical_instrument']}_M1_normalized.csv")
+          e['state']='INDEPENDENT_WINDOW2_16_DATA_PASS';e['data_reused_from_2026']=False;e['strategy_outcomes_used_for_window_selection']=False;Path('raw16/ACQUISITION_EVIDENCE.json').write_text(json.dumps(e,indent=2));print('INDEPENDENT_WINDOW2_16_DATA_GATE PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-window2-full-raw16
+          path: raw16/
+          retention-days: 30
+
+  assemble:
+    needs: [acquire34, acquire16]
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-50-independent-validation-20260818}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Restore exact research runtime
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+          python -m py_compile trailaris_50_asset/build_independent_factors.py trailaris_50_asset/assemble_independent_34.py trailaris_50_asset/promote_independent_shard.py trailaris_50_asset/replay_independent_from_promoted.py trailaris_50_asset/batch_consistent_drawdown.py trailaris_50_asset/evaluate_independent_gate.py
+      - uses: actions/download-artifact@v4
+        with: {name: qv2-window2-full-raw34, path: raw34}
+      - uses: actions/download-artifact@v4
+        with: {name: qv2-window2-full-raw16, path: raw16}
+      - name: Build exact 50 raw estate and fresh causal factors
+        run: |
+          python - <<'PY'
+          import json,shutil
+          from pathlib import Path
+          raw50=Path('raw50');raw50.mkdir();rows=[]
+          for src in (Path('raw34'),Path('raw16')):
+              e=json.loads((src/'ACQUISITION_EVIDENCE.json').read_text())
+              for r in e['evidence']:
+                  asset=r['canonical_instrument'];p=src/f'{asset}_M1_normalized.csv';assert p.exists(),p;dst=raw50/p.name;shutil.copy2(p,dst);q=dict(r);q['file']=str(dst);rows.append(q)
+          assert len(rows)==50 and len({r['canonical_instrument'] for r in rows})==50 and all(r['status']=='PASS' for r in rows)
+          (raw50/'ACQUISITION_EVIDENCE.json').write_text(json.dumps({'state':'INDEPENDENT_WINDOW2_50_DATA_PASS','start':'2024-12-16T00:00:00Z','end_exclusive':'2025-07-14T00:00:00Z','assets_scheduled':50,'assets_pass':50,'evidence':rows,'data_reused_from_2026':False},indent=2))
+          PY
+          mkdir -p independent_factors
+          python trailaris_50_asset/build_independent_factors.py --rawdir raw34 --start "$START" --end "$END" --out independent_factors/Trailaris_R3_FactorFeed.csv --audit independent_factors/FACTOR_EVIDENCE.json
+          python trailaris_r4/build_research_specs.py
+      - name: Build fresh asset-local bundles
+        env: {PYTHONPATH: '.:trailaris_r4'}
+        run: |
+          python trailaris_100_asset/build_asset_bundle.py --rawdir raw34 --outdir bundles/core34
+          python trailaris_100_asset/build_asset_bundle.py --rawdir raw50 --outdir bundles/all50
+      - name: Assemble exact 34 control and exact unchanged 50
+        env: {PYTHONPATH: '.:trailaris_r4'}
+        run: |
+          python trailaris_50_asset/assemble_independent_34.py --bundle-root bundles/core34 --factor-feed independent_factors/Trailaris_R3_FactorFeed.csv --outdir assembled34
+          python trailaris_50_asset/assemble_50_universe.py --bundle-root bundles/all50 --factor-feed independent_factors/Trailaris_R3_FactorFeed.csv --approved16 trailaris_50_asset/QV2_50_APPROVED_EVALUATION_16.txt --outdir assembled50
+          python - <<'PY'
+          import json
+          a=json.load(open('assembled34/ASSEMBLY_SUMMARY.json'));b=json.load(open('assembled50/ASSEMBLY_SUMMARY.json'))
+          assert a['feature_assets']==34 and a['candidate_assets']==34
+          assert b['feature_assets']==50 and b['candidate_assets']==50 and b['quant_v2_modified'] is False
+          print('INDEPENDENT_WINDOW2_ASSEMBLY PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-window2-full-assembled-34
+          path: assembled34/
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-window2-full-assembled-50
+          path: assembled50/
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-window2-full-factor-evidence
+          path: independent_factors/
+          retention-days: 30
+
+  promote:
+    needs: assemble
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        assets: [34, 50]
+        shard: [0, 1, 2, 3, 4, 5]
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-50-independent-validation-20260818}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Restore exact promotion runtime
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+          test "$(git rev-parse HEAD:trailaris_r5_5/longcycle_integrated_negative_refinement.py)" = 'a6f6fcc8dfc1d265c5917dc9df3f3c73eb08d6cb'
+      - uses: actions/download-artifact@v4
+        with:
+          name: "qv2-window2-full-assembled-${{ matrix.assets }}"
+          path: universe
+      - name: Execute untouched causal promotion shard
+        env: {PYTHONPATH: '.:trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5'}
+        run: python trailaris_50_asset/promote_independent_shard.py --universe-dir universe --assets ${{ matrix.assets }} --shard ${{ matrix.shard }} --shards 6 --outdir promoted
+      - uses: actions/upload-artifact@v4
+        with:
+          name: "qv2-window2-full-promoted-${{ matrix.assets }}-${{ matrix.shard }}"
+          path: promoted/
+          retention-days: 30
+
+  replay:
+    needs: promote
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        assets: [34, 50]
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-50-independent-validation-20260818}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Restore exact replay runtime
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          python trailaris_r4/build_research_specs.py
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+      - uses: actions/download-artifact@v4
+        with:
+          name: "qv2-window2-full-assembled-${{ matrix.assets }}"
+          path: universe
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: "qv2-window2-full-promoted-${{ matrix.assets }}-*"
+          path: promoted
+      - name: Apply realized closed-balance sizing semantic only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('trailaris_r5_4/R5_BASE_CAUSAL_ENGINE.py');s=p.read_text();old='r4.size_trade(r.asset,eq,rf,float(r.stop_distance),specs)';new='r4.size_trade(r.asset,balance,rf,float(r.stop_distance),specs)';n=s.count(old);assert n in (1,2),n;p.write_text(s.replace(old,new));print('CLOSED_BALANCE_PATCH_COUNT',n)
+          PY
+      - name: Execute exact sequential independent replay
+        env: {PYTHONPATH: '.:trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5'}
+        run: python trailaris_50_asset/replay_independent_from_promoted.py --universe-dir universe --promoted-root promoted --assets ${{ matrix.assets }} --specs trailaris_r4/research_proxy_specs.csv --outdir result
+      - uses: actions/upload-artifact@v4
+        with:
+          name: "qv2-window2-full-result-${{ matrix.assets }}"
+          path: result/
+          retention-days: 30
+
+  evaluate:
+    needs: replay
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-50-independent-validation-20260818}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/download-artifact@v4
+        with: {name: qv2-window2-full-result-34, path: result34}
+      - uses: actions/download-artifact@v4
+        with: {name: qv2-window2-full-result-50, path: result50}
+      - name: Evaluate frozen acceptance gate V2
+        run: |
+          mkdir -p independent_result
+          python trailaris_50_asset/evaluate_independent_gate.py --status34 result34/QV2_34_INDEPENDENT_STATUS.json --status50 result50/QV2_50_INDEPENDENT_STATUS.json --spec trailaris_50_asset/QV2_50_INDEPENDENT_ACCEPTANCE_SPEC_V2.json --out independent_result/QV2_50_INDEPENDENT_GATE_DECISION.json
+          cp result34/QV2_34_INDEPENDENT_STATUS.json independent_result/
+          cp result50/QV2_50_INDEPENDENT_STATUS.json independent_result/
+          cp result34/QV2_34_INDEPENDENT_WEEKLY.csv independent_result/
+          cp result50/QV2_50_INDEPENDENT_WEEKLY.csv independent_result/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-window2-full-independent-decision
+          path: independent_result/
+          retention-days: 30
+      - name: Preserve compact evidence
+        run: |
+          mkdir -p trailaris_50_asset/independent_validation_results/window2
+          cp independent_result/* trailaris_50_asset/independent_validation_results/window2/
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add trailaris_50_asset/independent_validation_results/window2/
+          git commit -m 'evidence: untouched 34 vs 50 independent validation [skip ci]' || exit 0
+          git pull --rebase origin trailaris-qv2-50-independent-validation-20260818 || true
+          git push origin HEAD:trailaris-qv2-50-independent-validation-20260818 || true
