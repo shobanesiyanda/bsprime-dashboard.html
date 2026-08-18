@@ -29,7 +29,7 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add trailaris_50_asset/ACTIVE_INDEPENDENT_WINDOW2_DATA_STATUS.json
-          git commit -m 'ops: snapshot retriggered window2 data gate [skip ci]' || exit 0
+          git commit -m 'ops: refresh independent window2 data gate [skip ci]' || exit 0
           git pull --rebase origin trailaris-qv2-50-independent-validation-20260818 || true
           git push origin HEAD:trailaris-qv2-50-independent-validation-20260818 || true
-# probe-window2-retrigger
+# probe-window2-refresh-2
