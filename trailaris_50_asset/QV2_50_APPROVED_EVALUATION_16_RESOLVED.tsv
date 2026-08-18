@@ -1,0 +1,17 @@
+instrument_id	canonical_instrument	provider_name
+cocoacmdusd	COCOA.CMD	COCOA.CMD/USD
+sugarcmdusd	SUGAR.CMD	SUGAR.CMD/USD
+coffeecmdusx	COFFEE.CMD	COFFEE.CMD/USX
+aaplususd	AAPL.US	AAPL.US/USD
+soybeancmdusx	SOYBEAN.CMD	SOYBEAN.CMD/USX
+orclususd	ORCL.US	ORCL.US/USD
+msftususd	MSFT.US	MSFT.US/USD
+usdcnh	USDCNH	USD/CNH
+vususd	V.US	V.US/USD
+audnzd	AUDNZD	AUD/NZD
+eurchf	EURCHF	EUR/CHF
+gbpnzd	GBPNZD	GBP/NZD
+fraidxeur	FRA.IDX	FRA.IDX/EUR
+tslaususd	TSLA.US	TSLA.US/USD
+chiidxusd	CHI.IDX	CHI.IDX/USD
+coppercmdusd	COPPER.CMD	COPPER.CMD/USD
