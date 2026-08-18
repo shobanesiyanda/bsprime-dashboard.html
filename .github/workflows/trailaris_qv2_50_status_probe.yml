@@ -35,4 +35,4 @@ jobs:
           git commit -m 'ops: snapshot fast 50-selection [skip ci]'
           git pull --rebase origin trailaris-quant-v2-50-asset-complementarity-20260818
           git push origin HEAD:trailaris-quant-v2-50-asset-complementarity-20260818
-# probe revision 5
+# probe revision 6
