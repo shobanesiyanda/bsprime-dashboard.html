@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 env:
-  TARGET_SHA: 9c336bc89598b505ba1dbc6a0c0c7758dad6b734
+  TARGET_SHA: 24acf668aa6d7e0400b7530f6b0d52f8aac5b5f5
   RESULT_BRANCH: trailaris-quant-v2-100-asset-canonical-expansion-20260818
 
 jobs:
@@ -34,7 +34,7 @@ jobs:
           rows=[]
           for r in d.get('workflow_runs',[]):
               rows.append({k:r.get(k) for k in ['id','name','status','conclusion','event','head_sha','created_at','updated_at','run_started_at','html_url']})
-          out={'target_sha':'9c336bc89598b505ba1dbc6a0c0c7758dad6b734','runs':rows}
+          out={'target_sha':'24acf668aa6d7e0400b7530f6b0d52f8aac5b5f5','runs':rows}
           Path('trailaris_100_asset').mkdir(exist_ok=True)
           Path('trailaris_100_asset/ACTIVE_100_REPLAY_RUN_STATUS.json').write_text(json.dumps(out,indent=2))
           print(json.dumps(out,indent=2))
@@ -45,6 +45,6 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+users.noreply.github.com
           git add trailaris_100_asset/ACTIVE_100_REPLAY_RUN_STATUS.json
-          git commit -m 'ops: 100-asset replay R3 continuation status [skip ci]'
+          git commit -m 'ops: 100-asset parallel exact replay status [skip ci]'
           git pull --rebase origin "$RESULT_BRANCH"
           git push origin HEAD:"$RESULT_BRANCH"
