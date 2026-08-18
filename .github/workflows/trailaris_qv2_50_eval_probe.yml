@@ -12,26 +12,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: {ref: trailaris-quant-v2-50-asset-evaluation-20260818}
-      - name: Capture evaluation run
+      - name: Capture approved-16 data gate
         env: {GH_TOKEN: '${{ github.token }}'}
         run: |
           gh api 'repos/shobanesiyanda/bsprime-dashboard.html/actions/runs?branch=trailaris-quant-v2-50-asset-evaluation-20260818&per_page=50' > /tmp/runs.json
           python - <<'PY'
           import json,subprocess
           from pathlib import Path
-          d=json.load(open('/tmp/runs.json'));name='Trailaris Quant V2 — 50 Asset Closed-Balance Evaluation'
+          d=json.load(open('/tmp/runs.json'));name='Trailaris Quant V2 — Approved 16 Evaluation Data Gate'
           rs=[r for r in d.get('workflow_runs',[]) if r.get('name')==name]
-          if not rs: raise SystemExit('evaluation run not found')
+          if not rs: raise SystemExit('approved-16 data gate not found')
           r=sorted(rs,key=lambda x:x['created_at'],reverse=True)[0]
           jobs=json.loads(subprocess.check_output(['gh','api',f"repos/shobanesiyanda/bsprime-dashboard.html/actions/runs/{r['id']}/jobs?per_page=100"],text=True)).get('jobs',[])
           out={'run_id':r['id'],'status':r['status'],'conclusion':r.get('conclusion'),'head_sha':r['head_sha'],'created_at':r['created_at'],'updated_at':r['updated_at'],'jobs':[{'id':j['id'],'name':j['name'],'status':j['status'],'conclusion':j.get('conclusion'),'steps':[{'name':s['name'],'status':s['status'],'conclusion':s.get('conclusion')} for s in j.get('steps',[])]} for j in jobs]}
-          Path('trailaris_50_asset/ACTIVE_EVALUATION_STATUS.json').write_text(json.dumps(out,indent=2));print(json.dumps(out,indent=2))
+          Path('trailaris_50_asset/ACTIVE_APPROVED16_DATA_GATE_STATUS.json').write_text(json.dumps(out,indent=2));print(json.dumps(out,indent=2))
           PY
       - name: Commit snapshot
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add trailaris_50_asset/ACTIVE_EVALUATION_STATUS.json
-          git commit -m 'ops: snapshot 50-asset evaluation [skip ci]' || exit 0
+          git add trailaris_50_asset/ACTIVE_APPROVED16_DATA_GATE_STATUS.json
+          git commit -m 'ops: snapshot approved-16 data gate [skip ci]' || exit 0
           git pull --rebase origin trailaris-quant-v2-50-asset-evaluation-20260818
           git push origin HEAD:trailaris-quant-v2-50-asset-evaluation-20260818
