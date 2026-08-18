@@ -44,7 +44,7 @@ def one(asset):
 def main():
  ap=argparse.ArgumentParser();ap.add_argument('--outdir',type=Path,required=True);ap.add_argument('--asset',choices=list(CRYPTO)+list(SYN));a=ap.parse_args();a.outdir.mkdir(parents=True,exist_ok=True);assets=[a.asset] if a.asset else list(CRYPTO)+list(SYN);daily=[];sess=[];qual=[]
  for asset in assets:d,s,q=one(asset);daily+=d;sess+=s;qual.append(q)
- pd.DataFrame(daily).to_csv(a.outdir/'DAILY_RETURNS.csv',index=False);pd.DataFrame(sess).to_csv(a.outdir/'SESSION_PROFILE.csv',index=False);pd.DataFrame(qual).to_csv(a.outdir/'DATA_QUALITY.csv',index=False);bad=[q['asset'] for q in qual if not q['coverage_pass']]
- if bad:raise RuntimeError(f'missing-core structural coverage failure: {bad}')
+ pd.DataFrame(daily).to_csv(a.outdir/'DAILY_RETURNS.csv',index=False);pd.DataFrame(sess).to_csv(a.outdir/'SESSION_PROFILE.csv',index=False);pd.DataFrame(qual).to_csv(a.outdir/'DATA_QUALITY.csv',index=False);print(json.dumps({'quality':qual},indent=2,default=str));bad=[q['asset'] for q in qual if not q['coverage_pass']]
+ if bad:raise RuntimeError(f'missing-core structural coverage failure: {bad}; quality={json.dumps(qual,default=str)}')
  status={'state':'MISSING_CORE_STRUCTURAL_REFERENCE_COMPLETE','assets':len(assets),'asset_names':assets,'uses_strategy_outcomes':False};(a.outdir/'SUMMARY.json').write_text(json.dumps(status,indent=2));print(json.dumps(status,indent=2))
 if __name__=='__main__':main()
