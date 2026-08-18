@@ -1,0 +1,56 @@
+{
+  "control_id": "TR-MEE-QV2-100A-20260818-001",
+  "state": "PREPARED__COMPOUNDING_RECONCILIATION_REQUIRED",
+  "experiment": "QUANT_V2_34_TO_100_ASSET_EXPANSION",
+  "canonical_baseline": {
+    "name": "Quant V2 Canonical Baseline — 34 Assets",
+    "starting_balance_usd": 100.0,
+    "ending_balance_usd": 1389.6425169269207,
+    "compounded_return_pct": 1289.6425169269207,
+    "positive_weeks": 26,
+    "negative_weeks": 0,
+    "profit_factor": 2.9703730692297037,
+    "max_weekly_drawdown_pct": -3.7440606836682933,
+    "max_event_equity_drawdown_pct": -2.7023988320913572,
+    "evidence_artifact_id": 9284801783,
+    "strategy_blob_sha1": "120390ab52e80f51bafedc42389ceb7420a410f2"
+  },
+  "asset_expansion": {
+    "baseline_assets": 34,
+    "additional_assets": 66,
+    "target_assets": 100,
+    "selection_manifest": "trailaris_100_asset/ADDITIONAL_66_MANIFEST.tsv",
+    "selection_rule": "Fixed before any 100-asset replay outcome is observed; no post-result substitution or cherry-picking.",
+    "additional_asset_mix": {
+      "FX": 20,
+      "EQUITY": 20,
+      "INDEX": 8,
+      "CRYPTO": 8,
+      "COMMODITY": 6,
+      "METAL": 4
+    }
+  },
+  "permitted_experimental_delta": "ASSET_UNIVERSE_ONLY",
+  "baseline_integrity": {
+    "strategy": "PRESERVE_EXACTLY",
+    "ranking": "PRESERVE_EXACTLY",
+    "risk_rules": "PRESERVE_EXACTLY",
+    "execution": "PRESERVE_EXACTLY",
+    "management": "PRESERVE_EXACTLY",
+    "position_compounding": "EXISTING_STRATEGY_CONTROL_ONLY",
+    "starting_currency": "USD",
+    "starting_balance_usd": 100.0,
+    "evaluation_window_weeks": 26
+  },
+  "founder_compounding_definition": {
+    "closed_balance_compounding": "Fresh position sizing must compound from the current realized closed account balance. Realized gains increase the next balance-based sizing amount and realized losses reduce it.",
+    "floating_pnl_rule": "Unrealized mark-to-market profit must not enlarge the balance base used to size a fresh position.",
+    "position_compounding": "Additional or expanded exposure remains conditional on the existing Quant V2 strategy, campaign, risk, exposure and execution rules."
+  },
+  "preflight_finding": {
+    "observed_replay_behavior": "The current replay engine computes eq = mtm(t) before new-entry sizing and passes eq into size_trade. The 1389.6425169269207 evidence therefore requires reconciliation against the Founder-defined closed-balance compounding rule before the 100-asset replay is allowed to produce a successor baseline.",
+    "evidence_event_rows": 2119,
+    "event_rows_where_entry_equity_differs_from_entry_balance": 360,
+    "action": "Do not silently change Quant V2. Reconcile the 34-asset compounding semantic first, then run the 100-asset experiment from the resulting canonical reference."
+  }
+}
