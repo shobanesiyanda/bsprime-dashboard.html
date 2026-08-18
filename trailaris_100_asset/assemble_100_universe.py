@@ -5,6 +5,10 @@ from pathlib import Path
 import pandas as pd
 from trailaris_full_universe.qv2_asset_universe_adapter import install_universe
 
+FACTORY_FAMILIES=[
+ 'SUPPLY_DEMAND','LIQUIDITY_STRUCTURE','TREND_FOLLOWING','MOMENTUM_PULLBACK','BREAKOUT_RETEST','MEAN_REVERSION','VOLATILITY_REGIME','SESSION_TIME','ORDER_FLOW_MICROSTRUCTURE','RELATIVE_VALUE_PAIRS','INTERMARKET','CARRY_VALUE','CRYPTO_FUNDING_BASIS','EVENT_RESPONSE','ENSEMBLE_REGIME'
+]
+
 
 def main():
     ap=argparse.ArgumentParser()
@@ -31,7 +35,7 @@ def main():
     if not parts:raise RuntimeError('no asset-local candidates')
     base=pd.concat(parts,ignore_index=True)
     import trailaris_r4_full_universe_loop as r4
-    mapping=install_universe(r4,meta.rename(columns={'discovery_provider_name':'discovery_provider_name'}))
+    mapping=install_universe(r4,meta)
     if len(set(r4.ROUTES))!=100:raise RuntimeError(f'extended route registry failed: {len(set(r4.ROUTES))}/100')
     extras=[]
     for fn in (r4.generate_relative_value_candidates,r4.generate_intermarket_candidates):
@@ -44,12 +48,16 @@ def main():
     ens=r4.generate_ensemble_candidates(cands,fcache)
     if ens is not None and len(ens):cands=pd.concat([cands,ens],ignore_index=True)
     import trailaris_r4_asset_adapter as r4a
+    # Verify that every one of the 100 assets can be evaluated by the same 15-family applicability contract.
+    for asset in meta.asset.astype(str):
+        for family in FACTORY_FAMILIES:
+            v=r4a.family_applicable(asset,family)
+            if not isinstance(v,(bool,int)):raise RuntimeError(f'non-boolean applicability {asset}/{family}: {v!r}')
     m=cands.apply(lambda q:(q.strategy_family=='CAMPAIGN_MANAGEMENT') or r4a.family_applicable(str(q.asset),str(q.strategy_family)),axis=1)
     cands=cands[m].reset_index(drop=True)
     cands['decision_time']=pd.to_datetime(cands.decision_time,utc=True);cands['exit_time']=pd.to_datetime(cands.exit_time,utc=True)
     cands=cands.sort_values(['decision_time','campaign_id']).reset_index(drop=True)
     cands.to_csv(a.outdir/'ALL_CANDIDATES.csv.gz',index=False,compression='gzip')
-    # Copy full feature frames into one deterministic evidence directory.
     outidx=[]
     for _,r in meta.iterrows():
         asset=str(r.asset);src=Path(str(r.source_feature_file));fn=src.name
@@ -57,8 +65,10 @@ def main():
         outidx.append({'asset':asset,'discovery_provider_name':str(r.discovery_provider_name),'instrument_id':str(r.instrument_id),'feature_file':fn})
     pd.DataFrame(outidx).to_csv(a.outdir/'FEATURE_INDEX.csv',index=False)
     pd.DataFrame([{'asset':k,'anchor':v} for k,v in sorted(mapping.items())]).to_csv(a.outdir/'UNIVERSE_ADAPTER_MAP.csv',index=False)
-    fam=sorted(set(cands.strategy_family.astype(str))) if 'strategy_family' in cands else []
-    out={'state':'EXACT_100_ASSET_UNIVERSE_ASSEMBLED','feature_assets':len(meta),'asset_local_candidate_rows':len(base),'total_candidate_rows':len(cands),'candidate_assets':int(cands.asset.nunique()),'strategy_families':len(fam),'strategy_family_names':fam,'global_relative_intermarket_factor_ensemble_generation':True,'quant_v2_modified':False}
+    observed=sorted(set(cands.strategy_family.astype(str))) if 'strategy_family' in cands else []
+    unknown=sorted(set(observed)-set(FACTORY_FAMILIES)-{'CAMPAIGN_MANAGEMENT'})
+    if unknown:raise RuntimeError(f'unknown strategy families in candidates: {unknown}')
+    out={'state':'EXACT_100_ASSET_UNIVERSE_ASSEMBLED','feature_assets':len(meta),'asset_local_candidate_rows':len(base),'total_candidate_rows':len(cands),'candidate_assets':int(cands.asset.nunique()),'strategy_families':15,'factory_strategy_family_names':FACTORY_FAMILIES,'triggered_candidate_strategy_families':len(observed),'triggered_candidate_strategy_family_names':observed,'global_relative_intermarket_factor_ensemble_generation':True,'quant_v2_modified':False}
     (a.outdir/'ASSEMBLY_SUMMARY.json').write_text(json.dumps(out,indent=2));print(json.dumps(out,indent=2))
 
 if __name__=='__main__':main()
