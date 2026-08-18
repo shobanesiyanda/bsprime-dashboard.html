@@ -1,0 +1,33 @@
+name: Trailaris Quant V2 — 34 Raw Estate Export
+on:
+  push:
+    branches: [trailaris-ephemeral-research-20260815]
+    paths: ['.github/workflows/trailaris_qv2_34_raw_export.yml']
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-r5-4-26week-validation-20260816}
+      - name: Restore exact 34-asset M1 cache from source branch scope
+        uses: actions/cache/restore@v4
+        with:
+          path: trailaris_longcycle/raw_m1
+          key: trailaris-r5-5-active-m1-34-20260119-20260814-v1
+          fail-on-cache-miss: true
+      - name: Verify exact 34 raw estate
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          core=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          p=Path('trailaris_longcycle/raw_m1');missing=[a for a in core if not (p/f'{a}_M1_normalized.csv').exists()];assert not missing,missing
+          print({'verified_assets':34})
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-qv2-34-raw-estate-export
+          path: trailaris_longcycle/raw_m1/
+          retention-days: 7
