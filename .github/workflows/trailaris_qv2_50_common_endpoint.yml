@@ -1,0 +1,25 @@
+name: Trailaris Quant V2 — Common Provider Endpoint
+on:
+  push:
+    branches: [trailaris-qv2-50-independent-validation-20260818]
+    paths: ['.github/workflows/trailaris_qv2_50_common_endpoint.yml']
+permissions:
+  contents: read
+jobs:
+  endpoint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-50-independent-validation-20260818}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - name: Install provider runtime
+        run: npm install --no-save --silent dukascopy-node@1.50.0
+      - name: Derive common provider endpoint without strategy outcomes
+        run: node trailaris_50_asset/discover_common_provider_endpoint.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-independent-common-provider-endpoint
+          path: COMMON_PROVIDER_ENDPOINT.json
+          retention-days: 30
