@@ -22,15 +22,20 @@ def deriv(symbol):
  ws=websocket.create_connection('wss://ws.binaryws.com/websockets/v3?app_id=1089',timeout=25);rows=[];end=int(END.timestamp())-1
  try:
   while end>=int(START.timestamp()):
-   ws.send(json.dumps({'ticks_history':symbol,'end':end,'style':'candles','granularity':300,'count':5000,'adjust_start_time':1}));x=json.loads(ws.recv());
-   if x.get('error'):raise RuntimeError(x['error'].get('message'));cs=x.get('candles',[])
+   ws.send(json.dumps({'ticks_history':symbol,'end':end,'style':'candles','granularity':300,'count':5000,'adjust_start_time':1}))
+   x=json.loads(ws.recv())
+   if x.get('error'):
+    raise RuntimeError(x['error'].get('message'))
+   cs=x.get('candles',[])
    if not cs:break
-   epochs=[int(c['epoch']) for c in cs];rows += [(pd.to_datetime(int(c['epoch']),unit='s',utc=True),float(c['close'])) for c in cs if int(START.timestamp())<=int(c['epoch'])<int(END.timestamp())];m=min(epochs);end=m-1
+   epochs=[int(c['epoch']) for c in cs]
+   rows += [(pd.to_datetime(int(c['epoch']),unit='s',utc=True),float(c['close'])) for c in cs if int(START.timestamp())<=int(c['epoch'])<int(END.timestamp())]
+   m=min(epochs);end=m-1
    if m<=int(START.timestamp()):break
  finally:ws.close()
  return sorted(set(rows))
 def summarize(asset,rows,source,daily_fallback=False):
- z=pd.DataFrame(rows,columns=['timestamp','close']).drop_duplicates('timestamp').sort_values('timestamp');
+ z=pd.DataFrame(rows,columns=['timestamp','close']).drop_duplicates('timestamp').sort_values('timestamp')
  if len(z)<2:raise RuntimeError(f'empty structural reference {asset}')
  lr=np.log(z.close).diff();z['abs_lr']=lr.abs();dc=z.set_index('timestamp').close.resample('1D').last().dropna();dr=dc.pct_change().dropna();cls='CRYPTO' if asset in CRYPTO else 'SYNTHETIC';daily=[{'date':t.date().isoformat(),'asset':asset,'return':float(v),'role':'CORE','asset_class':cls,'anchor':asset} for t,v in dr.items()]
  if daily_fallback:vals=[(n,.25) for n,_,_ in SESSIONS]
