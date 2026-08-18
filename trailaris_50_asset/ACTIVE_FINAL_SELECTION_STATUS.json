@@ -1,0 +1,37 @@
+{
+  "run_id": 32113691323,
+  "status": "in_progress",
+  "conclusion": null,
+  "jobs": [
+    {
+      "id": 95638413600,
+      "name": "synth (V50)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 95638413608,
+      "name": "synth (V100)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 95638413653,
+      "name": "synth (V25)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 95638413698,
+      "name": "synth (V75)",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "id": 95638413709,
+      "name": "synth (V10)",
+      "status": "completed",
+      "conclusion": "failure"
+    }
+  ]
+}
