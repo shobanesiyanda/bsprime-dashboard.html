@@ -1,0 +1,76 @@
+{
+  "run_id": 32128571402,
+  "status": "in_progress",
+  "conclusion": null,
+  "head_sha": "1790e35fb0f8209a901c6d8aebb8a69e15d1296f",
+  "jobs": [
+    {
+      "id": 95684471918,
+      "name": "bridge",
+      "status": "in_progress",
+      "conclusion": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Restore exact runtime",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Restore reconstructed 34 evidence universe and exact canonical promotion estate",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Derive Quant V2 veto on exact canonical promotion estate and reproduce preserved equity-sizing result",
+          "status": "in_progress",
+          "conclusion": null
+        },
+        {
+          "name": "Apply realized closed-balance sizing semantic only",
+          "status": "pending",
+          "conclusion": null
+        },
+        {
+          "name": "Reproduce exact 34 closed-balance control from preserved Quant V2 kept estate",
+          "status": "pending",
+          "conclusion": null
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "pending",
+          "conclusion": null
+        },
+        {
+          "name": "Preserve compact bridge status",
+          "status": "pending",
+          "conclusion": null
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "pending",
+          "conclusion": null
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "pending",
+          "conclusion": null
+        }
+      ]
+    }
+  ]
+}
