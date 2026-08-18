@@ -1,0 +1,75 @@
+name: Trailaris Quant V2 — Window 2 Exact 16 Isolated Recovery
+on:
+  push:
+    branches: [trailaris-qv2-50-independent-validation-20260818]
+    paths: ['.github/workflows/trailaris_qv2_50_window2_16_isolated_recovery.yml']
+permissions:
+  actions: read
+  contents: read
+env:
+  DISCOVERY_ARTIFACT_ID: 9301401424
+  START: '2024-12-16T00:00:00Z'
+  END: '2025-07-14T00:00:00Z'
+jobs:
+  acquire16:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-50-independent-validation-20260818}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install acquisition runtime
+        run: |
+          npm install --no-save --silent dukascopy-node@1.50.0
+          python -m pip install --quiet pandas
+      - name: Resolve exact approved-16 identities
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${DISCOVERY_ARTIFACT_ID}/zip > discovery.zip
+          mkdir discovery && unzip -q discovery.zip -d discovery
+          python - <<'PY'
+          import pandas as pd
+          from pathlib import Path
+          approved=[x.strip() for x in Path('trailaris_50_asset/QV2_50_APPROVED_EVALUATION_16.txt').read_text().splitlines() if x.strip()]
+          d=pd.read_csv('discovery/DISCOVERED_UNIVERSE.csv');by={str(r.canonical_instrument):r for _,r in d.iterrows()};assert set(approved)<=set(by) and len(approved)==16
+          with open('APPROVED16.tsv','w') as f:
+              f.write('instrument_id\tcanonical_instrument\tprovider_name\n')
+              for asset in approved:
+                  r=by[asset];f.write(f"{r.instrument_id}\t{asset}\t{r.provider_name}\n")
+          print('APPROVED16_IDENTITY PASS')
+          PY
+      - name: Acquire general exact-16 estate and retain all passing files
+        shell: bash
+        run: |
+          set +e
+          node trailaris_50_asset/acquire_independent_manifest.js --manifest APPROVED16.tsv --start "$START" --end "$END" --outdir raw16 --concurrency 4 --chunk-days 28
+          echo "GENERAL_ACQUISITION_EXIT=$?"
+          exit 0
+      - name: Recover exact SOYBEAN provider series in isolated process
+        run: node trailaris_50_asset/recover_independent_soybean.js --start "$START" --end "$END" --outdir raw16
+      - name: Reconcile exact immutable 16 and enforce strict gate
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          approved=[x.strip() for x in Path('trailaris_50_asset/QV2_50_APPROVED_EVALUATION_16.txt').read_text().splitlines() if x.strip()]
+          g=json.loads(Path('raw16/ACQUISITION_EVIDENCE_ADDITIONS.json').read_text());soy=json.loads(Path('raw16/SOYBEAN_RECOVERY_EVIDENCE.json').read_text())
+          by={str(r['canonical_instrument']):r for r in g['evidence']};by['SOYBEAN.CMD']=soy
+          assert set(by)==set(approved),(set(by)^set(approved))
+          rows=[by[a] for a in approved];bad=[]
+          for r in rows:
+              a=str(r['canonical_instrument']);p=Path('raw16')/f'{a}_M1_normalized.csv'
+              if r['status']!='PASS' or not r.get('full_window_coverage') or int(r.get('conflicting_duplicates',0))!=0 or int(r.get('invalid_ohlc',0))!=0 or not p.exists():bad.append((a,r.get('status'),r.get('last'),str(p)))
+              r['file']=str(p)
+          assert not bad,bad
+          out={'state':'INDEPENDENT_WINDOW2_EXACT_16_DATA_PASS','start':'2024-12-16T00:00:00Z','end_exclusive':'2025-07-14T00:00:00Z','assets_scheduled':16,'assets_pass':16,'evidence':rows,'data_reused_from_2026':False,'strategy_outcomes_used_for_recovery':False,'soybean_recovery':'EXACT_SAME_PROVIDER_INSTRUMENT__ISOLATED_QUERY_SHAPE_ONLY'}
+          Path('raw16/ACQUISITION_EVIDENCE.json').write_text(json.dumps(out,indent=2));print('WINDOW2_EXACT_16_DATA_GATE PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-window2-exact16-isolated
+          path: raw16/
+          retention-days: 30
