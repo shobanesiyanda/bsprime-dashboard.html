@@ -1,0 +1,68 @@
+{
+  "state": "FOUNDER_DECISION_REQUIRED__ORCL_EVALUATION_DATA_INELIGIBLE",
+  "date": "2026-08-18",
+  "experiment": "QUANT_V2_34_TO_50_COMPLEMENTARITY_EXPANSION",
+  "quant_v2_strategy_blob": "120390ab52e80f51bafedc42389ceb7420a410f2",
+  "closed_balance_control": {
+    "starting_balance_usd": 100.0,
+    "ending_balance_usd": 1400.6510417217567,
+    "positive_weeks": 26,
+    "profit_factor": 3.0217601028262315
+  },
+  "founder_approved_additions": [
+    "COCOA.CMD",
+    "SUGAR.CMD",
+    "COFFEE.CMD",
+    "AAPL.US",
+    "SOYBEAN.CMD",
+    "ORCL.US",
+    "MSFT.US",
+    "USDCNH",
+    "V.US",
+    "AUDNZD",
+    "EURCHF",
+    "GBPNZD",
+    "FRA.IDX",
+    "TSLA.US",
+    "CHI.IDX",
+    "COPPER.CMD"
+  ],
+  "evaluation_data_gate": {
+    "eligible_approved_assets": 15,
+    "ineligible_approved_assets": ["ORCL.US"],
+    "V.US": {
+      "instrument_id": "vususd",
+      "rows": 37341,
+      "full_window_coverage": true,
+      "first": "2026-01-21T14:30:00.000Z",
+      "last": "2026-08-14T19:59:00.000Z"
+    },
+    "ORCL.US": {
+      "instrument_id": "orclususd",
+      "rows": 7348,
+      "full_window_coverage": false,
+      "first": "2026-01-22T14:30:00.000Z",
+      "last": "2026-08-14T19:59:00.000Z"
+    }
+  },
+  "preserved_replay_infrastructure": {
+    "original_34_bundle_artifact_id": 9308647757,
+    "assembled_100_estate_artifact_id": 9309264189,
+    "assembled_100_estate_contains_all_original_34_features": true,
+    "assembled_100_estate_contains_14_of_16_approved_addition_features": true,
+    "V_US_recovery_passed": true
+  },
+  "recommended_replacement": {
+    "remove": "ORCL.US",
+    "add": "NVDA.US",
+    "basis": "PRE_EVALUATION_STRUCTURAL_COMPLEMENTARITY_AND_FULL_EVALUATION_DATA_ELIGIBILITY_ONLY",
+    "evaluation_period_strategy_outcomes_used_for_replacement": false,
+    "reason": "NVDA.US is already structurally ranked near the selection boundary, is not an original-34 duplicate, and is present in the preserved full evaluation feature estate."
+  },
+  "prohibited_without_founder_approval": [
+    "silently substitute ORCL.US",
+    "relax the fixed-window data-integrity requirement for ORCL.US",
+    "use evaluation-period P&L to choose a replacement"
+  ],
+  "next_valid_path": "FOUNDER_APPROVE_NVDA_US_FOR_ORCL_US__THEN_RUN_EXACT_34_PLUS_16_50_ASSET_CLOSED_BALANCE_REPLAY"
+}
