@@ -21,7 +21,11 @@ def main():
         x=pd.read_csv(a.universe_dir/str(r.feature_file));x['timestamp']=pd.to_datetime(x.timestamp,utc=True);fcache[str(r.asset)]=x.sort_values('timestamp').reset_index(drop=True)
     if len(fcache)!=100:raise RuntimeError(f'feature cache integrity {len(fcache)}/100')
     import trailaris_r4_full_universe_loop as r4
+    # Load the canonical 34-route research specifications before expanding r4.ROUTES.
+    # r4.load_specs deliberately fail-closes unless the route set is exactly the frozen 34.
+    base_specs=r4.load_specs(a.specs,'research-proxy')
     meta=idx[['asset','discovery_provider_name']].drop_duplicates().copy();install_universe(r4,meta)
+    specs=extend_research_specs(base_specs,meta)
     import R5_BASE_CAUSAL_ENGINE as base;base.r4.factor_vec=r4.factor_vec
     import quantitative_integrated_v2 as qv2
     files=sorted(a.promoted_root.rglob('QV2_100_PROMOTED_SHARD_*.csv.gz'));parts=[]
@@ -39,7 +43,6 @@ def main():
         if len(pairs)!=26 or sorted(pairs.eval_week_index.astype(int).tolist())!=list(range(26)):raise RuntimeError('parallel promotion index integrity failed')
     P=P.sort_values(['eval_week','decision_time','campaign_id']).reset_index(drop=True)
     P.to_csv(a.outdir/'QV2_100_PROMOTED.csv.gz',index=False,compression='gzip')
-    base_specs=r4.load_specs(a.specs,'research-proxy');specs=extend_research_specs(base_specs,meta)
     equity=100.;Wrows=[];events=[];decisions=[];raw_end=max(pd.Timestamp(x.timestamp.iloc[-1]) for x in fcache.values())
     for wk in weeks:
         pr=P.loc[P.eval_week.eq(wk)].copy()
