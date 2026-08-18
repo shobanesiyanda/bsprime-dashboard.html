@@ -1,0 +1,88 @@
+name: Trailaris Quant V2 — 34 Exact Canonical Bridge
+on:
+  push:
+    branches: [trailaris-qv2-34-success-attribution-20260818]
+    paths: ['.github/workflows/trailaris_qv2_34_exact_canonical_bridge.yml']
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: write
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-34-success-attribution-20260818}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Restore exact runtime
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          python trailaris_r4/build_research_specs.py
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = '120390ab52e80f51bafedc42389ceb7420a410f2'
+      - name: Restore reconstructed 34 evidence universe and exact canonical promotion estate
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          set -euo pipefail
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/9320772950/zip > assembled.zip
+          mkdir assembled34 && unzip -q assembled.zip -d assembled34
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/9270611209/zip > canonical.zip
+          mkdir canonical34 && unzip -q canonical.zip -d canonical34
+          test -f assembled34/ALL_CANDIDATES.csv.gz
+          test -f canonical34/R5_5_INTEGRATED_NEGATIVE_REFINEMENT_PROMOTED.csv
+      - name: Derive Quant V2 veto on exact canonical promotion estate and reproduce preserved equity-sizing result
+        env: {PYTHONPATH: '.:trailaris_r4:trailaris_full_universe:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5'}
+        run: |
+          python trailaris_34_attribution/replay_exact_canonical_bridge.py --assembled assembled34 --canonical canonical34 --specs trailaris_r4/research_proxy_specs.csv --outdir bridge_equity --mode derive
+          python - <<'PY'
+          import json
+          s=json.load(open('bridge_equity/QV2_34_EXACT_BRIDGE_STATUS.json'));m=s['metrics']
+          print(json.dumps(s,indent=2))
+          assert s['quant_vetoed']==38,(s['quant_vetoed'],s['quant_kept'])
+          assert s['quant_kept']==3151
+          assert abs(m['end_equity']-1389.6425169269207)<1e-8,m
+          assert m['executed_trades']==2119 and m['wins']==1222 and m['losses']==466 and m['flats']==431,m
+          assert abs(m['profit_factor']-2.9703730692297037)<1e-10,m
+          print('EXACT_QUANT_V2_CANONICAL_BRIDGE PASS')
+          PY
+      - name: Apply realized closed-balance sizing semantic only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('trailaris_r5_4/R5_BASE_CAUSAL_ENGINE.py');s=p.read_text();old='r4.size_trade(r.asset,eq,rf,float(r.stop_distance),specs)';new='r4.size_trade(r.asset,balance,rf,float(r.stop_distance),specs)'
+          n=s.count(old);assert n in (1,2),n;p.write_text(s.replace(old,new));print('patched',n)
+          PY
+      - name: Reproduce exact 34 closed-balance control from preserved Quant V2 kept estate
+        env: {PYTHONPATH: '.:trailaris_r4:trailaris_full_universe:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5'}
+        run: |
+          python trailaris_34_attribution/replay_exact_canonical_bridge.py --assembled assembled34 --canonical canonical34 --specs trailaris_r4/research_proxy_specs.csv --outdir bridge_balance --mode replay-kept --kept-file bridge_equity/QV2_34_EXACT_BRIDGE_KEPT.csv.gz
+          python - <<'PY'
+          import json
+          s=json.load(open('bridge_balance/QV2_34_EXACT_BRIDGE_STATUS.json'));m=s['metrics'];print(json.dumps(s,indent=2))
+          assert abs(m['end_equity']-1400.6510417217567)<1e-8,m
+          assert m['executed_trades']==2119 and m['wins']==1223 and m['losses']==465 and m['flats']==431,m
+          assert abs(m['profit_factor']-3.0217601028262315)<1e-10,m
+          print('EXACT_34_CLOSED_BALANCE_CONTROL PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-qv2-34-exact-canonical-bridge
+          path: |
+            bridge_equity/
+            bridge_balance/
+          retention-days: 30
+      - name: Preserve compact bridge status
+        run: |
+          mkdir -p trailaris_34_attribution/results
+          cp bridge_equity/QV2_34_EXACT_BRIDGE_STATUS.json trailaris_34_attribution/results/QV2_34_EQUITY_SIZING_BRIDGE_STATUS.json
+          cp bridge_balance/QV2_34_EXACT_BRIDGE_STATUS.json trailaris_34_attribution/results/QV2_34_CLOSED_BALANCE_BRIDGE_STATUS.json
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add trailaris_34_attribution/results/
+          git commit -m 'evidence: exact 34 canonical bridge statuses [skip ci]' || exit 0
+          git pull --rebase origin trailaris-qv2-34-success-attribution-20260818
+          git push origin HEAD:trailaris-qv2-34-success-attribution-20260818
