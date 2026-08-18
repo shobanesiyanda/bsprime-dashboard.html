@@ -1,0 +1,111 @@
+name: Trailaris Quant V2 — 50 Geometry Research
+
+on:
+  push:
+    branches: [trailaris-qv2-50-geometry-research-20260818]
+    paths: ['.github/workflows/trailaris_qv2_50_geometry_research.yml']
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+env:
+  QV2_BLOB: 120390ab52e80f51bafedc42389ceb7420a410f2
+  ASSEMBLED50_ARTIFACT_ID: 9318715516
+  CONTROL50_ARTIFACT_ID: 9318836671
+
+jobs:
+  geometry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-50-geometry-research-20260818}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Restore exact runtime and identities
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          python trailaris_r4/build_research_specs.py
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+          cp trailaris_r5_4/R5_BASE_CAUSAL_ENGINE.py /tmp/R5_BASE_CAUSAL_ENGINE.original.py
+      - name: Restore exact 50 assembled universe, exact promotion estate, and control result
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          set -euo pipefail
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${ASSEMBLED50_ARTIFACT_ID}/zip > assembled.zip
+          mkdir assembled50 && unzip -q assembled.zip -d assembled50
+          mkdir -p promoted
+          for pair in \
+            '0 9318792578' \
+            '1 9318783145' \
+            '2 9318794147' \
+            '3 9318777749' \
+            '4 9318777350' \
+            '5 9318771561'; do
+              set -- $pair; i=$1; id=$2
+              gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${id}/zip > p${i}.zip
+              mkdir -p promoted/qv2-50-promoted-${i}; unzip -q p${i}.zip -d promoted/qv2-50-promoted-${i}
+          done
+          mkdir -p results/CONTROL
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${CONTROL50_ARTIFACT_ID}/zip > control.zip
+          unzip -q control.zip -d results/CONTROL
+          test -f assembled50/ALL_CANDIDATES.csv.gz
+          test -f results/CONTROL/QV2_50_REPLAY_STATUS.json
+          test "$(find promoted -name 'QV2_50_PROMOTED_SHARD_*.csv.gz' | wc -l)" -eq 6
+      - name: Execute pre-specified portfolio overlay variants
+        env: {PYTHONPATH: '.:trailaris_r4:trailaris_full_universe:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5'}
+        run: |
+          set -euo pipefail
+          for mode in FACTOR100 WEEK8 FACTOR100_WEEK8; do
+            cp /tmp/R5_BASE_CAUSAL_ENGINE.original.py trailaris_r5_4/R5_BASE_CAUSAL_ENGINE.py
+            MODE="$mode" python - <<'PY'
+          import os
+          from pathlib import Path
+          p=Path('trailaris_r5_4/R5_BASE_CAUSAL_ENGINE.py');s=p.read_text()
+          old='r4.size_trade(r.asset,eq,rf,float(r.stop_distance),specs)';new='r4.size_trade(r.asset,balance,rf,float(r.stop_distance),specs)'
+          assert s.count(old)==2,s.count(old);s=s.replace(old,new)
+          mode=os.environ['MODE']
+          if 'FACTOR100' in mode:
+              assert s.count('1.25')==3,s.count('1.25');s=s.replace('1.25','1.00')
+          if 'WEEK8' in mode:
+              oldg='(.25 if growth>=.10 else 1.)';newg='(.25 if growth>=.08 else 1.)'
+              assert s.count(oldg)==1,s.count(oldg);s=s.replace(oldg,newg)
+          p.write_text(s);print('prepared',mode)
+          PY
+            rm -rf "results/$mode"
+            python trailaris_50_asset/replay_50_from_promoted.py \
+              --universe-dir assembled50 \
+              --promoted-root promoted \
+              --specs trailaris_r4/research_proxy_specs.csv \
+              --balance-control trailaris_100_asset/QV2_34_BALANCE_REPLAY_RESULT.json \
+              --approved16 trailaris_50_asset/QV2_50_APPROVED_EVALUATION_16.txt \
+              --outdir "results/$mode"
+          done
+      - name: Build corrected geometry attribution and comparison
+        run: |
+          python trailaris_50_asset/summarize_50_geometry_variants.py \
+            --root results \
+            --control trailaris_100_asset/QV2_34_BALANCE_REPLAY_RESULT.json \
+            --out results/QV2_50_GEOMETRY_RESEARCH_SUMMARY.json
+          python -m py_compile trailaris_50_asset/summarize_50_geometry_variants.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-qv2-50-geometry-research
+          path: results/
+          retention-days: 30
+      - name: Preserve compact research evidence
+        run: |
+          mkdir -p trailaris_50_asset/geometry_research_results
+          cp results/QV2_50_GEOMETRY_RESEARCH_SUMMARY.json trailaris_50_asset/geometry_research_results/
+          cp results/QV2_50_GEOMETRY_RESEARCH_SUMMARY.csv trailaris_50_asset/geometry_research_results/
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add trailaris_50_asset/geometry_research_results/
+          git commit -m 'evidence: 50 geometry research comparison [skip ci]' || exit 0
+          git pull --rebase origin trailaris-qv2-50-geometry-research-20260818
+          git push origin HEAD:trailaris-qv2-50-geometry-research-20260818
