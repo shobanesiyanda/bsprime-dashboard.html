@@ -1,0 +1,206 @@
+{
+  "final": {
+    "run_id": 32152150403,
+    "status": "in_progress",
+    "conclusion": null,
+    "head_sha": "26794b316377df2d15f914750d4c8301f02d741e",
+    "created_at": "2026-08-18T15:03:38Z",
+    "updated_at": "2026-08-18T15:03:44Z",
+    "jobs": [
+      {
+        "id": 95760410047,
+        "name": "acquire16",
+        "status": "in_progress",
+        "conclusion": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v5",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Install acquisition runtime",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Resolve exact unchanged approved-16 provider identities",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Acquire untouched exact approved-16 estate",
+            "status": "in_progress",
+            "conclusion": null
+          },
+          {
+            "name": "Enforce exact unchanged 16 data gate",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Post Run actions/setup-python@v5",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "pending",
+            "conclusion": null
+          }
+        ]
+      },
+      {
+        "id": 95760410129,
+        "name": "acquire34",
+        "status": "in_progress",
+        "conclusion": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v5",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Install acquisition runtime",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Freeze exact original-34 provider manifest",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Acquire exact 24 Dukascopy, five Binance crypto and five Deriv synthetics",
+            "status": "in_progress",
+            "conclusion": null
+          },
+          {
+            "name": "Reconcile exact original-34 data estate",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Post Run actions/setup-python@v5",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "pending",
+            "conclusion": null
+          }
+        ]
+      }
+    ]
+  },
+  "deriv": {
+    "run_id": 32151995765,
+    "status": "in_progress",
+    "conclusion": null,
+    "head_sha": "3888391ffb24c47efc22c40b70161bd7eff7c1e5",
+    "created_at": "2026-08-18T15:02:06Z",
+    "updated_at": "2026-08-18T15:02:10Z",
+    "jobs": [
+      {
+        "id": 95759890287,
+        "name": "deriv",
+        "status": "in_progress",
+        "conclusion": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Install WebSocket runtime",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Acquire exact Deriv synthetics on final provider-defined window",
+            "status": "in_progress",
+            "conclusion": null
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "pending",
+            "conclusion": null
+          }
+        ]
+      }
+    ]
+  }
+}
