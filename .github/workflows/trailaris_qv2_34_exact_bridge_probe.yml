@@ -1,0 +1,34 @@
+name: Trailaris Quant V2 — 34 Exact Bridge Probe
+on:
+  push:
+    branches: [trailaris-qv2-34-success-attribution-20260818]
+    paths: ['.github/workflows/trailaris_qv2_34_exact_bridge_probe.yml']
+permissions:
+  actions: read
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-34-success-attribution-20260818}
+      - name: Capture exact bridge run
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          gh api 'repos/shobanesiyanda/bsprime-dashboard.html/actions/runs?branch=trailaris-qv2-34-success-attribution-20260818&per_page=50' >/tmp/runs.json
+          python - <<'PY'
+          import json,subprocess
+          from pathlib import Path
+          d=json.load(open('/tmp/runs.json'));name='Trailaris Quant V2 — 34 Exact Canonical Bridge';rs=[r for r in d['workflow_runs'] if r.get('name')==name]
+          if not rs:raise SystemExit('bridge run missing')
+          r=sorted(rs,key=lambda x:x['created_at'],reverse=True)[0];jobs=json.loads(subprocess.check_output(['gh','api',f"repos/shobanesiyanda/bsprime-dashboard.html/actions/runs/{r['id']}/jobs?per_page=100"],text=True))['jobs']
+          out={'run_id':r['id'],'status':r['status'],'conclusion':r.get('conclusion'),'head_sha':r['head_sha'],'jobs':[{'id':j['id'],'name':j['name'],'status':j['status'],'conclusion':j.get('conclusion'),'steps':[{'name':s['name'],'status':s['status'],'conclusion':s.get('conclusion')} for s in j.get('steps',[])]} for j in jobs]};Path('trailaris_34_attribution/ACTIVE_EXACT_BRIDGE_STATUS.json').write_text(json.dumps(out,indent=2));print(json.dumps(out,indent=2))
+          PY
+      - name: Commit snapshot
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add trailaris_34_attribution/ACTIVE_EXACT_BRIDGE_STATUS.json
+          git commit -m 'ops: snapshot exact 34 bridge [skip ci]' || exit 0
+          git pull --rebase origin trailaris-qv2-34-success-attribution-20260818
+          git push origin HEAD:trailaris-qv2-34-success-attribution-20260818
