@@ -1,0 +1,14 @@
+{
+  "workflow_name": "Trailaris R5.5 \u2014 Quantitative V2 Exact Estate R3 26W",
+  "runs": [
+    {
+      "run_id": 32016871059,
+      "status": "completed",
+      "conclusion": "failure",
+      "head_sha": "0ba14b4d980b8eb2c7ee38ab70b1695f580b3eae",
+      "created_at": "2026-08-17T09:46:01Z",
+      "updated_at": "2026-08-17T09:46:24Z",
+      "artifacts": []
+    }
+  ]
+}
