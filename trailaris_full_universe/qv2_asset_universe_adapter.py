@@ -18,6 +18,11 @@ CURRENCIES = {
     'USD','EUR','GBP','JPY','AUD','CAD','CHF','NZD','CNH','CNY','HKD','SGD','NOK','SEK','DKK','PLN','CZK','HUF','RON','TRY','ZAR','MXN','BRL','ILS','AED','SAR','THB'
 }
 
+# Runtime-only adapter lineage. This does not change Quant V2 strategy logic;
+# it lets R4 applicability/session helpers resolve an expanded asset through
+# the same canonical 34-route anchor already used by the universe adapter.
+_ADAPTER_ANCHORS: dict[str, str] = {}
+
 
 def _tokens(asset: str, provider_name: str = '') -> tuple[str, str]:
     a = str(asset).upper().replace('-', '').replace('_', '')
@@ -82,9 +87,28 @@ def _copy_anchor_keys(module: Any, asset: str, anchor: str) -> None:
             except Exception: pass
 
 
+def _ensure_r4_asset_class_fallback() -> None:
+    import trailaris_r4_asset_adapter as r4a
+    if getattr(r4a, '_qv2_anchor_asset_class_fallback', False):
+        return
+    original = r4a.asset_class
+    def extended_asset_class(asset):
+        a=str(asset)
+        try:
+            return original(a)
+        except KeyError:
+            anchor=_ADAPTER_ANCHORS.get(a)
+            if anchor is None:
+                raise
+            return original(anchor)
+    r4a.asset_class=extended_asset_class
+    r4a._qv2_anchor_asset_class_fallback=True
+
+
 def install_asset(r4: Any, asset: str, provider_name: str = '') -> str:
     asset=str(asset); anchor=anchor_for(asset,provider_name)
     if asset in ORIGINAL_ROUTES: return anchor
+    _ADAPTER_ANCHORS[asset]=anchor
     _copy_anchor_keys(r4,asset,anchor)
     routes=getattr(r4,'ROUTES',None)
     if isinstance(routes,list) and asset not in routes: routes.append(asset)
@@ -92,6 +116,7 @@ def install_asset(r4: Any, asset: str, provider_name: str = '') -> str:
     try:
         import trailaris_r4_asset_adapter as r4a
         _copy_anchor_keys(r4a,asset,anchor)
+        _ensure_r4_asset_class_fallback()
     except Exception:
         pass
     return anchor
