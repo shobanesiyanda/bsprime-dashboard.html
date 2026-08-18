@@ -1,0 +1,71 @@
+name: Trailaris Quant V2 — 50 Missing Two Bundle Recovery
+on:
+  push:
+    branches: [trailaris-quant-v2-50-asset-evaluation-20260818]
+    paths: ['.github/workflows/trailaris_qv2_50_missing2_bundle_recovery.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-quant-v2-50-asset-evaluation-20260818}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install exact runtime
+        run: |
+          npm install --no-save --silent dukascopy-node@1.50.0
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+      - name: Create exact missing-two provider manifest
+        run: |
+          mkdir -p trailaris_50_asset/recovery
+          printf 'instrument_id\tcanonical_instrument\tprovider_name\norclususd\tORCL.US\tORCL.US/USD\nvususd\tV.US\tV.US/USD\n' > trailaris_50_asset/recovery/MISSING2.tsv
+      - name: Acquire exact 26-week M1
+        run: node trailaris_full_universe/acquire_duka_exact_26w_shard.js --manifest trailaris_50_asset/recovery/MISSING2.tsv --outdir missing2/raw --shard 0 --shards 1 --concurrency 2
+      - name: Build exact asset-local bundles if acquisition passes
+        env: {PYTHONPATH: '.:trailaris_r4:trailaris_full_universe'}
+        run: |
+          python - <<'PY'
+          import json
+          e=json.load(open('missing2/raw/ACQUISITION_EVIDENCE.json'))
+          print(json.dumps(e,indent=2))
+          assert e['assets_scheduled']==2 and e['assets_pass']==2,e
+          PY
+          python trailaris_100_asset/build_asset_bundle.py --rawdir missing2/raw --outdir missing2/bundle
+      - name: Preserve recovery status
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          ev=Path('missing2/raw/ACQUISITION_EVIDENCE.json')
+          e=json.loads(ev.read_text()) if ev.exists() else {'assets_scheduled':2,'assets_pass':0,'evidence':[]}
+          b=Path('missing2/bundle/BUNDLE_SUMMARY.json')
+          out={'state':'MISSING2_RECOVERY_COMPLETE' if b.exists() else 'MISSING2_RECOVERY_INCOMPLETE','assets_scheduled':e.get('assets_scheduled'),'assets_pass':e.get('assets_pass'),'evidence':[{k:r.get(k) for k in ['canonical_instrument','instrument_id','rows','full_window_coverage','status','first','last','error']} for r in e.get('evidence',[])],'bundle':json.loads(b.read_text()) if b.exists() else None}
+          Path('trailaris_50_asset/QV2_50_MISSING2_RECOVERY_STATUS.json').write_text(json.dumps(out,indent=2));print(json.dumps(out,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trailaris-qv2-50-missing2-bundle
+          path: |
+            trailaris_50_asset/QV2_50_MISSING2_RECOVERY_STATUS.json
+            missing2/raw/ACQUISITION_EVIDENCE.json
+            missing2/bundle/
+          retention-days: 30
+      - name: Commit compact recovery status
+        if: always()
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add trailaris_50_asset/QV2_50_MISSING2_RECOVERY_STATUS.json
+          git commit -m 'evidence: missing-two recovery status [skip ci]' || exit 0
+          git pull --rebase origin trailaris-quant-v2-50-asset-evaluation-20260818
+          git push origin HEAD:trailaris-quant-v2-50-asset-evaluation-20260818
