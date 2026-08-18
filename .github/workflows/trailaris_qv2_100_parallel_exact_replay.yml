@@ -1,0 +1,127 @@
+name: Trailaris Quant V2 — 100 Asset Parallel Exact Replay
+
+on:
+  push:
+    branches: [trailaris-r5-4-26week-validation-20260816]
+    paths:
+      - '.github/workflows/trailaris_qv2_100_parallel_exact_replay.yml'
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: trailaris-qv2-100-parallel-exact-replay
+  cancel-in-progress: false
+
+env:
+  SOURCE_BRANCH: trailaris-quant-v2-100-asset-canonical-expansion-20260818
+  QV2_BLOB: 120390ab52e80f51bafedc42389ceb7420a410f2
+  ASSEMBLED_ARTIFACT_ID: 9309264189
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        shard: [0,1,2,3,4,5]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-quant-v2-100-asset-canonical-expansion-20260818
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install runtime and reconstruct R4
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+          test "$(git rev-parse HEAD:trailaris_r5_5/longcycle_integrated_negative_refinement.py)" = "a6f6fcc8dfc1d265c5917dc9df3f3c73eb08d6cb"
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v1.py)" = "c3debf8da3f184d86c59a287b25a58ebe105bd03"
+      - name: Restore exact assembled 100-asset evidence
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          set -euo pipefail
+          mkdir -p assembled
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${ASSEMBLED_ARTIFACT_ID}/zip > assembled.zip
+          echo '7107e7b301c49ab2808009711fabef3e7e72674b5794fcd550196328f5ee678f  assembled.zip' | sha256sum -c -
+          unzip -q assembled.zip -d assembled
+          test -f assembled/ALL_CANDIDATES.csv.gz
+          test -f assembled/FEATURE_INDEX.csv
+      - name: Execute exact independent weekly promotion shard
+        env: {PYTHONPATH: '.:trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5'}
+        run: python trailaris_100_asset/promote_100_shard.py --universe-dir assembled --shard ${{ matrix.shard }} --shards 6 --outdir promoted-${{ matrix.shard }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-100-parallel-promoted-${{ matrix.shard }}
+          path: promoted-${{ matrix.shard }}/
+          retention-days: 30
+
+  replay:
+    needs: promote
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-quant-v2-100-asset-canonical-expansion-20260818
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install runtime and verify identities
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          python trailaris_r4/build_research_specs.py
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+          test "$(git rev-parse HEAD:trailaris_r5_5/longcycle_integrated_negative_refinement.py)" = "a6f6fcc8dfc1d265c5917dc9df3f3c73eb08d6cb"
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v1.py)" = "c3debf8da3f184d86c59a287b25a58ebe105bd03"
+      - name: Restore exact assembled 100-asset evidence
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          set -euo pipefail
+          mkdir -p assembled
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${ASSEMBLED_ARTIFACT_ID}/zip > assembled.zip
+          echo '7107e7b301c49ab2808009711fabef3e7e72674b5794fcd550196328f5ee678f  assembled.zip' | sha256sum -c -
+          unzip -q assembled.zip -d assembled
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: qv2-100-parallel-promoted-*
+          path: promoted
+      - name: Apply realized closed-balance lot sizing only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('trailaris_r5_4/R5_BASE_CAUSAL_ENGINE.py');s=p.read_text();old='r4.size_trade(r.asset,eq,rf,float(r.stop_distance),specs)';new='r4.size_trade(r.asset,balance,rf,float(r.stop_distance),specs)'
+          assert s.count(old)==2,s.count(old);p.write_text(s.replace(old,new));assert p.read_text().count(new)==2
+          print('REALIZED_CLOSED_BALANCE_SIZING_PASS')
+          PY
+      - name: Sequential portfolio replay from exact merged weekly promotions
+        env: {PYTHONPATH: '.:trailaris_r4:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5'}
+        run: python trailaris_100_asset/replay_100_from_promoted.py --universe-dir assembled --promoted-root promoted --specs trailaris_r4/research_proxy_specs.csv --balance-control trailaris_100_asset/QV2_34_BALANCE_REPLAY_RESULT.json --outdir replay-parallel
+      - name: Preserve fresh-universe selection evidence
+        run: cp assembled/FRESH_66_SELECTION_STATUS.json replay-parallel/FRESH_66_SELECTION_STATUS.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-qv2-100-asset-parallel-exact-replay
+          path: replay-parallel/
+          retention-days: 30
+      - name: Commit compact parallel evidence
+        run: |
+          set -euo pipefail
+          mkdir -p trailaris_100_asset/results_parallel
+          cp replay-parallel/QV2_100_REPLAY_STATUS.json trailaris_100_asset/results_parallel/
+          cp replay-parallel/QV2_100_WEEKLY.csv trailaris_100_asset/results_parallel/
+          cp replay-parallel/FRESH_66_SELECTION_STATUS.json trailaris_100_asset/results_parallel/
+          git config user.name github-actions[bot]
+          git config user.email 41898282+users.noreply.github.com
+          git add trailaris_100_asset/results_parallel/
+          git commit -m 'evidence: Quant V2 100-asset parallel exact replay [skip ci]'
+          git pull --rebase origin "$SOURCE_BRANCH"
+          git push origin HEAD:"$SOURCE_BRANCH"
