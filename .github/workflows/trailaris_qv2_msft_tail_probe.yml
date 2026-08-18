@@ -1,0 +1,63 @@
+name: Trailaris Quant V2 — MSFT M1 Tail Probe
+
+on:
+  push:
+    branches: [trailaris-qv2-50-independent-validation-20260818]
+    paths: ['.github/workflows/trailaris_qv2_msft_tail_probe.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-qv2-50-independent-validation-20260818
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Dukascopy runtime
+        run: npm install --no-save --silent dukascopy-node@1.50.0
+      - name: Probe package tail and raw daily objects
+        run: |
+          set -euo pipefail
+          mkdir -p msft_probe
+          node - <<'JS' > msft_probe/package_probe.json
+          const {getHistoricalRates}=require('dukascopy-node');
+          (async()=>{
+            const d=await getHistoricalRates({instrument:'msftususd',dates:{from:new Date('2025-07-07T00:00:00Z'),to:new Date('2025-08-01T00:00:00Z')},timeframe:'m1',format:'json',priceType:'bid',batchSize:1,pauseBetweenBatchesMs:1200});
+            const ts=(d||[]).map(x=>+x.timestamp).filter(Number.isFinite).sort((a,b)=>a-b);
+            console.log(JSON.stringify({instrument:'msftususd',rows:ts.length,first:ts.length?new Date(ts[0]).toISOString():null,last:ts.length?new Date(ts.at(-1)).toISOString():null,unique_days:[...new Set(ts.map(t=>new Date(t).toISOString().slice(0,10)))]},null,2));
+          })().catch(e=>{console.error(e);process.exit(2)});
+          JS
+          python - <<'PY'
+          import json,subprocess
+          from pathlib import Path
+          out=[]
+          for day in range(11,22):
+              # July is month 06 in Dukascopy's raw datafeed path.
+              url=f'https://datafeed.dukascopy.com/datafeed/MSFTUSUSD/2025/06/{day:02d}/BID_candles_min_1.bi5'
+              p=Path('msft_probe')/f'2025-07-{day:02d}.bi5'
+              r=subprocess.run(['curl','-L','--retry','3','--retry-delay','2','-sS','-w','%{http_code}','-o',str(p),url],capture_output=True,text=True)
+              out.append({'date':f'2025-07-{day:02d}','http_code':r.stdout[-3:] if r.stdout else '', 'bytes':p.stat().st_size if p.exists() else 0,'url':url})
+          Path('msft_probe/raw_probe.json').write_text(json.dumps(out,indent=2))
+          print(json.dumps(out,indent=2))
+          PY
+      - name: Preserve probe status
+        run: |
+          cp msft_probe/package_probe.json trailaris_50_asset/MSFT_PACKAGE_TAIL_PROBE.json
+          cp msft_probe/raw_probe.json trailaris_50_asset/MSFT_RAW_DAILY_TAIL_PROBE.json
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add trailaris_50_asset/MSFT_PACKAGE_TAIL_PROBE.json trailaris_50_asset/MSFT_RAW_DAILY_TAIL_PROBE.json
+          git commit -m 'evidence: probe MSFT M1 tail coverage [skip ci]' || exit 0
+          git pull --rebase origin trailaris-qv2-50-independent-validation-20260818 || true
+          git push origin HEAD:trailaris-qv2-50-independent-validation-20260818 || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-qv2-msft-tail-probe
+          path: msft_probe/
+          retention-days: 30
