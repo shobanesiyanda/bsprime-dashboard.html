@@ -1,4 +1,4 @@
-name: Trailaris Quant V2 — Window 2 Deriv Recovery Test
+name: Trailaris Quant V2 — Final Independent Deriv Recovery Test
 on:
   push:
     branches: [trailaris-qv2-50-independent-validation-20260818]
@@ -16,10 +16,10 @@ jobs:
         with: {node-version: '20'}
       - name: Install WebSocket runtime
         run: npm install --no-save --silent ws
-      - name: Acquire exact Deriv synthetics
-        run: node trailaris_50_asset/recover_independent_deriv.js --start '2024-12-16T00:00:00Z' --end '2025-07-14T00:00:00Z' --outdir deriv5
+      - name: Acquire exact Deriv synthetics on final provider-defined window
+        run: node trailaris_50_asset/recover_independent_deriv.js --start '2024-11-18T00:00:00Z' --end '2025-06-16T00:00:00Z' --outdir deriv5
       - uses: actions/upload-artifact@v4
         with:
-          name: qv2-window2-deriv-recovery-test
+          name: qv2-final-independent-deriv-recovery-test
           path: deriv5/
           retention-days: 30
