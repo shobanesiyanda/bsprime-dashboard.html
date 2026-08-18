@@ -1,0 +1,52 @@
+name: Trailaris Quant V2 — MSFT Official Raw M1 Recovery
+
+on:
+  push:
+    branches: [trailaris-qv2-50-independent-validation-20260818]
+    paths: ['.github/workflows/trailaris_qv2_msft_raw_recovery.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-qv2-50-independent-validation-20260818
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Recover exact MSFT.US official raw M1 estate
+        run: python trailaris_50_asset/recover_independent_msft_raw.py --start '2024-12-23T00:00:00Z' --end '2025-07-21T00:00:00Z' --outdir raw_msft
+      - name: Enforce exact MSFT data gate
+        run: |
+          python - <<'PY'
+          import json,pandas as pd
+          from pathlib import Path
+          e=json.load(open('raw_msft/MSFT_RAW_RECOVERY_EVIDENCE.json'))
+          assert e['canonical_instrument']=='MSFT.US' and e['instrument_id']=='msftususd'
+          assert e['status']=='PASS' and e['full_window_coverage'] and e['rows']>=45000
+          assert e['invalid_records']==0 and e['bad_layout_days']==0 and e['conflicting_duplicates']==0
+          f=Path('raw_msft/MSFT.US_M1_normalized.csv');assert f.exists()
+          d=pd.read_csv(f);assert len(d)==e['rows'];assert d.timestamp.is_unique
+          ts=pd.to_datetime(d.timestamp,utc=True);assert ts.min()<=pd.Timestamp('2024-12-26T00:00:00Z');assert ts.max()>=pd.Timestamp('2025-07-17T00:00:00Z')
+          print('MSFT_EXACT_RAW_INDEPENDENT_GATE PASS',len(d),ts.min(),ts.max())
+          PY
+      - name: Preserve compact evidence
+        run: |
+          cp raw_msft/MSFT_RAW_RECOVERY_EVIDENCE.json trailaris_50_asset/MSFT_RAW_INDEPENDENT_RECOVERY_EVIDENCE.json
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add trailaris_50_asset/MSFT_RAW_INDEPENDENT_RECOVERY_EVIDENCE.json
+          git commit -m 'evidence: exact MSFT official raw independent-window recovery [skip ci]' || exit 0
+          git pull --rebase origin trailaris-qv2-50-independent-validation-20260818 || true
+          git push origin HEAD:trailaris-qv2-50-independent-validation-20260818 || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-independent-msft-raw
+          path: raw_msft/
+          retention-days: 30
