@@ -24,10 +24,12 @@ jobs:
           set -euo pipefail
           mkdir -p trailaris_50_asset
           gh run list --workflow trailaris_qv2_34_recompute_from_bundle.yml --branch trailaris-qv2-50-independent-validation-20260818 --limit 5 --json databaseId,status,conclusion,headSha,createdAt,updatedAt,url > trailaris_50_asset/ACTIVE_ORIGINAL34_CORRECTED_DD_STATUS.json
+          gh run list --workflow trailaris_qv2_locate_34_control_artifact.yml --branch trailaris-qv2-50-independent-validation-20260818 --limit 5 --json databaseId,status,conclusion,headSha,createdAt,updatedAt,url > trailaris_50_asset/ACTIVE_34_CONTROL_LOCATOR_STATUS.json
           gh run list --workflow trailaris_qv2_msft_tail_probe.yml --branch trailaris-qv2-50-independent-validation-20260818 --limit 5 --json databaseId,status,conclusion,headSha,createdAt,updatedAt,url > trailaris_50_asset/ACTIVE_MSFT_TAIL_PROBE_STATUS.json
           gh run list --workflow trailaris_qv2_msft_raw_recovery.yml --branch trailaris-qv2-50-independent-validation-20260818 --limit 5 --json databaseId,status,conclusion,headSha,createdAt,updatedAt,url > trailaris_50_asset/ACTIVE_MSFT_RAW_RECOVERY_STATUS.json
           gh run list --workflow trailaris_qv2_deriv_paged_recovery.yml --branch trailaris-qv2-50-independent-validation-20260818 --limit 5 --json databaseId,status,conclusion,headSha,createdAt,updatedAt,url > trailaris_50_asset/ACTIVE_DERIV_PAGED_RECOVERY_STATUS.json
           cat trailaris_50_asset/ACTIVE_ORIGINAL34_CORRECTED_DD_STATUS.json
+          cat trailaris_50_asset/ACTIVE_34_CONTROL_LOCATOR_STATUS.json
           cat trailaris_50_asset/ACTIVE_MSFT_TAIL_PROBE_STATUS.json
           cat trailaris_50_asset/ACTIVE_MSFT_RAW_RECOVERY_STATUS.json
           cat trailaris_50_asset/ACTIVE_DERIV_PAGED_RECOVERY_STATUS.json
@@ -35,7 +37,7 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add trailaris_50_asset/ACTIVE_ORIGINAL34_CORRECTED_DD_STATUS.json trailaris_50_asset/ACTIVE_MSFT_TAIL_PROBE_STATUS.json trailaris_50_asset/ACTIVE_MSFT_RAW_RECOVERY_STATUS.json trailaris_50_asset/ACTIVE_DERIV_PAGED_RECOVERY_STATUS.json
+          git add trailaris_50_asset/ACTIVE_ORIGINAL34_CORRECTED_DD_STATUS.json trailaris_50_asset/ACTIVE_34_CONTROL_LOCATOR_STATUS.json trailaris_50_asset/ACTIVE_MSFT_TAIL_PROBE_STATUS.json trailaris_50_asset/ACTIVE_MSFT_RAW_RECOVERY_STATUS.json trailaris_50_asset/ACTIVE_DERIV_PAGED_RECOVERY_STATUS.json
           git commit -m 'status: snapshot active Quant V2 diagnostics [skip ci]' || exit 0
           git pull --rebase origin trailaris-qv2-50-independent-validation-20260818 || true
           git push origin HEAD:trailaris-qv2-50-independent-validation-20260818 || true
