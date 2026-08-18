@@ -1,0 +1,58 @@
+name: Trailaris Quant V2 — Independent 34 Data Recovery
+on:
+  push:
+    branches: [trailaris-qv2-50-independent-validation-20260818]
+    paths: ['.github/workflows/trailaris_qv2_50_independent_34_recovery.yml']
+permissions:
+  contents: read
+env:
+  START: '2024-12-23T00:00:00Z'
+  END: '2025-07-21T00:00:00Z'
+jobs:
+  acquire34:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-50-independent-validation-20260818}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install acquisition runtime
+        run: |
+          npm install --no-save --silent dukascopy-node@1.50.0 ws
+          python -m pip install --quiet pandas numpy
+      - name: Acquire untouched original-34 M1 estate with sharded core pulls
+        shell: bash
+        run: |
+          set -euo pipefail
+          node trailaris_50_asset/acquire_independent_core.js --start "$START" --end "$END" --outdir raw_core --chunk-days 28 > core.log 2>&1 & P1=$!
+          python trailaris_50_asset/acquire_independent_crypto.py --start "$START" --end "$END" --outdir raw_crypto > crypto.log 2>&1 & P2=$!
+          FAIL=0; wait $P1 || FAIL=1; wait $P2 || FAIL=1
+          cat core.log; cat crypto.log
+          test "$FAIL" = 0
+      - name: Merge and enforce exact 34 acquisition gate
+        run: |
+          python - <<'PY'
+          import json,shutil
+          from pathlib import Path
+          routes=['EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF','XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS','V75','V50','V100','V25','V10']
+          root=Path('raw34');root.mkdir();rows=[]
+          for src,name in [(Path('raw_core'),'ACQUISITION_EVIDENCE_CORE.json'),(Path('raw_crypto'),'ACQUISITION_EVIDENCE_CRYPTO.json')]:
+              e=json.loads((src/name).read_text())
+              for r in e['evidence']:
+                  asset=str(r['canonical_instrument']);p=src/f'{asset}_M1_normalized.csv'
+                  if r['status']=='PASS':assert p.exists(),(asset,p);dst=root/p.name;shutil.copy2(p,dst);r['file']=str(dst)
+                  rows.append(r)
+          assert len(rows)==34 and {r['canonical_instrument'] for r in rows}==set(routes)
+          bad=[r for r in rows if r['status']!='PASS' or not r.get('full_window_coverage')]
+          assert not bad,bad
+          out={'start':'2024-12-23T00:00:00Z','end_exclusive':'2025-07-21T00:00:00Z','assets_scheduled':34,'assets_pass':34,'evidence':rows,'data_reused_from_2026':False}
+          (root/'ACQUISITION_EVIDENCE.json').write_text(json.dumps(out,indent=2));print('INDEPENDENT_34_DATA_GATE PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-independent-raw34-recovery
+          path: raw34/
+          retention-days: 30
