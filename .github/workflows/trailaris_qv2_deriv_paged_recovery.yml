@@ -1,0 +1,55 @@
+name: Trailaris Quant V2 — Deriv Paged Independent Recovery
+
+on:
+  push:
+    branches: [trailaris-qv2-50-independent-validation-20260818]
+    paths: ['.github/workflows/trailaris_qv2_deriv_paged_recovery.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: trailaris-qv2-50-independent-validation-20260818
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install WebSocket runtime
+        run: npm install --no-save --silent ws
+      - name: Recover exact five Deriv synthetics on untouched window
+        run: node trailaris_50_asset/recover_independent_deriv_paged.js --start '2024-12-23T00:00:00Z' --end '2025-07-21T00:00:00Z' --outdir raw_deriv5 --pace-ms 4000 --count 5000
+      - name: Enforce exact synthetic data gate
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          e=json.loads(Path('raw_deriv5/DERIV_RECOVERY_EVIDENCE.json').read_text())
+          expected={'V75','V50','V100','V25','V10'}
+          by={r['canonical_instrument']:r for r in e['evidence']}
+          assert set(by)==expected and e['assets_pass']==5
+          for a,r in by.items():
+              assert r['status']=='PASS' and r['full_window_coverage'] and r['rows']>=250000
+              assert int(r.get('invalid',0))==0 and int(r.get('conflicts',0))==0
+              assert Path('raw_deriv5',f'{a}_M1_normalized.csv').exists()
+          print('DERIV_EXACT5_INDEPENDENT_GATE PASS')
+          PY
+      - name: Preserve compact recovery evidence
+        run: |
+          cp raw_deriv5/DERIV_RECOVERY_EVIDENCE.json trailaris_50_asset/DERIV_PAGED_INDEPENDENT_RECOVERY_EVIDENCE.json
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add trailaris_50_asset/DERIV_PAGED_INDEPENDENT_RECOVERY_EVIDENCE.json
+          git commit -m 'evidence: exact Deriv independent-window recovery [skip ci]' || exit 0
+          git pull --rebase origin trailaris-qv2-50-independent-validation-20260818 || true
+          git push origin HEAD:trailaris-qv2-50-independent-validation-20260818 || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-independent-deriv5-paged
+          path: raw_deriv5/
+          retention-days: 30
