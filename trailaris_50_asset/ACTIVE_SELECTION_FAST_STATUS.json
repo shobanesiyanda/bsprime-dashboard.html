@@ -1,0 +1,55 @@
+{
+  "run_id": 32112762524,
+  "status": "in_progress",
+  "conclusion": null,
+  "jobs": [
+    {
+      "id": 95635601701,
+      "name": "core (SOLUSD)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 95635601770,
+      "name": "core (V100)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 95635601776,
+      "name": "core (V25)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 95635601779,
+      "name": "core (V10)",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "id": 95635601781,
+      "name": "core (BNBUSD)",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "id": 95635601795,
+      "name": "core (V75)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 95635601853,
+      "name": "core (V50)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 95635601855,
+      "name": "core (XRPUSD)",
+      "status": "in_progress",
+      "conclusion": null
+    }
+  ]
+}
