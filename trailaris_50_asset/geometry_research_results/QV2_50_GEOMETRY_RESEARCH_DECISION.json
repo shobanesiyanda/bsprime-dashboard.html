@@ -1,0 +1,72 @@
+{
+  "state": "QV2_50_GEOMETRY_RESEARCH_DECISION_COMPLETE",
+  "research_branch": "trailaris-qv2-50-geometry-research-20260818",
+  "source_exact_50_replay_run_id": 32120438494,
+  "source_exact_50_result_artifact_id": 9318836671,
+  "geometry_research_run_id": 32130845452,
+  "geometry_research_artifact_id": 9322177155,
+  "geometry_research_artifact_digest": "sha256:363ce50527ec0d443f7a4efa60e1b9f6afe3092d948d685eedffb71d4283c9eb",
+  "strategy_blob": "120390ab52e80f51bafedc42389ceb7420a410f2",
+  "quant_v2_modified": false,
+  "asset_universe_modified": false,
+  "promotion_estate_modified": false,
+  "metric_correction": {
+    "legacy_reported_50_event_drawdown_pct": -5.246810634190813,
+    "batch_consistent_50_event_drawdown_pct": -2.6241854930341,
+    "closed_balance_34_event_drawdown_pct": -2.702834147462363,
+    "interpretation": "The legacy global event-DD calculation interleaved independently week-local accounting states and could temporarily mark a same-timestamp due-to-close position beyond its defined exit while another due position was processed first. Using the final post-close state at each timestamp within each evaluated week removes that measurement artifact without changing decisions, sizing, P&L, weekly returns or ending balance."
+  },
+  "control_50": {
+    "end_balance_usd": 1679.446783649415,
+    "return_pct": 1579.446783649415,
+    "positive_weeks": 26,
+    "weeks_ge_5pct": 23,
+    "weeks_ge_10pct": 21,
+    "trades": 2672,
+    "profit_factor": 2.8635515153693523,
+    "batch_consistent_event_drawdown_pct": -2.6241854930341,
+    "max_weekly_drawdown_pct": -2.6065436400701913,
+    "weekly_return_min_pct": 4.033087333450713,
+    "core34_inside_50": {
+      "trades": 2028,
+      "net_event_pnl_usd": 1225.8725524254387,
+      "profit_factor": 3.0278340854894794
+    },
+    "expansion16": {
+      "trades": 644,
+      "net_event_pnl_usd": 352.49158611415476,
+      "profit_factor": 2.453917950809415,
+      "selected_assets": 14
+    }
+  },
+  "variants": {
+    "FACTOR100": {
+      "end_balance_usd": 1676.0137788934214,
+      "trades": 2526,
+      "profit_factor": 2.915621115685882,
+      "batch_consistent_event_drawdown_pct": -2.71084188534401,
+      "decision": "REJECT_AS_SUCCESSOR",
+      "reason": "PF improves modestly but 146 trades are lost, ending balance is slightly lower, and corrected event DD is slightly worse than control."
+    },
+    "WEEK8": {
+      "end_balance_usd": 1267.6182757556842,
+      "trades": 2672,
+      "profit_factor": 2.8736077176770984,
+      "batch_consistent_event_drawdown_pct": -2.5313417848153796,
+      "decision": "REJECT_AS_SUCCESSOR",
+      "reason": "Earlier weekly risk throttling materially destroys compounding for only negligible PF improvement."
+    },
+    "FACTOR100_WEEK8": {
+      "end_balance_usd": 1382.2019446617655,
+      "trades": 2589,
+      "profit_factor": 2.948484885321066,
+      "batch_consistent_event_drawdown_pct": -2.56072115849071,
+      "decision": "REJECT_AS_SUCCESSOR",
+      "reason": "PF and drawdown improve modestly but ending balance falls below the 34 closed-balance control and 83 trades are lost."
+    }
+  },
+  "research_conclusion": "CONTROL_50_RETAINS_LEAD. The exact 50 does not require a portfolio overlay based on these tests. Its original 34-asset core preserves PF approximately 3.03 inside the expanded universe, the 16 additions contribute substantial positive P&L and trade throughput, and the corrected event drawdown is slightly better than the 34 control. Do not change Quant V2 or the exact 50 universe on the basis of these exploratory variants.",
+  "next_gate": "PRESERVE_CURRENT_50_AND_RUN_FRESH_INDEPENDENT_VALIDATION_WITH_BATCH_CONSISTENT_EVENT_DRAWDOWN_REPORTED_ALONGSIDE_LEGACY_METRIC",
+  "automatic_promotion": false,
+  "evidence_class": "EXPLORATORY_26_WEEK_CAUSAL_WALK_FORWARD_RESEARCH_PROXY; SAME EVALUATION WINDOW USED FOR VARIANT COMPARISON; FRESH VALIDATION REQUIRED BEFORE PROMOTION"
+}
