@@ -20,7 +20,9 @@ jobs:
         with: {node-version: '20'}
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
-      - run: npm install --no-save --silent dukascopy-node@1.50.0
+      - run: |
+          npm install --no-save --silent dukascopy-node@1.50.0
+          python -m pip install --quiet pandas
       - name: Resolve exact approved 16
         env: {GH_TOKEN: '${{ github.token }}'}
         run: |
