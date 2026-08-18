@@ -33,3 +33,4 @@ jobs:
           git commit -m 'ops: snapshot independent validation [skip ci]' || exit 0
           git pull --rebase origin trailaris-qv2-50-independent-validation-20260818 || true
           git push origin HEAD:trailaris-qv2-50-independent-validation-20260818 || true
+# probe-trigger-20260818
