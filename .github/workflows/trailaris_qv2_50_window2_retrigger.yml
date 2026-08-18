@@ -1,0 +1,15 @@
+name: Trailaris Quant V2 — Window 2 Retrigger
+on:
+  push:
+    branches: [trailaris-qv2-50-independent-validation-20260818]
+    paths: ['.github/workflows/trailaris_qv2_50_window2_retrigger.yml']
+permissions:
+  actions: write
+  contents: read
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch repaired window2 data gate
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: gh workflow run trailaris_qv2_50_independent_window2_data.yml --ref trailaris-qv2-50-independent-validation-20260818
