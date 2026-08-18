@@ -1,0 +1,28 @@
+{
+  "state": "MISSING2_RECOVERY_INCOMPLETE",
+  "assets_scheduled": 2,
+  "assets_pass": 1,
+  "evidence": [
+    {
+      "canonical_instrument": "V.US",
+      "instrument_id": "vususd",
+      "rows": 37341,
+      "full_window_coverage": true,
+      "status": "PASS",
+      "first": "2026-01-21T14:30:00.000Z",
+      "last": "2026-08-14T19:59:00.000Z",
+      "error": null
+    },
+    {
+      "canonical_instrument": "ORCL.US",
+      "instrument_id": "orclususd",
+      "rows": 7348,
+      "full_window_coverage": false,
+      "status": "FAIL",
+      "first": "2026-01-22T14:30:00.000Z",
+      "last": "2026-08-14T19:59:00.000Z",
+      "error": null
+    }
+  ],
+  "bundle": null
+}
