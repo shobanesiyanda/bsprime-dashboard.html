@@ -34,7 +34,7 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add trailaris_50_asset/ACTIVE_FINAL_INDEPENDENT_STATUS.json
-          git commit -m 'ops: snapshot final independent validation [skip ci]' || exit 0
+          git commit -m 'ops: refresh final independent validation [skip ci]' || exit 0
           git pull --rebase origin trailaris-qv2-50-independent-validation-20260818 || true
           git push origin HEAD:trailaris-qv2-50-independent-validation-20260818 || true
-# final-independent-status
+# final-independent-refresh-2
