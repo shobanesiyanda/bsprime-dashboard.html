@@ -1,0 +1,43 @@
+{
+  "state": "FINAL_PROVIDER_DEFINED_INDEPENDENT_ACCEPTANCE_GATE_PRESERVED_BEFORE_REPLAY",
+  "window_selection_evidence": {
+    "run_id": 32151327468,
+    "artifact_id": 9329856266,
+    "artifact_digest": "sha256:ead78241c97fc2f2c066219943a0ed83f04ee069fb1c2c6cc16ad503ee141728",
+    "selection_rule": "Latest Monday boundary not later than the 2025-07-21 calibration start for which every exact Dukascopy-backed asset has a valid M1 bar within the preceding four calendar days. Provider timestamps only; no strategy outcomes."
+  },
+  "prior_candidate_windows": {
+    "2025-01-20_to_2025-07-21": "INVALIDATED_AT_RAW_DATA_GATE_BEFORE_REPLAY__MSFT_US_COVERAGE",
+    "2025-01-13_to_2025-07-14": "INVALIDATED_AT_RAW_DATA_GATE_BEFORE_REPLAY__SOYBEAN_CMD_COVERAGE"
+  },
+  "strategy_outcomes_observed_from_prior_candidate_windows": false,
+  "thresholds_changed_from_v1_or_v2": false,
+  "raw_window": "2024-11-18T00:00:00Z/2025-06-16T00:00:00Z",
+  "evaluated_window": "2024-12-16T00:00:00Z/2025-06-16T00:00:00Z",
+  "evaluated_weeks": 26,
+  "comparison": "EXACT_50_VS_ORIGINAL_34_ON_IDENTICAL_UNTOUCHED_MARKET_WINDOW",
+  "strategy_blob": "120390ab52e80f51bafedc42389ceb7420a410f2",
+  "asset_50_manifest": "trailaris_50_asset/QV2_50_APPROVED_EVALUATION_16.txt plus original 34",
+  "no_reuse": [
+    "No 2025-07-21 through 2026-01-19 complementarity-calibration outcomes",
+    "No 2026-01-19 through 2026-08-15 evaluation candidates, promotions, features or outcomes",
+    "No strategy outcomes from rejected independent-window candidates because neither reached promotion/replay",
+    "No post-result parameter or acceptance-threshold tuning"
+  ],
+  "drawdown_authority": "Batch-consistent mark-to-market within each independent week-local replay book; legacy global event metric is lineage only",
+  "serious_production_candidate_gate": {
+    "end_balance_50_gt_34": true,
+    "executed_trades_50_gt_34": true,
+    "profit_factor_50_min": 2.25,
+    "profit_factor_50_ratio_to_34_min": 0.90,
+    "batch_event_drawdown_50_floor_pct": -4.0,
+    "batch_event_drawdown_50_not_worse_than_34_by_more_than_percentage_points": 0.75,
+    "positive_weeks_50_min": 24,
+    "positive_weeks_50_not_lower_than_34_by_more_than": 1,
+    "expansion16_net_pnl_usd_gt": 0.0,
+    "expansion16_profit_factor_min": 1.50,
+    "executed_trades_50_min": 2000
+  },
+  "interpretation": "The 50 is supported as the leading production-universe candidate only if it adds both capital growth and transaction throughput on untouched data without materially diluting edge quality or drawdown relative to the 34 control. Broker/account certification remains a separate gate.",
+  "automatic_production_promotion": false
+}
