@@ -1,0 +1,136 @@
+name: Trailaris Quant V2 — 34 Success Attribution
+
+on:
+  push:
+    branches: [trailaris-qv2-34-success-attribution-20260818]
+    paths: ['.github/workflows/trailaris_qv2_34_success_attribution.yml']
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+env:
+  BRANCH: trailaris-qv2-34-success-attribution-20260818
+  ORIGINAL34_ARTIFACT_ID: 9308647757
+  QV2_BLOB: 120390ab52e80f51bafedc42389ceb7420a410f2
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-34-success-attribution-20260818}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Restore exact runtime and original-34 evidence
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${ORIGINAL34_ARTIFACT_ID}/zip > original34.zip
+          echo '50998265a97ea185025fc6b540f27f54e50157e9b233bfa01038c386e5750c27  original34.zip' | sha256sum -c -
+          mkdir original34 && unzip -q original34.zip -d original34
+      - name: Rebuild exact original-34 global candidate universe
+        env: {PYTHONPATH: '.:trailaris_r4:trailaris_full_universe'}
+        run: python trailaris_34_attribution/assemble_34_universe.py --bundle original34 --factor-feed original34/Trailaris_R3_FactorFeed.csv --outdir assembled34
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-34-attribution-assembled
+          path: assembled34/
+          retention-days: 30
+
+  promote:
+    needs: assemble
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        shard: [0,1,2,3,4,5]
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-34-success-attribution-20260818}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Restore exact runtime
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+          test "$(git rev-parse HEAD:trailaris_r5_5/longcycle_integrated_negative_refinement.py)" = 'a6f6fcc8dfc1d265c5917dc9df3f3c73eb08d6cb'
+      - uses: actions/download-artifact@v4
+        with: {name: qv2-34-attribution-assembled, path: assembled34}
+      - name: Run exact weekly gate cascade shard
+        env: {PYTHONPATH: '.:trailaris_r4:trailaris_full_universe:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5'}
+        run: python trailaris_34_attribution/promote_34_shard.py --universe-dir assembled34 --shard ${{ matrix.shard }} --shards 6 --outdir promotion-${{ matrix.shard }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qv2-34-attribution-promotion-${{ matrix.shard }}
+          path: promotion-${{ matrix.shard }}/
+          retention-days: 30
+
+  replay_attribution:
+    needs: promote
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-34-success-attribution-20260818}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Restore runtime and verify preserved identities
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pandas numpy
+          cat trailaris_r4/r4_runner.part00 trailaris_r4/r4_runner.part01 trailaris_r4/r4_runner.part02 trailaris_r4/r4_runner.part03 trailaris_r4/r4_runner.part040 trailaris_r4/r4_runner.part041 trailaris_r4/r4_runner.part05 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_full_universe_loop.py
+          cat trailaris_r4/r4_adapter.part00 trailaris_r4/r4_adapter.part01 | base64 -d | gzip -d > trailaris_r4/trailaris_r4_asset_adapter.py
+          python trailaris_r4/build_research_specs.py
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+          test "$(git rev-parse HEAD:trailaris_r5_5/longcycle_integrated_negative_refinement.py)" = 'a6f6fcc8dfc1d265c5917dc9df3f3c73eb08d6cb'
+      - uses: actions/download-artifact@v4
+        with: {name: qv2-34-attribution-assembled, path: assembled34}
+      - uses: actions/download-artifact@v4
+        with: {pattern: qv2-34-attribution-promotion-*, path: promoted}
+      - name: Apply exact realized closed-balance sizing semantic
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('trailaris_r5_4/R5_BASE_CAUSAL_ENGINE.py');s=p.read_text();old='r4.size_trade(r.asset,eq,rf,float(r.stop_distance),specs)';new='r4.size_trade(r.asset,balance,rf,float(r.stop_distance),specs)'
+          assert s.count(old)==2,s.count(old);p.write_text(s.replace(old,new));assert p.read_text().count(new)==2
+          print('REALIZED_CLOSED_BALANCE_SIZING PASS')
+          PY
+      - name: Reproduce 34 control and generate success attribution
+        env: {PYTHONPATH: '.:trailaris_r4:trailaris_full_universe:trailaris_r5_4:trailaris_r5_4/reliability_variants:trailaris_r5_5'}
+        run: python trailaris_34_attribution/replay_and_attribute_34.py --universe-dir assembled34 --promoted-root promoted --specs trailaris_r4/research_proxy_specs.csv --control trailaris_100_asset/QV2_34_BALANCE_REPLAY_RESULT.json --outdir attribution34
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-qv2-34-success-attribution
+          path: attribution34/
+          retention-days: 30
+      - name: Preserve compact attribution evidence
+        run: |
+          set -euo pipefail
+          mkdir -p trailaris_34_attribution/results
+          cp attribution34/QV2_34_SUCCESS_ATTRIBUTION_SUMMARY.json trailaris_34_attribution/results/
+          cp attribution34/QV2_34_ATTRIBUTION_BY_ASSET.csv trailaris_34_attribution/results/
+          cp attribution34/QV2_34_ATTRIBUTION_BY_STRATEGY_FAMILY.csv trailaris_34_attribution/results/
+          cp attribution34/QV2_34_ATTRIBUTION_BY_TIER.csv trailaris_34_attribution/results/
+          cp attribution34/QV2_34_ATTRIBUTION_BY_ASSET_CLASS.csv trailaris_34_attribution/results/
+          cp attribution34/QV2_34_GATE_REJECTION_EFFICACY.csv trailaris_34_attribution/results/
+          cp attribution34/QV2_34_PORTFOLIO_REJECTION_EFFICACY.csv trailaris_34_attribution/results/
+          cp attribution34/QV2_34_MAX_DD_ATTRIBUTION_BY_ASSET.csv trailaris_34_attribution/results/
+          cp attribution34/QV2_34_MAX_DD_ACTIVE_POSITIONS.csv trailaris_34_attribution/results/
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add trailaris_34_attribution/results/
+          git commit -m 'evidence: preserve exact 34 success attribution [skip ci]' || exit 0
+          git pull --rebase origin "$BRANCH"
+          git push origin HEAD:"$BRANCH"
