@@ -1,0 +1,155 @@
+name: Trailaris Quant V2 — 100 Asset Expansion Preflight
+
+on:
+  push:
+    branches: [trailaris-quant-v2-100-asset-canonical-expansion-20260818]
+    paths:
+      - '.github/workflows/trailaris_quant_v2_100_asset_preflight.yml'
+      - 'trailaris_100_asset/**'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: trailaris-quant-v2-100-asset-preflight
+  cancel-in-progress: false
+
+env:
+  QV2_BLOB: 120390ab52e80f51bafedc42389ceb7420a410f2
+  DISCOVERY_ARTIFACT_ID: 9301401424
+  BASELINE_ARTIFACT_ID: 9284801783
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify Quant V2 strategy identity
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:trailaris_r5_5/quantitative_integrated_v2.py)" = "$QV2_BLOB"
+
+      - name: Fetch preserved discovery evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${DISCOVERY_ARTIFACT_ID}/zip > discovery.zip
+          mkdir discovery
+          unzip -q discovery.zip -d discovery
+          test -f discovery/DISCOVERY_SUMMARY.json
+          test -f discovery/FACTOR_COMPATIBLE_UNIVERSE.tsv
+
+      - name: Resolve fixed 66 assets without outcome information
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import csv
+
+          original = {
+            'EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','USDCHF','NZDUSD','EURJPY','GBPJPY','EURGBP','AUDJPY','CADJPY','GBPCHF',
+            'XAUUSD','XAGUSD','BTCUSD','ETHUSD','SOLUSD','BNBUSD','XRPUSD','US100','US500','US30','GER40','UK100','JP225','WTI','BRENT','NATGAS',
+            'V75','V50','V100','V25','V10'
+          }
+          chosen=[x.strip() for x in Path('trailaris_100_asset/ADDITIONAL_66_CANONICAL.txt').read_text().splitlines() if x.strip()]
+          assert len(chosen)==66, len(chosen)
+          assert len(set(chosen))==66
+          assert not (set(chosen) & original), sorted(set(chosen) & original)
+
+          s=json.loads(Path('discovery/DISCOVERY_SUMMARY.json').read_text())
+          assert s['provider_metadata_instruments']==1499
+          assert s['with_full_26w_m1_window']==1492
+          assert s['frozen_factor_contract_compatible']==1492
+          assert s['outcome_information_used'] is False
+
+          with open('discovery/FACTOR_COMPATIBLE_UNIVERSE.tsv', newline='', encoding='utf-8') as f:
+            rows=list(csv.DictReader(f, delimiter='\t'))
+          by={r['canonical_instrument']:r for r in rows}
+          missing=[a for a in chosen if a not in by]
+          assert not missing, missing
+
+          out=Path('preflight')
+          out.mkdir(exist_ok=True)
+          with (out/'ADDITIONAL_66_RESOLVED.tsv').open('w',encoding='utf-8',newline='') as f:
+            w=csv.writer(f,delimiter='\t',lineterminator='\n')
+            w.writerow(['instrument_id','canonical_instrument','provider_name'])
+            for a in chosen:
+              r=by[a]
+              w.writerow([r['instrument_id'],a,r['provider_name']])
+          print('ASSET_SET_READY 34 + 66 = 100')
+          PY
+
+      - name: Fetch and verify 1389.64 canonical baseline evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api repos/shobanesiyanda/bsprime-dashboard.html/actions/artifacts/${BASELINE_ARTIFACT_ID}/zip > baseline.zip
+          mkdir baseline
+          unzip -q baseline.zip -d baseline
+          python - <<'PY'
+          import json
+          import pandas as pd
+          from pathlib import Path
+
+          status=json.loads(Path('baseline/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_STATUS.json').read_text())
+          c=status['candidate']
+          assert abs(c['end_equity']-1389.6425169269207)<1e-9
+          assert abs(c['compounded_return_pct']-1289.6425169269207)<1e-9
+          assert c['positive_weeks']==26 and c['negative_weeks']==0
+          assert abs(c['profit_factor']-2.9703730692297037)<1e-12
+
+          ev=pd.read_csv('baseline/R5_5_QUANTITATIVE_V2_EXACT_ESTATE_EVENTS.csv')
+          diff=(pd.to_numeric(ev['equity_at_entry'])-pd.to_numeric(ev['balance_at_entry'])).abs()>1e-9
+          assert len(ev)==2119
+          assert int(diff.sum())==360
+          Path('preflight').mkdir(exist_ok=True)
+          Path('preflight/BASELINE_EVIDENCE.json').write_text(json.dumps({
+            'ending_balance_usd':c['end_equity'],
+            'compounded_return_pct':c['compounded_return_pct'],
+            'positive_weeks':c['positive_weeks'],
+            'profit_factor':c['profit_factor'],
+            'event_rows':len(ev),
+            'entry_rows_equity_not_equal_balance':int(diff.sum())
+          },indent=2))
+          print('CANONICAL_BASELINE_EVIDENCE_VERIFIED')
+          PY
+
+      - name: Audit compounding semantic before any 100-asset replay
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          src=Path('trailaris_r5_4/R5_BASE_CAUSAL_ENGINE.py').read_text()
+          uses_mtm='eq=mtm(t)' in src.replace(' ','')
+          sizes_from_eq='size_trade(r.asset,eq,rf' in src.replace(' ','')
+          report={
+            'state':'READY_FOR_RECONCILIATION',
+            'target_assets':100,
+            'baseline_assets':34,
+            'additional_assets':66,
+            'strategy_blob_preserved':True,
+            'closed_balance_compounding_required':True,
+            'observed_engine_sizes_fresh_entries_from_marked_equity':bool(uses_mtm and sizes_from_eq),
+            'successor_replay_authorized':False,
+            'reason':'Founder-defined fresh-position sizing uses realized closed account balance; current baseline engine passes marked equity into position sizing. Reconcile the 34-asset reference before expanding to 100.'
+          }
+          Path('preflight/100_ASSET_PREFLIGHT_STATUS.json').write_text(json.dumps(report,indent=2))
+          print(json.dumps(report,indent=2))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trailaris-qv2-100-asset-preflight
+          path: preflight/
+          retention-days: 30
