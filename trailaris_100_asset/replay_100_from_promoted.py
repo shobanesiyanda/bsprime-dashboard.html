@@ -21,11 +21,14 @@ def main():
         x=pd.read_csv(a.universe_dir/str(r.feature_file));x['timestamp']=pd.to_datetime(x.timestamp,utc=True);fcache[str(r.asset)]=x.sort_values('timestamp').reset_index(drop=True)
     if len(fcache)!=100:raise RuntimeError(f'feature cache integrity {len(fcache)}/100')
     import trailaris_r4_full_universe_loop as r4
-    # Load the canonical 34-route research specifications before expanding r4.ROUTES.
-    # r4.load_specs deliberately fail-closes unless the route set is exactly the frozen 34.
+    # Load frozen 34-route specs before expanding r4.ROUTES. load_specs returns an asset-indexed frame;
+    # extend_research_specs operates on the explicit asset column, then we restore the indexed shape
+    # required by the unchanged sizing function.
     base_specs=r4.load_specs(a.specs,'research-proxy')
+    base_specs_frame=base_specs.reset_index() if 'asset' not in base_specs.columns else base_specs.copy()
     meta=idx[['asset','discovery_provider_name']].drop_duplicates().copy();install_universe(r4,meta)
-    specs=extend_research_specs(base_specs,meta)
+    specs_frame=extend_research_specs(base_specs_frame,meta)
+    specs=specs_frame.set_index('asset',drop=True)
     import R5_BASE_CAUSAL_ENGINE as base;base.r4.factor_vec=r4.factor_vec
     import quantitative_integrated_v2 as qv2
     files=sorted(a.promoted_root.rglob('QV2_100_PROMOTED_SHARD_*.csv.gz'));parts=[]
