@@ -1,77 +1,14 @@
 {
-  "run_id": 32149264060,
+  "run_id": 32149823874,
   "status": "in_progress",
   "conclusion": null,
   "event": "push",
-  "head_sha": "a90e27d524cc15f802542515ba38146ece81dd73",
-  "created_at": "2026-08-18T14:35:25Z",
-  "updated_at": "2026-08-18T14:35:29Z",
+  "head_sha": "33f68c96ae393efa1bf1ddac68ab9b3c2cbf3272",
+  "created_at": "2026-08-18T14:40:57Z",
+  "updated_at": "2026-08-18T14:41:01Z",
   "jobs": [
     {
-      "id": 95750719911,
-      "name": "acquire34",
-      "status": "in_progress",
-      "conclusion": null,
-      "steps": [
-        {
-          "name": "Set up job",
-          "status": "completed",
-          "conclusion": "success"
-        },
-        {
-          "name": "Run actions/checkout@v4",
-          "status": "completed",
-          "conclusion": "success"
-        },
-        {
-          "name": "Run actions/setup-node@v4",
-          "status": "completed",
-          "conclusion": "success"
-        },
-        {
-          "name": "Run actions/setup-python@v5",
-          "status": "completed",
-          "conclusion": "success"
-        },
-        {
-          "name": "Install acquisition runtime",
-          "status": "completed",
-          "conclusion": "success"
-        },
-        {
-          "name": "Acquire untouched original-34 raw estate",
-          "status": "in_progress",
-          "conclusion": null
-        },
-        {
-          "name": "Merge and enforce exact 34 data gate",
-          "status": "pending",
-          "conclusion": null
-        },
-        {
-          "name": "Run actions/upload-artifact@v4",
-          "status": "pending",
-          "conclusion": null
-        },
-        {
-          "name": "Post Run actions/setup-python@v5",
-          "status": "pending",
-          "conclusion": null
-        },
-        {
-          "name": "Post Run actions/setup-node@v4",
-          "status": "pending",
-          "conclusion": null
-        },
-        {
-          "name": "Post Run actions/checkout@v4",
-          "status": "pending",
-          "conclusion": null
-        }
-      ]
-    },
-    {
-      "id": 95750719979,
+      "id": 95752612062,
       "name": "acquire16",
       "status": "in_progress",
       "conclusion": null,
@@ -113,6 +50,69 @@
         },
         {
           "name": "Enforce exact 16 data gate",
+          "status": "pending",
+          "conclusion": null
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "pending",
+          "conclusion": null
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "pending",
+          "conclusion": null
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "pending",
+          "conclusion": null
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "pending",
+          "conclusion": null
+        }
+      ]
+    },
+    {
+      "id": 95752612276,
+      "name": "acquire34",
+      "status": "in_progress",
+      "conclusion": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install acquisition runtime",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Acquire untouched original-34 raw estate",
+          "status": "in_progress",
+          "conclusion": null
+        },
+        {
+          "name": "Merge and enforce exact 34 data gate",
           "status": "pending",
           "conclusion": null
         },
