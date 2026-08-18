@@ -1,13 +1,13 @@
 {
-  "run_id": 32120134728,
+  "run_id": 32120438494,
   "status": "in_progress",
   "conclusion": null,
-  "head_sha": "8cf09c02a31f0f3042c3aaa886e312ea9239486f",
-  "created_at": "2026-08-18T09:09:53Z",
-  "updated_at": "2026-08-18T09:09:57Z",
+  "head_sha": "e27ce13b194dbe407bb6f1c6defea0df4cb0e102",
+  "created_at": "2026-08-18T09:13:17Z",
+  "updated_at": "2026-08-18T09:13:20Z",
   "jobs": [
     {
-      "id": 95658459285,
+      "id": 95659413019,
       "name": "new16",
       "status": "in_progress",
       "conclusion": null,
@@ -43,12 +43,27 @@
           "conclusion": "success"
         },
         {
-          "name": "Acquire exact 26-week M1 for approved 16",
+          "name": "Acquire exact 26-week M1 for approved additions",
           "status": "in_progress",
           "conclusion": null
         },
         {
-          "name": "Enforce evaluation-data gate and build asset-local bundle",
+          "name": "Enforce fresh-data gate for 15 non-COCOA additions",
+          "status": "pending",
+          "conclusion": null
+        },
+        {
+          "name": "Build fresh 15 asset-local bundle",
+          "status": "pending",
+          "conclusion": null
+        },
+        {
+          "name": "Restore preserved accepted COCOA bundle",
+          "status": "pending",
+          "conclusion": null
+        },
+        {
+          "name": "Verify exact approved-16 bundle composition",
           "status": "pending",
           "conclusion": null
         },
