@@ -1,0 +1,37 @@
+name: Trailaris QV2 — Deriv Window2 Evidence Inventory
+on:
+  push:
+    branches: [trailaris-qv2-50-independent-validation-20260818]
+    paths: ['.github/workflows/trailaris_qv2_deriv_window2_inventory.yml']
+permissions:
+  actions: read
+  contents: write
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-50-independent-validation-20260818}
+      - name: Inventory all Window2 Deriv recovery attempts
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json,subprocess
+          repo='shobanesiyanda/bsprime-dashboard.html';wf='trailaris_qv2_50_deriv_window2_test.yml'
+          runs=json.loads(subprocess.check_output(['gh','run','list','--repo',repo,'--workflow',wf,'--limit','100','--json','databaseId,status,conclusion,headSha,headBranch,createdAt,updatedAt,displayTitle'],text=True))
+          out=[]
+          for r in runs:
+              a=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/actions/runs/{r["databaseId"]}/artifacts?per_page=100'],text=True)).get('artifacts',[])
+              out.append({**r,'artifacts':[{'id':x['id'],'name':x['name'],'size_in_bytes':x['size_in_bytes'],'expired':x['expired'],'digest':x.get('digest')} for x in a]})
+          open('trailaris_50_asset/DERIV_WINDOW2_RUN_INVENTORY.json','w').write(json.dumps(out,indent=2))
+          print(json.dumps(out,indent=2))
+          PY
+      - name: Commit inventory
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add trailaris_50_asset/DERIV_WINDOW2_RUN_INVENTORY.json
+          git commit -m 'evidence: inventory prior Deriv Window2 runs [skip ci]' || exit 0
+          git pull --rebase origin trailaris-qv2-50-independent-validation-20260818 || true
+          git push origin HEAD:trailaris-qv2-50-independent-validation-20260818 || true
