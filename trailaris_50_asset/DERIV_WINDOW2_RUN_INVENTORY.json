@@ -1,0 +1,46 @@
+[
+  {
+    "conclusion": "failure",
+    "createdAt": "2026-08-18T15:11:40Z",
+    "databaseId": 32152960782,
+    "displayTitle": "research: verify paced final Deriv recovery",
+    "headBranch": "trailaris-qv2-50-independent-validation-20260818",
+    "headSha": "62f40f4f6c1ebba7b04a3c751976b9a1dd9c5f39",
+    "status": "completed",
+    "updatedAt": "2026-08-18T15:22:57Z",
+    "artifacts": []
+  },
+  {
+    "conclusion": "failure",
+    "createdAt": "2026-08-18T15:08:11Z",
+    "databaseId": 32152613519,
+    "displayTitle": "research: rerun parallel final Deriv verification",
+    "headBranch": "trailaris-qv2-50-independent-validation-20260818",
+    "headSha": "679775f52be0bcc9460d6175159f6ccc6f9229a9",
+    "status": "completed",
+    "updatedAt": "2026-08-18T15:09:29Z",
+    "artifacts": []
+  },
+  {
+    "conclusion": "failure",
+    "createdAt": "2026-08-18T15:02:06Z",
+    "databaseId": 32151995765,
+    "displayTitle": "research: verify Deriv on final independent window",
+    "headBranch": "trailaris-qv2-50-independent-validation-20260818",
+    "headSha": "3888391ffb24c47efc22c40b70161bd7eff7c1e5",
+    "status": "completed",
+    "updatedAt": "2026-08-18T15:06:41Z",
+    "artifacts": []
+  },
+  {
+    "conclusion": "failure",
+    "createdAt": "2026-08-18T14:53:25Z",
+    "databaseId": 32151096391,
+    "displayTitle": "research: verify exact Deriv synthetic historical recovery",
+    "headBranch": "trailaris-qv2-50-independent-validation-20260818",
+    "headSha": "5314b7ae95ecbeedef4a9ecddc57ad67f234f8e2",
+    "status": "completed",
+    "updatedAt": "2026-08-18T14:54:30Z",
+    "artifacts": []
+  }
+]
