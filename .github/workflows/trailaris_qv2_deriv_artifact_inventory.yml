@@ -1,0 +1,47 @@
+name: Trailaris QV2 — Deriv Historical Artifact Inventory
+on:
+  push:
+    branches: [trailaris-qv2-50-independent-validation-20260818]
+    paths: ['.github/workflows/trailaris_qv2_deriv_artifact_inventory.yml']
+permissions:
+  actions: read
+  contents: write
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-50-independent-validation-20260818}
+      - name: Scan repository artifact metadata
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json,subprocess,re
+          repo='shobanesiyanda/bsprime-dashboard.html';arts=[]
+          for page in range(1,21):
+              z=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/actions/artifacts?per_page=100&page={page}'],text=True))
+              a=z.get('artifacts',[])
+              if not a: break
+              arts.extend(a)
+          keys=('deriv','synthetic','raw','m1','estate','34','50','independent','export','replay','longcycle','active')
+          cand=[]
+          for a in arts:
+              name=a.get('name','').lower();run=a.get('workflow_run') or {}
+              if any(k in name for k in keys):
+                  cand.append({'id':a['id'],'name':a['name'],'size_in_bytes':a['size_in_bytes'],'expired':a['expired'],'created_at':a.get('created_at'),'expires_at':a.get('expires_at'),'digest':a.get('digest'),'run_id':run.get('id'),'head_branch':run.get('head_branch'),'head_sha':run.get('head_sha')})
+          cand.sort(key=lambda x:x.get('created_at') or '',reverse=True)
+          out={'artifacts_scanned':len(arts),'candidates':cand}
+          open('trailaris_50_asset/DERIV_REPOSITORY_ARTIFACT_INVENTORY.json','w').write(json.dumps(out,indent=2))
+          print('ARTIFACTS_SCANNED',len(arts),'CANDIDATES',len(cand))
+          for x in cand: print(json.dumps(x))
+          PY
+      - name: Commit inventory
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add trailaris_50_asset/DERIV_REPOSITORY_ARTIFACT_INVENTORY.json
+          git commit -m 'evidence: inventory repository artifacts for Deriv history [skip ci]' || exit 0
+          git pull --rebase origin trailaris-qv2-50-independent-validation-20260818 || true
+          git push origin HEAD:trailaris-qv2-50-independent-validation-20260818 || true
