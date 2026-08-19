@@ -1,0 +1,34 @@
+name: Trailaris QV2 — Deriv Historical Retention Probe
+on:
+  push:
+    branches: [trailaris-qv2-50-independent-validation-20260818]
+    paths: ['.github/workflows/trailaris_qv2_deriv_retention_probe.yml']
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: trailaris-qv2-50-independent-validation-20260818}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - run: npm install --no-save --silent ws
+      - name: Map requested end dates against returned R75 candles
+        run: |
+          node - <<'JS'
+          const fs=require('fs'),WebSocket=require('ws');
+          const endpoints=['wss://ws.binaryws.com/websockets/v3?app_id=1089','wss://api.derivws.com/trading/v1/options/ws/public'];
+          const dates=['2026-08-01T00:00:00Z','2026-07-01T00:00:00Z','2026-04-01T00:00:00Z','2026-01-01T00:00:00Z','2025-10-01T00:00:00Z','2025-08-20T00:00:00Z','2025-08-01T00:00:00Z','2025-07-21T00:00:00Z','2025-07-01T00:00:00Z','2025-06-01T00:00:00Z'];
+          function req(endpoint,endIso){return new Promise((resolve)=>{const end=Math.floor(Date.parse(endIso)/1000)-1,start=end-9*60;const ws=new WebSocket(endpoint);const timer=setTimeout(()=>{try{ws.close()}catch{};resolve({endpoint,endIso,error:'timeout'})},12000);ws.on('open',()=>ws.send(JSON.stringify({ticks_history:'R_75',start,end:String(end),style:'candles',granularity:60,count:10,req_id:1})));ws.on('message',m=>{let x;try{x=JSON.parse(m.toString())}catch{return};if(x.req_id!==1)return;clearTimeout(timer);const c=x.candles||[],lo=c.length?Math.min(...c.map(q=>+q.epoch)):null,hi=c.length?Math.max(...c.map(q=>+q.epoch)):null;try{ws.close()}catch{};resolve({endpoint,requested_end:endIso,requested_start_epoch:start,requested_end_epoch:end,error:x.error||x.errors||null,count:c.length,returned_first_epoch:lo,returned_last_epoch:hi,returned_first_iso:lo?new Date(lo*1000).toISOString():null,returned_last_iso:hi?new Date(hi*1000).toISOString():null,honored:lo!==null&&hi!==null&&lo>=start-60&&hi<=end+60})});ws.on('error',e=>{clearTimeout(timer);resolve({endpoint,endIso,error:String(e)})})})}
+          (async()=>{const out=[];for(const ep of endpoints){for(const d of dates){const r=await req(ep,d);out.push(r);console.log(JSON.stringify(r))}}fs.writeFileSync('trailaris_50_asset/DERIV_HISTORICAL_RETENTION_PROBE.json',JSON.stringify(out,null,2));})().catch(e=>{console.error(e);process.exit(2)});
+          JS
+      - name: Commit probe evidence
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add trailaris_50_asset/DERIV_HISTORICAL_RETENTION_PROBE.json
+          git commit -m 'evidence: map Deriv public historical retention [skip ci]'
+          git pull --rebase origin trailaris-qv2-50-independent-validation-20260818 || true
+          git push origin HEAD:trailaris-qv2-50-independent-validation-20260818
